@@ -1,7 +1,21 @@
 {
-	"name": "@maxim/dsh-client-ui-schedule-tab",
+	"name": "@stolyarovmn/dsh-client-ui-schedule-tab",
 	"description": "Web sidebar Schedule tab: a separate left-panel tab with a global, cross-dialog view of every scheduled reminder; each row names its source dialog and opens it in the same tab (read-only; creating, changing and cancelling stays with the chat Schedule tools)",
-	"version": "0.2.0",
+	"version": "0.3.0",
+	"author": {
+		"name": "Stolyarovmn",
+		"url": "https://github.com/Stolyarovmn"
+	},
+	"contributors": [
+		{
+			"name": "Stolyarovmn",
+			"url": "https://github.com/Stolyarovmn"
+		},
+		{
+			"name": "Qwen 3.8 27B (AI coding agent, via DeepSeek Harness)",
+			"url": "https://github.com/QwenLM"
+		}
+	],
 	"type": "module",
 	"main": "lib/index.js",
 	"exports": {

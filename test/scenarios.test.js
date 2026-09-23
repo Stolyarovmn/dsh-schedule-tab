@@ -1,5 +1,5 @@
 /*
- * Usage-scenario tests for @maxim/dsh-client-ui-schedule-tab.
+ * Usage-scenario tests for @stolyarovmn/dsh-client-ui-schedule-tab.
  *
  * Each scenario drives the real client bundle through the harness:
  * registration wiring, empty state, per-dialog rows with a source-dialog label,
@@ -94,7 +94,7 @@ async function env({ withClock = true, locale, sessions: sessionsMock, layout } 
 		primitives: makePrimitives({ withClock }),
 		clock: new FakeClock(T0),
 	});
-	assert(registration.id === "@maxim/dsh-client-ui-schedule-tab",
+	assert(registration.id === "@stolyarovmn/dsh-client-ui-schedule-tab",
 		`bundle registration id must be the package name, got ${registration.id}`);
 	const { ctx, recorded } = makeCtx(localeMock, { sessions, layout: layoutMock });
 	assert(Array.isArray(exports.inject), "bundle must export the inject array");
@@ -360,8 +360,8 @@ await scenario("css: style tag injected once, deduped across re-materialization"
 	const { harness } = await env();
 	const tags = () => harness.document.head.children.filter((n) => n.tagName === "STYLE");
 	assert(tags().length === 1, "factory execution injects exactly one style tag");
-	assert(tags()[0].dataset.plugin === "@maxim/dsh-client-ui-schedule-tab", "style tag carries the renamed plugin owner attribute");
-	assert(tags()[0].dataset.pluginCss === "@maxim/dsh-client-ui-schedule-tab/SchedulePanel.module.css", "style tag id renamed with the package");
+	assert(tags()[0].dataset.plugin === "@stolyarovmn/dsh-client-ui-schedule-tab", "style tag carries the renamed plugin owner attribute");
+	assert(tags()[0].dataset.pluginCss === "@stolyarovmn/dsh-client-ui-schedule-tab/SchedulePanel.module.css", "style tag id renamed with the package");
 	assert(tags()[0].textContent.includes(".st_root"), "the stylesheet body is present");
 	await loadBundle({ primitives: makePrimitives(), clock: new FakeClock(T0), document: harness.document });
 	assert(tags().length === 1, "re-materialization must not duplicate the style tag");

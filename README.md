@@ -1,4 +1,4 @@
-# @maxim/dsh-client-ui-schedule-tab
+# @stolyarovmn/dsh-client-ui-schedule-tab
 
 A DeepSeek Harness **client plugin** that adds a dedicated **Schedule** tab to
 the Web GUI's left panel. It shows a **global, cross-dialog** view of every
@@ -67,7 +67,9 @@ dsh plugin --profile web add file:C:\path\to\schedule-tab
 
 > `dsh plugin` forwards to pnpm in the profile directory, so any pnpm
 > dependency spec works. Once the package is published to the npm registry, a
-> plain `dsh plugin --profile web add @maxim/dsh-client-ui-schedule-tab` works too.
+> plain `dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab`
+> works too. (The npm scope is lowercase `@stolyarovmn` — npm scopes must be
+> lowercase — while the GitHub repository keeps its original casing.)
 
 ## Using it
 
@@ -88,6 +90,13 @@ dsh plugin --profile web add file:C:\path\to\schedule-tab
 | `lib/client.js` | browser half — the tab, the global panel, the session-list read, the click-through |
 | `test/harness.js` | mini React + fake clock/DOM + sessions/layout mocks that run the real bundle |
 | `test/scenarios.test.js` | 13 usage-scenario tests (`npm test`) |
+
+## Contributors
+
+- **Stolyarovmn** — <https://github.com/Stolyarovmn>
+- **Qwen 3.8 27B** (AI coding agent, via DeepSeek Harness) —
+  <https://github.com/QwenLM> — wrote the panel, the test harness, and most of
+  the implementation alongside the author.
 
 ## License
 
