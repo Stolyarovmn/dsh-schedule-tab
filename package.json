@@ -1,0 +1,45 @@
+{
+	"name": "@maxim/dsh-schedule-tab",
+	"description": "Web sidebar Schedule tab: a separate left-panel tab listing the current session's scheduled reminders (read-only; creating, changing and cancelling stays with the chat Schedule tools)",
+	"version": "0.1.1",
+	"type": "module",
+	"main": "lib/index.js",
+	"exports": {
+		".": "./lib/index.js",
+		"./client": "./lib/client.js",
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"test": "node test/scenarios.test.js"
+	},
+	"files": [
+		"lib/index.js",
+		"lib/client.js",
+		"README.md",
+		"LICENSE"
+	],
+	"keywords": [
+		"dsh",
+		"deepseek-harness",
+		"plugin",
+		"client-plugin",
+		"schedule",
+		"reminders",
+		"web-gui"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Stolyarovmn/dsh-schedule-tab.git"
+	},
+	"dsh": {
+		"client": {
+			"platform": "web",
+			"inject": [
+				"@deepseek-ai/dsh-client-locale",
+				"@deepseek-ai/dsh-client-ui-conversation",
+				"@deepseek-ai/dsh-client-ui-primitives"
+			]
+		}
+	},
+	"license": "MIT"
+}
