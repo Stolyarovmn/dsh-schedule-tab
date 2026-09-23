@@ -41,28 +41,24 @@ schedule a stable, always-present home in the left navigation.
 
 ## Install
 
-**Registry (published):**
-
-```sh
-dsh plugin --profile web add @maxim/dsh-schedule-tab
-```
-
-**Git (before a registry publish is available):**
+**Git (recommended):**
 
 ```sh
 dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab.git
 ```
 
-**Local checkout:**
+**Local checkout (development):**
 
 ```sh
 dsh plugin --profile web add file:C:\path\to\schedule-tab
 ```
 
 > `dsh plugin` forwards to pnpm in the profile directory, so any pnpm
-> dependency spec works. A git-hosted spec builds on install via the package
-> `prepare` script when pnpm allows it; a `file:` spec must point at a
-> directory containing the package (its `main` is `lib/index.js`).
+> dependency spec works. A `file:` spec must point at a directory containing
+> the package (its `main` is `lib/index.js`); a path-based patch entry
+> pointing at the main file is also accepted and converted to a `file://` URL.
+> Once the package is published to the npm registry, a plain
+> `dsh plugin --profile web add @maxim/dsh-schedule-tab` works too.
 
 ## Using it
 
