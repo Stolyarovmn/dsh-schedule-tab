@@ -3,4 +3,5 @@ npm-debug.log*
 *.log
 .DS_Store
 *.tmp.js
+*.tmp.cjs
 publish.tmp.js
