@@ -330,8 +330,34 @@ export function makeLocale() {
 	return locale;
 }
 
+// ── Sessions service mock (global list snapshot + open call recording) ────────
+/**
+ * A minimal stand-in for the `dsh-api-session-controller` `sessions` service:
+ * a `list` snapshot store (`{ ids, byId, current, phase }`) plus `open(id)`.
+ * `list.set(next)` triggers every subscriber (mirroring the real store), and
+ * `calls.open` records the ids `open()` was invoked with — the click-through
+ * assertions read it. Returns the service object itself (with `.calls`).
+ */
+export function makeSessions(initialSnapshot) {
+	let snapshot = initialSnapshot ?? { ids: [], byId: {}, current: undefined, phase: "pending" };
+	const listeners = new Set();
+	const list = {
+		getSnapshot: () => snapshot,
+		set: (value) => { snapshot = value; for (const listener of [...listeners]) listener(); },
+		subscribe: (listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
+	};
+	const calls = { open: [] };
+	return { list, calls, open: (id) => { calls.open.push(id); } };
+}
+
+// ── Layout service mock (selectPanel call recording) ──────────────────────────
+export function makeLayout() {
+	const calls = { selectPanel: [] };
+	return { calls, selectPanel: (id) => { calls.selectPanel.push(id); } };
+}
+
 // ── Slot ctx mock (records every registration) ───────────────────────────────
-export function makeCtx(locale) {
+export function makeCtx(locale, { sessions, layout } = {}) {
 	const recorded = {
 		effects: [],
 		panellist: [],
@@ -371,6 +397,8 @@ export function makeCtx(locale) {
 			},
 			slots,
 			locale,
+			sessions,
+			layout,
 		},
 	};
 }

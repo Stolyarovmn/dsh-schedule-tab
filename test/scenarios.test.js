@@ -1,10 +1,11 @@
 /*
- * Usage-scenario tests for @maxim/dsh-schedule-tab.
+ * Usage-scenario tests for @maxim/dsh-client-ui-schedule-tab.
  *
  * Each scenario drives the real client bundle through the harness:
- * registration wiring, empty state, single reminder, overdue ordering,
- * fixed-rate formatting, live projection updates, clock ticks, zh locale,
- * icon fallback, shell→child slot wiring, and CSS dedupe.
+ * registration wiring, empty state, per-dialog rows with a source-dialog label,
+ * cross-dialog aggregation, overdue ordering, fixed-rate formatting, live
+ * session-list updates, clock ticks, the click-through (open dialog in the same
+ * tab), zh locale, icon fallback, and CSS dedupe.
  *
  * Run: node test/scenarios.test.js
  */
@@ -15,7 +16,9 @@ import {
 	byTag,
 	childTexts,
 	makeCtx,
+	makeLayout,
 	makeLocale,
+	makeSessions,
 	textOf,
 	loadBundle,
 } from "./harness.js";
@@ -51,61 +54,74 @@ const agoMin = (m) => iso(T0 - m * 60_000);
 const record = (id, kind, prompt, scheduledAt, extra = {}) =>
 	({ id, kind, prompt, scheduledAt, ...extra });
 
+// A per-dialog list row. `title` may be absent (then only displayTitle is set,
+// or neither → the id is the last-resort label). `schedule` (the records that
+// dialog holds) is surfaced through projectionValues, exactly as the real
+// `dsh-schedule` projection is folded into the session list row.
+const session = (id, title, schedule = [], extra = {}) => ({
+	id,
+	displayTitle: title ?? id,
+	running: false,
+	blank: false,
+	updatedAt: T0,
+	...(title !== undefined ? { title } : {}),
+	...(schedule.length ? { projectionValues: { schedule } } : {}),
+	...extra,
+});
+const listSnapshot = (sessions, current) => ({
+	ids: sessions.map((s) => s.id),
+	byId: Object.fromEntries(sessions.map((s) => [s.id, s])),
+	current: current ?? sessions[0]?.id,
+	phase: "live",
+});
+
 function makePrimitives({ withClock = true } = {}) {
 	const IconClock = (props) => ({ type: "svg.clock", props, children: [] });
 	return withClock ? { IconClockOutline16: IconClock } : {};
 }
 
 /**
- * Fresh environment for one scenario: the real bundle is executed, its
- * apply(ctx) runs against a recording ctx, and the keyed main shell is
- * mounted exactly the way AppFrame would mount it (the shell renders the
- * session-maybe child; the child receives the standard kit props).
+ * Fresh environment for one scenario: the real bundle is executed, apply(ctx)
+ * runs against a ctx carrying mock sessions + layout services, and the keyed
+ * main occupant is mounted exactly as AppFrame would (it is the panel itself —
+ * a global, root-scope occupant with no session-maybe child).
  */
-async function env({ withClock = true, locale } = {}) {
+async function env({ withClock = true, locale, sessions: sessionsMock, layout } = {}) {
 	const localeMock = locale ?? makeLocale();
+	const sessions = sessionsMock ?? makeSessions(listSnapshot([]));
+	const layoutMock = layout ?? makeLayout();
 	const { registration, exports, harness } = await loadBundle({
 		primitives: makePrimitives({ withClock }),
 		clock: new FakeClock(T0),
 	});
-	assert(registration.id === "@maxim/dsh-schedule-tab",
+	assert(registration.id === "@maxim/dsh-client-ui-schedule-tab",
 		`bundle registration id must be the package name, got ${registration.id}`);
-	const { ctx, recorded } = makeCtx(localeMock);
+	const { ctx, recorded } = makeCtx(localeMock, { sessions, layout: layoutMock });
 	assert(Array.isArray(exports.inject), "bundle must export the inject array");
 	exports.apply(ctx);
-	const projection = { value: undefined };
-	const useProjection = (key) => (key === "schedule" ? projection.value : undefined);
-	const panelReg = recorded.mainSchedule[0];
-	assert(panelReg, "apply must register a main.schedule occupant");
-	const panel = panelReg.Component;
-	const shellReg = recorded.main.find((r) => r.meta.key === "schedule");
-	assert(shellReg, "apply must register the keyed main occupant");
-	const shell = shellReg.Component;
+	const mainReg = recorded.main.find((r) => r.meta.key === "schedule");
+	assert(mainReg, "apply must register the keyed main occupant");
+	const panel = mainReg.Component;
 	const tree = harness.render({
-		type: shell,
-		props: {
-			renderSlot: (slotKey) => {
-				assert(slotKey === "main.schedule",
-					`shell must address its declared child 'main.schedule', got '${slotKey}'`);
-				return {
-					type: panel,
-					props: { t: localeMock.bind("schedule-tab"), useProjection },
-					children: [],
-				};
-			},
-		},
+		type: panel,
+		props: { t: localeMock.bind("schedule-tab") },
 		children: [],
 	});
-	return { harness, tree, projection, recorded, exports, panel, shell, locale: localeMock };
+	return {
+		harness, tree, recorded, exports, panel, locale: localeMock,
+		sessions, layout: layoutMock,
+		calls: { open: sessions.calls.open, selectPanel: layoutMock.calls.selectPanel },
+	};
 }
 
 const rows = (tree) => byClass(tree, "st_row");
 const rowPrompts = (tree) => rows(tree).map((r) => textOf(byClassExact(r, "st_prompt")[0]));
 const rowStatuses = (tree) => rows(tree).map((r) => textOf(byClassExact(r, "st_status")[0]));
 const rowMetas = (tree) => rows(tree).map((r) => childTexts(byClassExact(r, "st_meta")[0]));
+const rowSources = (tree) => rows(tree).map((r) => textOf(byClassExact(r, "st_sourceName")[0]));
 
 // ── 1. Registration wiring ────────────────────────────────────────────────────
-await scenario("registration: dictionaries, tab entry, main key, child slot", async () => {
+await scenario("registration: dictionaries, tab entry, single global main key, inject names", async () => {
 	const { recorded, exports, locale } = await env();
 	const dict = locale.dictionaries.get("schedule-tab");
 	assert(dict, "apply must register the schedule-tab dictionary namespace");
@@ -119,168 +135,234 @@ await scenario("registration: dictionaries, tab entry, main key, child slot", as
 	assert(tab.meta.order === 0, "tab keeps top-of-group order 0");
 	assert(tab.meta.locale === "schedule-tab", "tab entry is locale-aware");
 	assert(tab.meta.label() === "Schedule", `en tab label resolves to 'Schedule', got ${JSON.stringify(tab.meta.label())}`);
-	assert(recorded.main.length === 1, "exactly one main registration");
+	assert(recorded.main.length === 1, "exactly one main registration (the global occupant)");
 	assert(recorded.main[0].meta.key === "schedule", `main key must be 'schedule', got ${JSON.stringify(recorded.main[0].meta.key)}`);
-	assert(recorded.main[0].meta.children["main.schedule"]?.scope === "session-maybe", "child slot is session-maybe scoped");
-	assert(recorded.mainSchedule.length === 1, "exactly one main.schedule occupant");
+	assert(recorded.main[0].meta.locale === "schedule-tab", "main occupant is locale-aware");
+	assert(recorded.main[0].meta.children === undefined, "global occupant declares no session-maybe child (data is global)");
+	assert(recorded.mainSchedule.length === 0, "no main.schedule child registration in the global design");
 	assert(typeof exports.apply === "function", "bundle exports apply");
-	assert(exports.inject.includes("slots") && exports.inject.includes("locale"), "inject names the slots and locale services");
+	for (const name of ["slots", "locale", "sessions", "layout"]) {
+		assert(exports.inject.includes(name), `inject must name the '${name}' service`);
+	}
 });
 
 // ── 2. Empty state ────────────────────────────────────────────────────────────
-await scenario("empty state: no session / no records → empty view, zero items", async () => {
+await scenario("empty state: no dialogs with records → empty view, zero items", async () => {
 	const { tree, harness } = await env();
 	assert(textOf(byClassExact(tree, "st_title")[0]) === "Schedule", `panel title must be 'Schedule', got ${JSON.stringify(textOf(byClassExact(tree, "st_title")[0]))}`);
 	assert(textOf(byClassExact(tree, "st_count")[0]) === "0 items", `count must read '0 items', got ${JSON.stringify(textOf(byClassExact(tree, "st_count")[0]))}`);
 	const empty = byClassExact(tree, "st_empty")[0];
-	assert(empty, "empty state renders when the projection is undefined (no session current)");
+	assert(empty, "empty state renders when no dialog has records");
 	assertIncludes(textOf(byClassExact(empty, "st_emptyTitle")[0]), "Nothing scheduled", "empty title");
 	assert(byTag(tree, "li").length === 0, "no rows in the empty state");
 	assert(harness.liveTimers() === 0, "no per-second interval while empty");
 });
 
-// ── 3. One future reminder ───────────────────────────────────────────────────
-await scenario("one future reminder: row, status, frequency, countdown", async () => {
-	const { tree, projection, harness } = await env();
-	projection.value = [record("schedule-1", "after", "Check the build", inMin(10), { afterSeconds: 600 })];
-	harness.rerender();
+// ── 3. One future reminder names its dialog ──────────────────────────────────
+await scenario("one future reminder: row, source dialog, status, frequency, countdown", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([session("s1", "Build pipeline", [record("schedule-1", "after", "Check the build", inMin(10), { afterSeconds: 600 })])]));
+	env0.harness.rerender();
+	const tree = env0.tree;
 	assert(rows(tree).length === 1, "exactly one row");
 	assert(textOf(byClassExact(tree, "st_title")[0]) === "Schedule", "title stays Schedule");
 	assert(textOf(byClassExact(tree, "st_count")[0]) === "1 item", `count must be singular '1 item', got ${JSON.stringify(textOf(byClassExact(tree, "st_count")[0]))}`);
 	const row = rows(tree)[0];
 	assert(row.el.props.className === "st_row", "future reminder is not overdue");
 	assert(rowStatuses(tree)[0] === "Scheduled", `status must be 'Scheduled', got ${JSON.stringify(rowStatuses(tree)[0])}`);
+	assert(rowSources(tree)[0] === "Build pipeline", `row must name its source dialog, got ${JSON.stringify(rowSources(tree)[0])}`);
 	const meta = rowMetas(tree)[0];
 	assert(meta.length === 5, `meta carries frequency·time·relative (5 spans), got ${meta.length}: ${JSON.stringify(meta)}`);
 	assert(meta[0] === "Once", `one-shot frequency must read 'Once', got ${JSON.stringify(meta[0])}`);
 	assertIncludes(meta[4], "in 10 minutes", "relative countdown");
-	assert(byTag(tree, "li")[0].el.key === "schedule-1", "row key is the record id (stable reconciliation)");
-	assert(harness.liveTimers() === 1, `one interval while records exist, got ${harness.liveTimers()}`);
+	assert(byTag(tree, "li")[0].el.key === "s1:schedule-1", "row key is dialog:record (stable reconciliation)");
+	assert(env0.harness.liveTimers() === 1, `one interval while records exist, got ${env0.harness.liveTimers()}`);
 });
 
-// ── 4. Overdue ordering ──────────────────────────────────────────────────────
-await scenario("overdue ordering: overdue first, then future ascending", async () => {
-	const { tree, projection, harness } = await env();
-	projection.value = [
-		record("schedule-1", "at", "Future B", inMin(30)),
-		record("schedule-2", "at", "Future A", inMin(5)),
-		record("schedule-3", "after", "Overdue A", agoMin(30), { afterSeconds: 600 }),
-		record("schedule-4", "after", "Overdue B", agoMin(1), { afterSeconds: 60 }),
-	];
-	harness.rerender();
+// ── 4. Overdue ordering across dialogs ───────────────────────────────────────
+await scenario("overdue ordering: overdue first, then future ascending, across dialogs", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s-fut-b", "Fut B", [record("r1", "at", "Future B", inMin(30))]),
+		session("s-fut-a", "Fut A", [record("r2", "at", "Future A", inMin(5))]),
+		session("s-ovd-a", "Ovd A", [record("r3", "after", "Overdue A", agoMin(30), { afterSeconds: 600 })]),
+		session("s-ovd-b", "Ovd B", [record("r4", "after", "Overdue B", agoMin(1), { afterSeconds: 60 })]),
+	]));
+	env0.harness.rerender();
+	const tree = env0.tree;
 	assert(rowPrompts(tree).join("|") === "Overdue A|Overdue B|Future A|Future B",
 		`expected overdue-first ascending order, got ${JSON.stringify(rowPrompts(tree))}`);
 	assert(rowStatuses(tree).join("|") === "Overdue|Overdue|Scheduled|Scheduled", `statuses wrong: ${JSON.stringify(rowStatuses(tree))}`);
+	assert(rowSources(tree).join("|") === "Ovd A|Ovd B|Fut A|Fut B", `source follows the row, got ${JSON.stringify(rowSources(tree))}`);
 	assert(byClass(tree, "st_rowOverdue").length === 2, "exactly the two overdue rows carry the warning style");
 	assertIncludes(rowMetas(tree)[0][4], "30 minutes overdue", "overdue relative label");
 	assertIncludes(rowMetas(tree)[1][4], "1 minute overdue", "overdue relative label (singular unit)");
 	assertIncludes(rowMetas(tree)[2][4], "in 5 minutes", "future relative label");
 	assertIncludes(rowMetas(tree)[3][4], "in 30 minutes", "future relative label");
-	assert(harness.liveTimers() === 1, "one shared interval for all rows");
+	assert(env0.harness.liveTimers() === 1, "one shared interval for all rows");
 });
 
-// ── 5. Fixed-rate formatting ─────────────────────────────────────────────────
+// ── 5. Cross-dialog aggregation ───────────────────────────────────────────────
+await scenario("aggregation: records from several dialogs merge into one list", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(40)), record("a2", "at", "Alpha task 2", inMin(41))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+		session("s3", "No records", []),
+	]));
+	env0.harness.rerender();
+	const tree = env0.tree;
+	assert(rows(tree).length === 3, "all three records from the two dialogs appear (the empty dialog is skipped)");
+	assert(rowPrompts(tree).join("|") === "Beta task|Alpha task|Alpha task 2", "merged list is time-ordered across dialogs");
+	assert(rowSources(tree).join("|") === "Beta|Alpha|Alpha", "each row carries its own dialog");
+	assert(textOf(byClassExact(tree, "st_count")[0]) === "3 items", `count is the total across dialogs, got ${JSON.stringify(textOf(byClassExact(tree, "st_count")[0]))}`);
+});
+
+// ── 6. Fixed-rate formatting ─────────────────────────────────────────────────
 await scenario("fixed-rate formatting: largest exact whole unit, no rounding", async () => {
-	const { tree, projection, harness } = await env();
-	projection.value = [
-		record("schedule-1", "every", "Water the plants", inHour(1), { everySeconds: 3600 }),
-		record("schedule-2", "every", "Weekly review", iso(T0 + 5 * 86_400_000), { everySeconds: 5 * 86_400 }),
-		record("schedule-3", "every", "Half-hour ping", iso(T0 + 1800), { everySeconds: 1800 }),
-		record("schedule-4", "every", "Prime interval", iso(T0 + 3700), { everySeconds: 3700 }),
-	];
-	harness.rerender();
-	// Rows are ordered by target time, so match by frequency set, not position.
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([session("s1", "Recurring", [
+		record("e1", "every", "Water the plants", inHour(1), { everySeconds: 3600 }),
+		record("e2", "every", "Weekly review", iso(T0 + 5 * 86_400_000), { everySeconds: 5 * 86_400 }),
+		record("e3", "every", "Half-hour ping", iso(T0 + 1800), { everySeconds: 1800 }),
+		record("e4", "every", "Prime interval", iso(T0 + 3700), { everySeconds: 3700 }),
+	])]))
+	;
+	env0.harness.rerender();
+	const tree = env0.tree;
 	const freqs = rowMetas(tree).map((m) => m[0]).sort();
-	// Non-round 3700s: the official algorithm keeps the largest exact whole unit
-	// — 3700 is not divisible by 60, so it stays "3700 seconds" (never rounded).
 	assert(JSON.stringify(freqs) === JSON.stringify(["Every 1 hour", "Every 30 minutes", "Every 3700 seconds", "Every 5 days"]),
 		`expected the four formatted frequencies (rows time-ordered), got ${JSON.stringify(freqs)}`);
 });
 
-// ── 6. Live projection updates ───────────────────────────────────────────────
-await scenario("live update: records appear, change, disappear; empty at the end", async () => {
-	const { tree, projection, harness } = await env();
-	assert(byClassExact(tree, "st_empty").length === 1, "starts empty");
-	projection.value = [record("schedule-1", "at", "First", inMin(5))];
-	harness.rerender();
-	assert(rows(tree).length === 1, "row appears on the live projection update");
-	projection.value = [
-		record("schedule-1", "at", "First", inMin(5)),
-		record("schedule-2", "at", "Second", inMin(15)),
-	];
-	harness.rerender();
-	assert(rows(tree).length === 2, "a second record appends");
-	assert(rowPrompts(tree)[0] === "First" && rowPrompts(tree)[1] === "Second", "order follows the projection");
-	projection.value = [record("schedule-2", "at", "Second", inMin(15))];
-	harness.rerender();
-	assert(rows(tree).length === 1, "deletion removes the row");
-	assert(rowPrompts(tree)[0] === "Second", "the surviving row remains");
-	projection.value = [];
-	harness.rerender();
-	assert(byClassExact(tree, "st_empty").length === 1, "removing the last record returns to the empty state");
-	assert(harness.liveTimers() === 0, "the clock interval is cleaned up when empty");
-	projection.value = [record("schedule-3", "at", "Third", inMin(20))];
-	harness.rerender();
-	assert(rows(tree).length === 1, "records can reappear after the empty state");
-	assert(harness.liveTimers() === 1, "the clock interval restarts with the records");
+// ── 7. Live session-list updates ─────────────────────────────────────────────
+await scenario("live update: records appear, change, disappear across the list", async () => {
+	const env0 = await env();
+	assert(byClassExact(env0.tree, "st_empty").length === 1, "starts empty");
+	env0.sessions.list.set(listSnapshot([session("s1", "D1", [record("r1", "at", "First", inMin(5))])]));
+	env0.harness.rerender();
+	assert(rows(env0.tree).length === 1, "row appears on the live session-list update");
+	env0.sessions.list.set(listSnapshot([
+		session("s1", "D1", [record("r1", "at", "First", inMin(5)), record("r2", "at", "Second", inMin(15))]),
+	]));
+	env0.harness.rerender();
+	assert(rows(env0.tree).length === 2, "a second record appends");
+	assert(rowPrompts(env0.tree)[0] === "First" && rowPrompts(env0.tree)[1] === "Second", "order follows the list");
+	env0.sessions.list.set(listSnapshot([session("s1", "D1", [record("r2", "at", "Second", inMin(15))])]));
+	env0.harness.rerender();
+	assert(rows(env0.tree).length === 1, "deletion removes the row");
+	assert(rowPrompts(env0.tree)[0] === "Second", "the surviving row remains");
+	env0.sessions.list.set(listSnapshot([session("s1", "D1", [])]));
+	env0.harness.rerender();
+	assert(byClassExact(env0.tree, "st_empty").length === 1, "removing the last record returns to the empty state");
+	assert(env0.harness.liveTimers() === 0, "the clock interval is cleaned up when empty");
+	env0.sessions.list.set(listSnapshot([session("s2", "D2", [record("r3", "at", "Third", inMin(20))])]));
+	env0.harness.rerender();
+	assert(rows(env0.tree).length === 1, "records can reappear (even from a different dialog)");
+	assert(rowSources(env0.tree)[0] === "D2", "the new row names the new dialog");
+	assert(env0.harness.liveTimers() === 1, "the clock interval restarts with the records");
 });
 
-// ── 7. Clock ticks ───────────────────────────────────────────────────────────
+// ── 8. Clock ticks ───────────────────────────────────────────────────────────
 await scenario("clock tick: countdown updates, then flips to overdue", async () => {
-	const { tree, projection, harness } = await env();
-	projection.value = [record("schedule-1", "at", "Deadline", inMin(2))];
-	harness.rerender();
-	assertIncludes(rowMetas(tree)[0][4], "in 2 minutes", "initial relative");
-	assert(rowStatuses(tree)[0] === "Scheduled", "initially scheduled");
-	const fired = harness.advance(70_000); // 70s later (2 min → 50s remaining)
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([session("s1", "D1", [record("r1", "at", "Deadline", inMin(2))])]));
+	env0.harness.rerender();
+	assertIncludes(rowMetas(env0.tree)[0][4], "in 2 minutes", "initial relative");
+	assert(rowStatuses(env0.tree)[0] === "Scheduled", "initially scheduled");
+	const fired = env0.harness.advance(70_000); // 70s later (2 min → 50s remaining)
 	assert(fired >= 1, "the per-second tick fired");
-	assert(rowStatuses(tree)[0] === "Scheduled", "still scheduled before the target");
-	// Sub-minute remainders use the seconds unit (mirrors the official catalog):
-	// ceil(50s / 1s) = "in 50 seconds".
-	assertIncludes(rowMetas(tree)[0][4], "in 50 seconds", "countdown in whole seconds while under a minute");
-	harness.advance(61_000); // cross the target (11s overdue: 70s + 61s = 131s > 120s)
-	assert(rowStatuses(tree)[0] === "Overdue", `flips to Overdue at the target, got ${JSON.stringify(rowStatuses(tree)[0])}`);
-	assert(byClass(tree, "st_rowOverdue").length === 1, "warning style applied after the flip");
-	assertIncludes(rowMetas(tree)[0][4], "11 seconds overdue", "small overdue remainders use the seconds unit");
+	assert(rowStatuses(env0.tree)[0] === "Scheduled", "still scheduled before the target");
+	assertIncludes(rowMetas(env0.tree)[0][4], "in 50 seconds", "countdown in whole seconds while under a minute");
+	env0.harness.advance(61_000); // cross the target (11s overdue: 70s + 61s = 131s > 120s)
+	assert(rowStatuses(env0.tree)[0] === "Overdue", `flips to Overdue at the target, got ${JSON.stringify(rowStatuses(env0.tree)[0])}`);
+	assert(byClass(env0.tree, "st_rowOverdue").length === 1, "warning style applied after the flip");
+	assertIncludes(rowMetas(env0.tree)[0][4], "11 seconds overdue", "small overdue remainders use the seconds unit");
 });
 
-// ── 8. Chinese locale ────────────────────────────────────────────────────────
+// ── 9. Click-through opens the dialog in the same tab ────────────────────────
+await scenario("click-through: clicking a row opens its dialog and returns to the conversation", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(40))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+	]));
+	env0.harness.rerender();
+	const tree = env0.tree;
+	const rowFor = (prompt) => rows(tree).find((r) => textOf(byClassExact(r, "st_prompt")[0]) === prompt);
+	// The rows are time-ordered: Beta (20 min) first, Alpha (40 min) second.
+	const betaRow = rowFor("Beta task");
+	const alphaRow = rowFor("Alpha task");
+	assert(betaRow && alphaRow, "both rows are present");
+	// Beta row first.
+	betaRow.el.props.onClick();
+	assert(env0.calls.open.length === 1 && env0.calls.open[0] === "s2", `clicking Beta must open dialog s2, got ${JSON.stringify(env0.calls.open)}`);
+	assert(env0.calls.selectPanel.length === 1 && env0.calls.selectPanel[0] === "conversation",
+		`after opening, the center returns to the conversation, got ${JSON.stringify(env0.calls.selectPanel)}`);
+	// Alpha row second (both calls accumulate, proving the handler is per-row).
+	alphaRow.el.props.onClick();
+	assert(env0.calls.open.length === 2 && env0.calls.open[1] === "s1", `clicking Alpha must open dialog s1, got ${JSON.stringify(env0.calls.open)}`);
+	assert(env0.calls.selectPanel.length === 2 && env0.calls.selectPanel[1] === "conversation", "second click also returns to the conversation");
+	// Keyboard activation works too.
+	alphaRow.el.props.onKeyDown({ key: "Enter" });
+	assert(env0.calls.open.length === 3 && env0.calls.open[2] === "s1", "Enter activates the row");
+	assert(rowFor("Alpha task").el.props.tabIndex === 0, "rows are keyboard-focusable");
+});
+
+// ── 10. Source-dialog label fallbacks ─────────────────────────────────────────
+await scenario("source label: title → displayTitle → id fallback chain", async () => {
+	const env0 = await env();
+	// Three fallback tiers in one list: a named dialog (title present), a
+	// display-only dialog (title absent → displayTitle), and a bare id (neither).
+	env0.sessions.list.set(listSnapshot([
+		session("s-title", "Named dialog", [record("t1", "at", "Has title", inMin(30))]),
+		{ id: "s-display", displayTitle: "Shown name", running: false, blank: false, updatedAt: T0, projectionValues: { schedule: [record("t2", "at", "Display only", inMin(10))] } },
+		{ id: "s-idonly", running: false, blank: false, updatedAt: T0, projectionValues: { schedule: [record("t3", "at", "Id fallback", inMin(60))] } },
+	]));
+	env0.harness.rerender();
+	const tree = env0.tree;
+	// Ordered by time: Display only (10), Has title (30), Id fallback (60).
+	const byPrompt = Object.fromEntries(rows(tree).map((r) => [textOf(byClassExact(r, "st_prompt")[0]), textOf(byClassExact(r, "st_sourceName")[0])]));
+	assert(byPrompt["Has title"] === "Named dialog", `title wins over displayTitle, got ${JSON.stringify(byPrompt["Has title"])}`);
+	assert(byPrompt["Display only"] === "Shown name", `displayTitle used when title absent, got ${JSON.stringify(byPrompt["Display only"])}`);
+	assert(byPrompt["Id fallback"] === "s-idonly", `id used as last resort, got ${JSON.stringify(byPrompt["Id fallback"])}`);
+});
+
+// ── 11. Chinese locale ────────────────────────────────────────────────────────
 await scenario("zh locale: panel and tab copy switch to Chinese", async () => {
 	const locale = makeLocale();
-	const { tree, projection, harness, recorded } = await env({ locale });
-	projection.value = [record("schedule-1", "at", "提醒一", inMin(10))];
-	harness.rerender();
-	assert(textOf(byClassExact(tree, "st_title")[0]) === "Schedule", "en title before the switch");
-	// The bound t and the tab label read the active language live; switching it
-	// re-renders the slot copy without a reload.
+	const env0 = await env({ locale });
+	env0.sessions.list.set(listSnapshot([session("s1", "提醒对话", [record("r1", "at", "提醒一", inMin(10))])]));
+	env0.harness.rerender();
+	assert(textOf(byClassExact(env0.tree, "st_title")[0]) === "Schedule", "en title before the switch");
 	locale.active = "zh";
-	harness.rerender();
-	assert(textOf(byClassExact(tree, "st_title")[0]) === "日程", `zh title must be 日程, got ${JSON.stringify(textOf(byClassExact(tree, "st_title")[0]))}`);
-	assert(textOf(byClassExact(tree, "st_count")[0]) === "1 项", `zh count, got ${JSON.stringify(textOf(byClassExact(tree, "st_count")[0]))}`);
-	assert(rowStatuses(tree)[0] === "已计划", `zh status, got ${JSON.stringify(rowStatuses(tree)[0])}`);
-	assertIncludes(rowMetas(tree)[0][4], "10分钟后", "zh relative label");
-	assert(recorded.panellist[0].meta.label() === "日程", `zh tab label, got ${JSON.stringify(recorded.panellist[0].meta.label())}`);
+	env0.harness.rerender();
+	assert(textOf(byClassExact(env0.tree, "st_title")[0]) === "日程", `zh title must be 日程, got ${JSON.stringify(textOf(byClassExact(env0.tree, "st_title")[0]))}`);
+	assert(textOf(byClassExact(env0.tree, "st_count")[0]) === "1 项", `zh count, got ${JSON.stringify(textOf(byClassExact(env0.tree, "st_count")[0]))}`);
+	assert(rowStatuses(env0.tree)[0] === "已计划", `zh status, got ${JSON.stringify(rowStatuses(env0.tree)[0])}`);
+	assert(textOf(byClassExact(env0.tree, "st_sourceLabel")[0]) === "来自", `zh source label, got ${JSON.stringify(textOf(byClassExact(env0.tree, "st_sourceLabel")[0]))}`);
+	assertIncludes(rowMetas(env0.tree)[0][4], "10分钟后", "zh relative label");
+	assert(env0.recorded.panellist[0].meta.label() === "日程", `zh tab label, got ${JSON.stringify(env0.recorded.panellist[0].meta.label())}`);
 });
 
-// ── 9. Icon fallback ─────────────────────────────────────────────────────────
+// ── 12. Icon fallback ─────────────────────────────────────────────────────────
 await scenario("icon fallback: no clock icon in primitives → renders without throwing", async () => {
-	const { tree, projection, harness } = await env({ withClock: false });
-	assert(byClassExact(tree, "st_empty").length === 1, "empty state renders without the icon primitive");
-	projection.value = [record("schedule-1", "at", "Still fine", inMin(10))];
-	harness.rerender();
-	assert(rows(tree).length === 1, "rows render without the icon primitive");
-	assert(byTag(tree, "svg.clock").length === 0, "no icon element when the primitive is absent");
+	const env0 = await env({ withClock: false });
+	assert(byClassExact(env0.tree, "st_empty").length === 1, "empty state renders without the icon primitive");
+	env0.sessions.list.set(listSnapshot([session("s1", "D1", [record("r1", "at", "Still fine", inMin(10))])]));
+	env0.harness.rerender();
+	assert(rows(env0.tree).length === 1, "rows render without the icon primitive");
+	assert(byTag(env0.tree, "svg.clock").length === 0, "no icon element when the primitive is absent");
 });
 
-// ── 10. CSS dedupe ───────────────────────────────────────────────────────────
+// ── 13. CSS dedupe ────────────────────────────────────────────────────────────
 await scenario("css: style tag injected once, deduped across re-materialization", async () => {
 	const { harness } = await env();
 	const tags = () => harness.document.head.children.filter((n) => n.tagName === "STYLE");
 	assert(tags().length === 1, "factory execution injects exactly one style tag");
-	assert(tags()[0].dataset.plugin === "@maxim/dsh-schedule-tab", "style tag carries the plugin owner attribute");
-	assert(tags()[0].dataset.pluginCss === "@maxim/dsh-schedule-tab/SchedulePanel.module.css", "style tag id renamed with the panel");
+	assert(tags()[0].dataset.plugin === "@maxim/dsh-client-ui-schedule-tab", "style tag carries the renamed plugin owner attribute");
+	assert(tags()[0].dataset.pluginCss === "@maxim/dsh-client-ui-schedule-tab/SchedulePanel.module.css", "style tag id renamed with the package");
 	assert(tags()[0].textContent.includes(".st_root"), "the stylesheet body is present");
-	// Simulate an HMR re-execution of the same script against the same document.
 	await loadBundle({ primitives: makePrimitives(), clock: new FakeClock(T0), document: harness.document });
 	assert(tags().length === 1, "re-materialization must not duplicate the style tag");
 });
