@@ -16,7 +16,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
       - run: npm test
       - run: npm run test:bundle
       - run: npm pack --dry-run
@@ -31,7 +30,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - name: Install plugin into an isolated DSH profile
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
