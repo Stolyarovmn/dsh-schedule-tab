@@ -1,7 +1,7 @@
 {
 	"name": "@stolyarovmn/dsh-client-ui-schedule-tab",
-	"description": "Web sidebar Schedule tab: a separate left-panel tab with a global, cross-dialog view of every scheduled reminder; each row names its source dialog and opens it in the same tab (read-only; creating, changing and cancelling stays with the chat Schedule tools)",
-	"version": "0.4.0",
+	"description": "Global Schedule tab for DeepSeek Harness Web: view built-in scheduled reminders across all dialogs and open their source conversations.",
+	"version": "0.4.1",
 	"author": {
 		"name": "Stolyarovmn",
 		"url": "https://github.com/Stolyarovmn"
@@ -37,6 +37,7 @@
 	],
 	"keywords": [
 		"dsh",
+		"dsh-plugin",
 		"deepseek-harness",
 		"plugin",
 		"client-plugin",
@@ -60,6 +61,19 @@
 				"@deepseek-ai/dsh-client-ui-primitives",
 				"@deepseek-ai/dsh-api-session-controller",
 				"@deepseek-ai/dsh-client-ui-layout"
+			]
+		},
+		"catalog": {
+			"category": "ui",
+			"summary": {
+				"en": "Global Schedule tab for built-in DeepSeek Harness reminders across all dialogs.",
+				"zh": "在一个全局 Schedule 标签页中查看所有对话里的 DeepSeek Harness 内置提醒。"
+			},
+			"capabilities": [
+				"slots",
+				"locale",
+				"sessions",
+				"layout"
 			]
 		}
 	},
