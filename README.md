@@ -87,3 +87,16 @@ The CI workflow also performs an installation smoke test with `dsh plugin add` a
 ## License
 
 MIT
+
+
+## Publishing
+
+npm publishing is automated from GitHub Releases through `.github/workflows/publish.yml`.
+
+The npm package should configure a GitHub Actions trusted publisher for:
+
+- repository: `Stolyarovmn/dsh-schedule-tab`
+- workflow: `publish.yml`
+- environment: `npm`
+
+Publishing a GitHub release whose tag matches `v<package.json version>` runs tests, validates the package contents, and publishes to npm with provenance. No long-lived npm token is required.
