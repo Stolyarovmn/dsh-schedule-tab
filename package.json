@@ -1,7 +1,7 @@
 {
 	"name": "@stolyarovmn/dsh-client-ui-schedule-tab",
 	"description": "Web sidebar Schedule tab: a separate left-panel tab with a global, cross-dialog view of every scheduled reminder; each row names its source dialog and opens it in the same tab (read-only; creating, changing and cancelling stays with the chat Schedule tools)",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"author": {
 		"name": "Stolyarovmn",
 		"url": "https://github.com/Stolyarovmn"
@@ -29,6 +29,7 @@
 	"files": [
 		"lib/index.js",
 		"lib/client.js",
+		"cordis.patch.yml",
 		"README.md",
 		"LICENSE"
 	],
@@ -46,6 +47,9 @@
 		"url": "git+https://github.com/Stolyarovmn/dsh-schedule-tab.git"
 	},
 	"dsh": {
+		"bundle": {
+			"patch": "./cordis.patch.yml"
+		},
 		"client": {
 			"platform": "web",
 			"inject": [

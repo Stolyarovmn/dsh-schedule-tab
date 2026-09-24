@@ -48,8 +48,10 @@ reminders from *every* dialog, not just the one you happen to be in.
 - **Click-through** = `ctx.sessions.open(id)` + `ctx.layout.selectPanel("conversation")`
   — both public services — so a click jumps into the source dialog in the same
   browser tab.
-- **Install** = `dsh plugin --profile web add <source>` (a registry package, a
-  `git+` spec, or a `file:` path pointing at the package).
+- **Install** = `dsh plugin --profile web add <source>` — a single command.
+  The package declares `dsh.bundle` with a `cordis.patch.yml` that inserts the
+  `schedule-tab` loader row, so `dsh plugin add` wires it into the profile's
+  bundle stack automatically; no manual edit of `cordis.patch.yml` is needed.
 
 ## Install
 
@@ -59,17 +61,32 @@ reminders from *every* dialog, not just the one you happen to be in.
 dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab.git
 ```
 
+**Pinned to a tag (reproducible):**
+
+```sh
+dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab.git#v0.4.0
+```
+
 **Local checkout (development):**
 
 ```sh
 dsh plugin --profile web add file:C:\path\to\schedule-tab
 ```
 
+Then restart `dsh web`. The package becomes a layer of the web profile (visible
+in `dsh web --dump-config` as the `schedule-tab` row) and appears in the Web
+GUI's Settings → Plugins inventory as `ui-schedule-tab`.
+
 > `dsh plugin` forwards to pnpm in the profile directory, so any pnpm
 > dependency spec works. Once the package is published to the npm registry, a
 > plain `dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab`
 > works too. (The npm scope is lowercase `@stolyarovmn` — npm scopes must be
 > lowercase — while the GitHub repository keeps its original casing.)
+>
+> **Git-hosted installs** run the package's build scripts on your machine at
+> install time, so pnpm may ask for an explicit `allowBuilds` confirmation —
+> allow it only for sources you trust, and pin a tag or commit. This package
+> ships prebuilt `lib/` files, so it declares no build scripts.
 
 ## Using it
 
@@ -81,11 +98,39 @@ dsh plugin --profile web add file:C:\path\to\schedule-tab
    (in any dialog) appears there, grouped and labeled by its source dialog.
 4. Click a row to jump straight into the dialog that owns it.
 
+## Distribution and discoverability
+
+DeepSeek Harness has **no in-app plugin marketplace and no central registry**:
+plugin discovery lives outside the app, and the Settings → Plugins search box
+only filters plugins *already installed* in your profile. How people find this
+one:
+
+- **GitHub topic [`dsh-plugin`](https://github.com/topics/dsh-plugin)** — the
+  official discovery channel recommended in the harness README and
+  CONTRIBUTING.md; this repository carries the topic.
+- **npm** — publishing `@stolyarovmn/dsh-client-ui-schedule-tab` makes it
+  installable by bare name and findable via `npm search` (the package is
+  publish-ready: `publishConfig.access: public`, prebuilt `lib/`, MIT).
+- **Community** — the harness README points contributors to GitHub Discussions
+  and the official Discord for sharing plugins; the upstream repo does not
+  accept external PRs, so a standalone repository is the intended model
+  ("we do not believe that packages in the official repository are inherently
+  more important than packages created by the community").
+- **Settings → Plugins inventory** (in-app) — after installation the plugin
+  shows up there as `ui-schedule-tab` and is found by the inventory's search
+  box; the search box is a local filter, not a catalog, so it never
+  *discovers* uninstalled plugins.
+
+There is currently no submission process to a DSH-curated catalog; the
+officially recommended publication paths are npm, git, and the `dsh-plugin`
+GitHub topic.
+
 ## Files
 
 | file | role |
 |---|---|
-| `package.json` | manifest: `main` (node half) + `./client` (browser half) + `dsh.client` |
+| `package.json` | manifest: `main` (node half) + `./client` (browser half) + `dsh.bundle` (self-activating install) + `dsh.client` |
+| `cordis.patch.yml` | the bundle layer: inserts the `schedule-tab` loader row, applied automatically when the package is a profile bundle |
 | `lib/index.js` | node half — empty `apply`, keeps the browser feature addressable |
 | `lib/client.js` | browser half — the tab, the global panel, the session-list read, the click-through |
 | `test/harness.js` | mini React + fake clock/DOM + sessions/layout mocks that run the real bundle |

@@ -1,0 +1,18 @@
+# Bundle layer for this package (package.json `dsh.bundle.patch`): it is
+# applied whenever a profile lists this package in `dsh.profile.bundles`.
+# `dsh plugin add` maintains that list automatically, so installation is a
+# single command — no manual entry in the profile's own cordis.patch.yml.
+#
+# The one row activates the browser half: the Loader imports the node entry
+# (lib/index.js, an empty apply) so the package becomes an active entry, and
+# the web client-module system scans active entries for their `dsh.client`
+# declaration, serving lib/client.js into the page. The row id `schedule-tab`
+# is what Settings → Plugins inventory shows (scope and `dsh-client-`
+# prefixes are stripped from the package name).
+#
+# The tab is read-only and null-safe: without the official `dsh-schedule` +
+# `dsh-time-context` host services it simply renders an empty state, so this
+# row is safe in any `dsh web` profile.
+- insert:
+    - id: schedule-tab
+      name: '@stolyarovmn/dsh-client-ui-schedule-tab'
