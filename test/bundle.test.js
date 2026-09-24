@@ -7,6 +7,14 @@ const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
+assert.ok(pkg.keywords.includes("dsh-plugin"));
+assert.ok(pkg.keywords.includes("deepseek-harness"));
+assert.equal(pkg.dsh?.catalog?.category, "ui");
+assert.equal(typeof pkg.dsh?.catalog?.summary?.en, "string");
+assert.equal(typeof pkg.dsh?.catalog?.summary?.zh, "string");
+assert.ok(pkg.dsh.catalog.summary.en.length <= 200);
+assert.ok(pkg.dsh.catalog.summary.zh.length <= 200);
+assert.deepEqual(pkg.dsh?.catalog?.capabilities, ["slots", "locale", "sessions", "layout"]);
 assert.ok(pkg.files.includes("cordis.patch.yml"));
 assert.ok(pkg.files.includes("lib/index.js"));
 assert.ok(pkg.files.includes("lib/client.js"));
