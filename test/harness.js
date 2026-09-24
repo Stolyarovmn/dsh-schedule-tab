@@ -1,19 +1,6 @@
-/*
- * Test harness for the schedule-tab client bundle.
- *
- * Executes the REAL lib/client.js bundle (the exact file the browser runs)
- * against a minimal React-compatible runtime plus a mock window/document,
- * so usage scenarios can be exercised deterministically in Node:
- *
- *  - jsx/jsxs element creation (key is the third positional argument, as in
- *    the real react/jsx-runtime) and positional child reconciliation
- *  - useState / useEffect hooks with dependency comparison and cleanup
- *  - fake wall clock (Date.now) + fake interval timers
- *  - a locale face whose active language the tests can switch
- *  - a slot ctx mock recording every registration apply() makes
- */
+// Minimal browser and service harness for client bundle tests.
 
-// ── Fake clock ────────────────────────────────────────────────────────────────
+// Fake clock
 export class FakeClock {
 	#now;
 	constructor(start) {
@@ -40,7 +27,7 @@ export class FakeClock {
 	}
 }
 
-// ── Minimal DOM ───────────────────────────────────────────────────────────────
+// Minimal DOM
 function makeElement(tagName) {
 	return {
 		tagName: tagName.toUpperCase(),
@@ -75,7 +62,7 @@ function makeDocument() {
 	return document;
 }
 
-// ── Mini React (enough of the hook/component contract the bundle uses) ───────
+// Mini React (enough of the hook/component contract the bundle uses)
 const depsEqual = (a, b) =>
 	a === b || (Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => Object.is(v, b[i])));
 
@@ -99,7 +86,6 @@ export class MiniReact {
 			clearInterval: (id) => { const t = this.#timers[id]; if (t) t.alive = false; },
 		};
 	}
-	/** Install the fake Date + global document so the bundle sees them. */
 	installGlobals() {
 		if (this.#uninstallClock === null && this.clock) this.#uninstallClock = this.clock.install();
 		if (this.#uninstallDocument === null) {
@@ -108,14 +94,12 @@ export class MiniReact {
 			this.#uninstallDocument = () => { globalThis.document = prev; };
 		}
 	}
-	/** Restore the real Date/document (idempotent). */
 	dispose() {
 		this.#uninstallClock?.();
 		this.#uninstallClock = null;
 		this.#uninstallDocument?.();
 		this.#uninstallDocument = null;
 	}
-	/** Number of live (un-cleared) interval timers. */
 	liveTimers() { return this.#timers.filter((t) => t.alive).length; }
 	#armTimer(fn, ms, repeating) {
 		const id = this.#timers.length;
@@ -228,7 +212,6 @@ export class MiniReact {
 		};
 		walk(node);
 	}
-	/** Render one element as the root and flush all resulting updates. */
 	render(element) {
 		const el = normalize(element);
 		const node = { inst: null, el, parent: null, childNodes: [] };
@@ -242,7 +225,6 @@ export class MiniReact {
 		this.flush();
 		return node;
 	}
-	/** Force another render pass (after external mock changes) and flush. */
 	rerender() { this.#dirty = true; return this.flush(); }
 	flush() {
 		let guard = 0;
@@ -268,14 +250,13 @@ function normalize(el) {
 	return el;
 }
 
-// ── Tree assertions (operate on the descriptor tree) ─────────────────────────
+// Tree assertions (operate on the descriptor tree)
 export function collectNodes(node, out = []) {
 	if (!node) return out;
 	if (node.el) out.push(node);
 	for (const child of node.childNodes ?? []) collectNodes(child, out);
 	return out;
 }
-/** All host elements whose className contains every given fragment. */
 export function byClass(node, ...fragments) {
 	return collectNodes(node).filter((n) => {
 		if (n.inst) return false;
@@ -283,15 +264,12 @@ export function byClass(node, ...fragments) {
 		return fragments.every((f) => cls.includes(f));
 	});
 }
-/** All host elements with the exact className. */
 export function byClassExact(node, className) {
 	return collectNodes(node).filter((n) => !n.inst && n.el.props.className === className);
 }
-/** All elements (host + component) whose type equals the given string. */
 export function byTag(node, tag) {
 	return collectNodes(node).filter((n) => !n.inst && n.el.type === tag);
 }
-/** Concatenated text of a subtree. */
 export function textOf(node) {
 	let out = "";
 	const walk = (n) => {
@@ -301,14 +279,13 @@ export function textOf(node) {
 	walk(node);
 	return out;
 }
-/** Text of each direct child of a node (host children only, in order). */
 export function childTexts(node) {
 	return (node.childNodes ?? [])
 		.filter((c) => !c.inst)
 		.map((c) => textOf(c));
 }
 
-// ── Locale face mock ──────────────────────────────────────────────────────────
+// Locale face mock
 export function makeLocale() {
 	const dictionaries = new Map();
 	const locale = {
@@ -330,14 +307,7 @@ export function makeLocale() {
 	return locale;
 }
 
-// ── Sessions service mock (global list snapshot + open call recording) ────────
-/**
- * A minimal stand-in for the `dsh-api-session-controller` `sessions` service:
- * a `list` snapshot store (`{ ids, byId, current, phase }`) plus `open(id)`.
- * `list.set(next)` triggers every subscriber (mirroring the real store), and
- * `calls.open` records the ids `open()` was invoked with — the click-through
- * assertions read it. Returns the service object itself (with `.calls`).
- */
+// Sessions service mock (global list snapshot + open call recording)
 export function makeSessions(initialSnapshot) {
 	let snapshot = initialSnapshot ?? { ids: [], byId: {}, current: undefined, phase: "pending" };
 	const listeners = new Set();
@@ -350,13 +320,13 @@ export function makeSessions(initialSnapshot) {
 	return { list, calls, open: (id) => { calls.open.push(id); } };
 }
 
-// ── Layout service mock (selectPanel call recording) ──────────────────────────
+// Layout service mock (selectPanel call recording)
 export function makeLayout() {
 	const calls = { selectPanel: [] };
 	return { calls, selectPanel: (id) => { calls.selectPanel.push(id); } };
 }
 
-// ── Slot ctx mock (records every registration) ───────────────────────────────
+// Slot ctx mock (records every registration)
 export function makeCtx(locale, { sessions, layout } = {}) {
 	const recorded = {
 		effects: [],
@@ -405,9 +375,7 @@ export function makeCtx(locale, { sessions, layout } = {}) {
 
 let installedHarness = null;
 
-/** Run the real bundle file and return { registration, exports, harness, window }. */
 export async function loadBundle({ primitives, document, clock } = {}) {
-	// Only one fake Date/document is global at a time: dispose the previous.
 	installedHarness?.dispose();
 	const harness = new MiniReact({ document, clock });
 	installedHarness = harness;

@@ -1,14 +1,4 @@
-/*
- * Usage-scenario tests for @stolyarovmn/dsh-client-ui-schedule-tab.
- *
- * Each scenario drives the real client bundle through the harness:
- * registration wiring, empty state, per-dialog rows with a source-dialog label,
- * cross-dialog aggregation, overdue ordering, fixed-rate formatting, live
- * session-list updates, clock ticks, the click-through (open dialog in the same
- * tab), zh locale, icon fallback, and CSS dedupe.
- *
- * Run: node test/scenarios.test.js
- */
+// Client behavior scenarios for the Schedule tab.
 import {
 	FakeClock,
 	byClass,
@@ -44,7 +34,6 @@ function assertIncludes(haystack, needle, label) {
 	}
 }
 
-// Deterministic base time: 2026-09-23T12:00:00Z
 const T0 = Date.parse("2026-09-23T12:00:00.000Z");
 const iso = (ms) => new Date(ms).toISOString();
 const inMin = (m) => iso(T0 + m * 60_000);
@@ -54,10 +43,6 @@ const agoMin = (m) => iso(T0 - m * 60_000);
 const record = (id, kind, prompt, scheduledAt, extra = {}) =>
 	({ id, kind, prompt, scheduledAt, ...extra });
 
-// A per-dialog list row. `title` may be absent (then only displayTitle is set,
-// or neither → the id is the last-resort label). `schedule` (the records that
-// dialog holds) is surfaced through projectionValues, exactly as the real
-// `dsh-schedule` projection is folded into the session list row.
 const session = (id, title, schedule = [], extra = {}) => ({
 	id,
 	displayTitle: title ?? id,
@@ -80,12 +65,6 @@ function makePrimitives({ withClock = true } = {}) {
 	return withClock ? { IconClockOutline16: IconClock } : {};
 }
 
-/**
- * Fresh environment for one scenario: the real bundle is executed, apply(ctx)
- * runs against a ctx carrying mock sessions + layout services, and the keyed
- * main occupant is mounted exactly as AppFrame would (it is the panel itself —
- * a global, root-scope occupant with no session-maybe child).
- */
 async function env({ withClock = true, locale, sessions: sessionsMock, layout } = {}) {
 	const localeMock = locale ?? makeLocale();
 	const sessions = sessionsMock ?? makeSessions(listSnapshot([]));
@@ -120,7 +99,6 @@ const rowStatuses = (tree) => rows(tree).map((r) => textOf(byClassExact(r, "st_s
 const rowMetas = (tree) => rows(tree).map((r) => childTexts(byClassExact(r, "st_meta")[0]));
 const rowSources = (tree) => rows(tree).map((r) => textOf(byClassExact(r, "st_sourceName")[0]));
 
-// ── 1. Registration wiring ────────────────────────────────────────────────────
 await scenario("registration: dictionaries, tab entry, single global main key, inject names", async () => {
 	const { recorded, exports, locale } = await env();
 	const dict = locale.dictionaries.get("schedule-tab");
@@ -146,7 +124,6 @@ await scenario("registration: dictionaries, tab entry, single global main key, i
 	}
 });
 
-// ── 2. Empty state ────────────────────────────────────────────────────────────
 await scenario("empty state: no dialogs with records → empty view, zero items", async () => {
 	const { tree, harness } = await env();
 	assert(textOf(byClassExact(tree, "st_title")[0]) === "Schedule", `panel title must be 'Schedule', got ${JSON.stringify(textOf(byClassExact(tree, "st_title")[0]))}`);
@@ -158,7 +135,6 @@ await scenario("empty state: no dialogs with records → empty view, zero items"
 	assert(harness.liveTimers() === 0, "no per-second interval while empty");
 });
 
-// ── 3. One future reminder names its dialog ──────────────────────────────────
 await scenario("one future reminder: row, source dialog, status, frequency, countdown", async () => {
 	const env0 = await env();
 	env0.sessions.list.set(listSnapshot([session("s1", "Build pipeline", [record("schedule-1", "after", "Check the build", inMin(10), { afterSeconds: 600 })])]));
@@ -179,7 +155,6 @@ await scenario("one future reminder: row, source dialog, status, frequency, coun
 	assert(env0.harness.liveTimers() === 1, `one interval while records exist, got ${env0.harness.liveTimers()}`);
 });
 
-// ── 4. Overdue ordering across dialogs ───────────────────────────────────────
 await scenario("overdue ordering: overdue first, then future ascending, across dialogs", async () => {
 	const env0 = await env();
 	env0.sessions.list.set(listSnapshot([
@@ -202,7 +177,6 @@ await scenario("overdue ordering: overdue first, then future ascending, across d
 	assert(env0.harness.liveTimers() === 1, "one shared interval for all rows");
 });
 
-// ── 5. Cross-dialog aggregation ───────────────────────────────────────────────
 await scenario("aggregation: records from several dialogs merge into one list", async () => {
 	const env0 = await env();
 	env0.sessions.list.set(listSnapshot([
@@ -218,7 +192,6 @@ await scenario("aggregation: records from several dialogs merge into one list", 
 	assert(textOf(byClassExact(tree, "st_count")[0]) === "3 items", `count is the total across dialogs, got ${JSON.stringify(textOf(byClassExact(tree, "st_count")[0]))}`);
 });
 
-// ── 6. Fixed-rate formatting ─────────────────────────────────────────────────
 await scenario("fixed-rate formatting: largest exact whole unit, no rounding", async () => {
 	const env0 = await env();
 	env0.sessions.list.set(listSnapshot([session("s1", "Recurring", [
@@ -235,7 +208,6 @@ await scenario("fixed-rate formatting: largest exact whole unit, no rounding", a
 		`expected the four formatted frequencies (rows time-ordered), got ${JSON.stringify(freqs)}`);
 });
 
-// ── 7. Live session-list updates ─────────────────────────────────────────────
 await scenario("live update: records appear, change, disappear across the list", async () => {
 	const env0 = await env();
 	assert(byClassExact(env0.tree, "st_empty").length === 1, "starts empty");
@@ -263,7 +235,6 @@ await scenario("live update: records appear, change, disappear across the list",
 	assert(env0.harness.liveTimers() === 1, "the clock interval restarts with the records");
 });
 
-// ── 8. Clock ticks ───────────────────────────────────────────────────────────
 await scenario("clock tick: countdown updates, then flips to overdue", async () => {
 	const env0 = await env();
 	env0.sessions.list.set(listSnapshot([session("s1", "D1", [record("r1", "at", "Deadline", inMin(2))])]));
@@ -280,7 +251,6 @@ await scenario("clock tick: countdown updates, then flips to overdue", async () 
 	assertIncludes(rowMetas(env0.tree)[0][4], "11 seconds overdue", "small overdue remainders use the seconds unit");
 });
 
-// ── 9. Click-through opens the dialog in the same tab ────────────────────────
 await scenario("click-through: clicking a row opens its dialog and returns to the conversation", async () => {
 	const env0 = await env();
 	env0.sessions.list.set(listSnapshot([
@@ -290,30 +260,23 @@ await scenario("click-through: clicking a row opens its dialog and returns to th
 	env0.harness.rerender();
 	const tree = env0.tree;
 	const rowFor = (prompt) => rows(tree).find((r) => textOf(byClassExact(r, "st_prompt")[0]) === prompt);
-	// The rows are time-ordered: Beta (20 min) first, Alpha (40 min) second.
 	const betaRow = rowFor("Beta task");
 	const alphaRow = rowFor("Alpha task");
 	assert(betaRow && alphaRow, "both rows are present");
-	// Beta row first.
 	betaRow.el.props.onClick();
 	assert(env0.calls.open.length === 1 && env0.calls.open[0] === "s2", `clicking Beta must open dialog s2, got ${JSON.stringify(env0.calls.open)}`);
 	assert(env0.calls.selectPanel.length === 1 && env0.calls.selectPanel[0] === "conversation",
 		`after opening, the center returns to the conversation, got ${JSON.stringify(env0.calls.selectPanel)}`);
-	// Alpha row second (both calls accumulate, proving the handler is per-row).
 	alphaRow.el.props.onClick();
 	assert(env0.calls.open.length === 2 && env0.calls.open[1] === "s1", `clicking Alpha must open dialog s1, got ${JSON.stringify(env0.calls.open)}`);
 	assert(env0.calls.selectPanel.length === 2 && env0.calls.selectPanel[1] === "conversation", "second click also returns to the conversation");
-	// Keyboard activation works too.
 	alphaRow.el.props.onKeyDown({ key: "Enter" });
 	assert(env0.calls.open.length === 3 && env0.calls.open[2] === "s1", "Enter activates the row");
 	assert(rowFor("Alpha task").el.props.tabIndex === 0, "rows are keyboard-focusable");
 });
 
-// ── 10. Source-dialog label fallbacks ─────────────────────────────────────────
 await scenario("source label: title → displayTitle → id fallback chain", async () => {
 	const env0 = await env();
-	// Three fallback tiers in one list: a named dialog (title present), a
-	// display-only dialog (title absent → displayTitle), and a bare id (neither).
 	env0.sessions.list.set(listSnapshot([
 		session("s-title", "Named dialog", [record("t1", "at", "Has title", inMin(30))]),
 		{ id: "s-display", displayTitle: "Shown name", running: false, blank: false, updatedAt: T0, projectionValues: { schedule: [record("t2", "at", "Display only", inMin(10))] } },
@@ -321,14 +284,12 @@ await scenario("source label: title → displayTitle → id fallback chain", asy
 	]));
 	env0.harness.rerender();
 	const tree = env0.tree;
-	// Ordered by time: Display only (10), Has title (30), Id fallback (60).
 	const byPrompt = Object.fromEntries(rows(tree).map((r) => [textOf(byClassExact(r, "st_prompt")[0]), textOf(byClassExact(r, "st_sourceName")[0])]));
 	assert(byPrompt["Has title"] === "Named dialog", `title wins over displayTitle, got ${JSON.stringify(byPrompt["Has title"])}`);
 	assert(byPrompt["Display only"] === "Shown name", `displayTitle used when title absent, got ${JSON.stringify(byPrompt["Display only"])}`);
 	assert(byPrompt["Id fallback"] === "s-idonly", `id used as last resort, got ${JSON.stringify(byPrompt["Id fallback"])}`);
 });
 
-// ── 11. Chinese locale ────────────────────────────────────────────────────────
 await scenario("zh locale: panel and tab copy switch to Chinese", async () => {
 	const locale = makeLocale();
 	const env0 = await env({ locale });
@@ -345,7 +306,6 @@ await scenario("zh locale: panel and tab copy switch to Chinese", async () => {
 	assert(env0.recorded.panellist[0].meta.label() === "日程", `zh tab label, got ${JSON.stringify(env0.recorded.panellist[0].meta.label())}`);
 });
 
-// ── 12. Icon fallback ─────────────────────────────────────────────────────────
 await scenario("icon fallback: no clock icon in primitives → renders without throwing", async () => {
 	const env0 = await env({ withClock: false });
 	assert(byClassExact(env0.tree, "st_empty").length === 1, "empty state renders without the icon primitive");
@@ -355,19 +315,17 @@ await scenario("icon fallback: no clock icon in primitives → renders without t
 	assert(byTag(env0.tree, "svg.clock").length === 0, "no icon element when the primitive is absent");
 });
 
-// ── 13. CSS dedupe ────────────────────────────────────────────────────────────
 await scenario("css: style tag injected once, deduped across re-materialization", async () => {
 	const { harness } = await env();
 	const tags = () => harness.document.head.children.filter((n) => n.tagName === "STYLE");
 	assert(tags().length === 1, "factory execution injects exactly one style tag");
-	assert(tags()[0].dataset.plugin === "@stolyarovmn/dsh-client-ui-schedule-tab", "style tag carries the renamed plugin owner attribute");
-	assert(tags()[0].dataset.pluginCss === "@stolyarovmn/dsh-client-ui-schedule-tab/SchedulePanel.module.css", "style tag id renamed with the package");
+	assert(tags()[0].dataset.plugin === "@stolyarovmn/dsh-client-ui-schedule-tab", "style tag identifies the plugin");
+	assert(tags()[0].dataset.pluginCss === "@stolyarovmn/dsh-client-ui-schedule-tab/SchedulePanel.module.css", "style tag id matches the package");
 	assert(tags()[0].textContent.includes(".st_root"), "the stylesheet body is present");
 	await loadBundle({ primitives: makePrimitives(), clock: new FakeClock(T0), document: harness.document });
 	assert(tags().length === 1, "re-materialization must not duplicate the style tag");
 });
 
-// ── Summary ───────────────────────────────────────────────────────────────────
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} scenarios passed`);
 if (failed.length > 0) {
