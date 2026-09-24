@@ -16,12 +16,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm test
-      - run: npm run test:bundle
+      - run: npm run test:all
       - run: npm pack --dry-run
 
   dsh-install-smoke:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dsh:
+          - 0.1.5-rc.3
+          - 0.1.7-rc.1
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -30,11 +35,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install plugin into an isolated DSH profile
+      - name: Install plugin with DSH ${{ matrix.dsh }}
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
         run: |
-          pnpm dlx @deepseek-ai/dsh plugin --profile smoke add "file:$GITHUB_WORKSPACE"
-          pnpm dlx @deepseek-ai/dsh --profile smoke --dump-config > /tmp/dsh-config.txt
+          pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} plugin --profile smoke add "file:$GITHUB_WORKSPACE"
+          pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --dump-config > /tmp/dsh-config.txt
           grep -F "schedule-tab" /tmp/dsh-config.txt
           grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
