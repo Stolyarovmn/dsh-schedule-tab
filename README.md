@@ -46,7 +46,7 @@ The package declares `dsh.bundle.patch`, so `dsh plugin add` activates the plugi
 Declared DSH peer range:
 
 ```text
->=0.1.5-rc.3 <0.2.0
+>=0.1.5-rc.3 <0.1.7-rc.2
 ```
 
 CI runs installation smoke tests against:
