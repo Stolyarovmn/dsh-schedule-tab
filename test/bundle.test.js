@@ -29,9 +29,11 @@ assert.match(patch, /name:\s*['"]@stolyarovmn\/dsh-client-ui-schedule-tab['"]/);
 const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
 assert.match(host, /@deepseek-ai\/dsh-schedule/);
 assert.match(host, /@deepseek-ai\/dsh-time-context/);
+assert.match(host, /ctx\.loader\.create/);
+assert.match(host, /entry\.fiber\.await/);
 assert.match(host, /ctx\.provide\(["']scheduleTabBootstrap["']/);
-assert.ok(host.indexOf("ctx.plugin(TimeContext)") < host.indexOf("ctx.provide(\"scheduleTabBootstrap\""));
-assert.ok(host.indexOf("ctx.plugin(Schedule)") < host.indexOf("ctx.provide(\"scheduleTabBootstrap\""));
+assert.ok(!host.includes('from "@deepseek-ai/dsh-schedule"'));
+assert.ok(!host.includes('from "@deepseek-ai/dsh-time-context"'));
 
 for (const script of ["preinstall", "install", "postinstall", "prepare"]) {
   assert.equal(pkg.scripts?.[script], undefined, `${script} must not execute during installation`);
