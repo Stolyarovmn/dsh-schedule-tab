@@ -54,6 +54,34 @@ CI runs installation smoke tests against:
 - `0.1.5-rc.3`
 - `0.1.7-rc.1`
 
+The client supports both projection shapes used by those releases: legacy
+`SessionSummary.projectionValues.schedule` and the 0.1.7
+`refreshProjections()/projectionsBySession` API. Session navigation uses
+`uiWorkspace.openSession()`, which is available in both releases.
+
+### Schedule service on DSH 0.1.5-rc.3 through 0.1.7-rc.1
+
+Those DSH releases ship the Host Schedule service as opt-in. This plugin displays
+real Schedule records; it intentionally does not reinterpret background
+`bash`/`pwsh` jobs as reminders. If the model starts `Start-Sleep` or another
+background command instead of calling `schedule_create`, enable the built-in
+Schedule service in the Web profile first.
+
+A minimal patch for those releases is:
+
+```yaml
+- insert:
+    - id: time-context
+      name: '@deepseek-ai/dsh-time-context'
+
+    - id: schedule
+      name: '@deepseek-ai/dsh-schedule'
+```
+
+Then pass that file to DSH with `--patch`. Do not apply this insert patch to a
+newer DSH profile that already declares those ids; enable its existing Schedule
+rows instead.
+
 ## Development
 
 Run all repository tests:

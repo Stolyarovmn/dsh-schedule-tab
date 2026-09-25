@@ -6,7 +6,7 @@ import {
 	byTag,
 	childTexts,
 	makeCtx,
-	makeLayout,
+	makeUiWorkspace,
 	makeLocale,
 	makeSessions,
 	textOf,
@@ -65,17 +65,17 @@ function makePrimitives({ withClock = true } = {}) {
 	return withClock ? { IconClockOutline16: IconClock } : {};
 }
 
-async function env({ withClock = true, locale, sessions: sessionsMock, layout } = {}) {
+async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspace } = {}) {
 	const localeMock = locale ?? makeLocale();
 	const sessions = sessionsMock ?? makeSessions(listSnapshot([]));
-	const layoutMock = layout ?? makeLayout();
+	const uiWorkspaceMock = uiWorkspace ?? makeUiWorkspace();
 	const { registration, exports, harness } = await loadBundle({
 		primitives: makePrimitives({ withClock }),
 		clock: new FakeClock(T0),
 	});
 	assert(registration.id === "@stolyarovmn/dsh-client-ui-schedule-tab",
 		`bundle registration id must be the package name, got ${registration.id}`);
-	const { ctx, recorded } = makeCtx(localeMock, { sessions, layout: layoutMock });
+	const { ctx, recorded } = makeCtx(localeMock, { sessions, uiWorkspace: uiWorkspaceMock });
 	assert(Array.isArray(exports.inject), "bundle must export the inject array");
 	exports.apply(ctx);
 	const mainReg = recorded.main.find((r) => r.meta.key === "schedule");
@@ -88,8 +88,8 @@ async function env({ withClock = true, locale, sessions: sessionsMock, layout } 
 	});
 	return {
 		harness, tree, recorded, exports, panel, locale: localeMock,
-		sessions, layout: layoutMock,
-		calls: { open: sessions.calls.open, selectPanel: layoutMock.calls.selectPanel },
+		sessions, uiWorkspace: uiWorkspaceMock,
+		calls: { openSession: uiWorkspaceMock.calls.openSession },
 	};
 }
 
@@ -119,7 +119,7 @@ await scenario("registration: dictionaries, tab entry, single global main key, i
 	assert(recorded.main[0].meta.children === undefined, "global occupant declares no session-maybe child (data is global)");
 	assert(recorded.mainSchedule.length === 0, "no main.schedule child registration in the global design");
 	assert(typeof exports.apply === "function", "bundle exports apply");
-	for (const name of ["slots", "locale", "sessions", "layout"]) {
+	for (const name of ["slots", "locale", "sessions", "uiWorkspace"]) {
 		assert(exports.inject.includes(name), `inject must name the '${name}' service`);
 	}
 });
@@ -251,7 +251,69 @@ await scenario("clock tick: countdown updates, then flips to overdue", async () 
 	assertIncludes(rowMetas(env0.tree)[0][4], "11 seconds overdue", "small overdue remainders use the seconds unit");
 });
 
-await scenario("click-through: clicking a row opens its dialog and returns to the conversation", async () => {
+await scenario("0.1.7 projections: refreshes cold sessions and reads projectionsBySession", async () => {
+	const initial = {
+		...listSnapshot([session("s-cold", "Cold dialog")]),
+		projectionsBySession: {},
+	};
+	const sessions = makeSessions(initial);
+	const refreshCalls = [];
+	sessions.refreshProjections = async (id) => { refreshCalls.push(id); };
+	const env0 = await env({ sessions });
+	assert(refreshCalls.length === 1 && refreshCalls[0] === "s-cold",
+		`cold 0.1.7 Session must request its full projection, got ${JSON.stringify(refreshCalls)}`);
+	assertIncludes(textOf(byClassExact(env0.tree, "st_emptyTitle")[0]), "Loading schedule", "modern loading state");
+
+	sessions.list.set({
+		...initial,
+		projectionsBySession: {
+			"s-cold": {
+				state: "ready",
+				error: null,
+				values: { schedule: [record("r-modern", "at", "Modern projection", inMin(8))] },
+			},
+		},
+	});
+	env0.harness.rerender();
+	assert(rows(env0.tree).length === 1, "0.1.7 projectionsBySession schedule becomes visible");
+	assert(rowPrompts(env0.tree)[0] === "Modern projection", "modern projection record is rendered");
+	assert(rowSources(env0.tree)[0] === "Cold dialog", "modern projection keeps source Session metadata");
+});
+
+await scenario("0.1.7 diagnostics: missing Schedule projection is reported instead of fake empty state", async () => {
+	const snapshot = {
+		...listSnapshot([session("s1", "No Schedule service")]),
+		projectionsBySession: {
+			s1: { state: "ready", error: null, values: { title: "No Schedule service" } },
+		},
+	};
+	const sessions = makeSessions(snapshot);
+	sessions.refreshProjections = async () => {};
+	const env0 = await env({ sessions });
+	assertIncludes(textOf(byClassExact(env0.tree, "st_emptyTitle")[0]), "Schedule is not enabled", "disabled Schedule diagnostic");
+	assertIncludes(textOf(byClassExact(env0.tree, "st_emptyHint")[0]), "background shell jobs", "background jobs distinction");
+});
+
+await scenario("0.1.7 precedence: projectionsBySession wins over legacy list hints", async () => {
+	const legacy = session("s1", "Mixed", [record("legacy", "at", "Stale legacy", inMin(20))]);
+	const snapshot = {
+		...listSnapshot([legacy]),
+		projectionsBySession: {
+			s1: {
+				state: "ready",
+				error: null,
+				values: { schedule: [record("modern", "at", "Fresh modern", inMin(10))] },
+			},
+		},
+	};
+	const sessions = makeSessions(snapshot);
+	sessions.refreshProjections = async () => {};
+	const env0 = await env({ sessions });
+	assert(rowPrompts(env0.tree).join("|") === "Fresh modern",
+		`modern projection must replace stale list hint, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+});
+
+await scenario("click-through: clicking a row opens its dialog through uiWorkspace", async () => {
 	const env0 = await env();
 	env0.sessions.list.set(listSnapshot([
 		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(40))]),
@@ -264,14 +326,13 @@ await scenario("click-through: clicking a row opens its dialog and returns to th
 	const alphaRow = rowFor("Alpha task");
 	assert(betaRow && alphaRow, "both rows are present");
 	betaRow.el.props.onClick();
-	assert(env0.calls.open.length === 1 && env0.calls.open[0] === "s2", `clicking Beta must open dialog s2, got ${JSON.stringify(env0.calls.open)}`);
-	assert(env0.calls.selectPanel.length === 1 && env0.calls.selectPanel[0] === "conversation",
-		`after opening, the center returns to the conversation, got ${JSON.stringify(env0.calls.selectPanel)}`);
+	assert(env0.calls.openSession.length === 1 && env0.calls.openSession[0] === "s2",
+		`clicking Beta must open dialog s2, got ${JSON.stringify(env0.calls.openSession)}`);
 	alphaRow.el.props.onClick();
-	assert(env0.calls.open.length === 2 && env0.calls.open[1] === "s1", `clicking Alpha must open dialog s1, got ${JSON.stringify(env0.calls.open)}`);
-	assert(env0.calls.selectPanel.length === 2 && env0.calls.selectPanel[1] === "conversation", "second click also returns to the conversation");
+	assert(env0.calls.openSession.length === 2 && env0.calls.openSession[1] === "s1",
+		`clicking Alpha must open dialog s1, got ${JSON.stringify(env0.calls.openSession)}`);
 	alphaRow.el.props.onKeyDown({ key: "Enter" });
-	assert(env0.calls.open.length === 3 && env0.calls.open[2] === "s1", "Enter activates the row");
+	assert(env0.calls.openSession.length === 3 && env0.calls.openSession[2] === "s1", "Enter activates the row");
 	assert(rowFor("Alpha task").el.props.tabIndex === 0, "rows are keyboard-focusable");
 });
 
