@@ -19,10 +19,10 @@ From GitHub:
 dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab.git
 ```
 
-Pinned to this release:
+Test branch (not published to npm):
 
 ```sh
-dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.4.6
+dsh plugin --profile web add "git+https://github.com/Stolyarovmn/dsh-schedule-tab.git#fix/qwen-schedule-tool-routing"
 ```
 
 For local development:
@@ -70,9 +70,13 @@ so restored dialogs receive `schedule_create`, `schedule_list` and
 `schedule_delete` after a full process restart.
 
 The tab only displays real Schedule records. It does not treat background
-`bash`/`pwsh` jobs as reminders. A full `dsh web` process restart is
-required after installing or upgrading; HMR cannot retrofit the legacy
-Schedule runtime into an Agent that is already live.
+`bash`/`pwsh` jobs as reminders. The Git test branch adds model-facing
+Schedule routing guidance and rejects the narrow background shell-timer pattern
+(`Start-Sleep ...; Write-Output ...` / `sleep ...; echo ...`) when
+`schedule_create` is available, so a model cannot silently substitute shell
+jobs for reminders. A full `dsh web` process restart is required after
+installing or upgrading; HMR cannot retrofit the legacy Schedule runtime into
+an Agent that is already live.
 
 ## Development
 
