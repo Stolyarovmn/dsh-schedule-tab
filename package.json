@@ -1,7 +1,7 @@
 {
 	"name": "@stolyarovmn/dsh-client-ui-schedule-tab",
 	"description": "Global Schedule tab for DeepSeek Harness Web: view built-in scheduled reminders across all dialogs and open their source conversations.",
-	"version": "0.4.5",
+	"version": "0.4.6",
 	"author": {
 		"name": "Stolyarovmn",
 		"url": "https://github.com/Stolyarovmn"
@@ -74,6 +74,8 @@
 	},
 	"icon": "./icon.svg",
 	"peerDependencies": {
-		"@deepseek-ai/dsh": ">=0.1.5-rc.3 <0.1.7-rc.2"
+		"@deepseek-ai/dsh": ">=0.1.5-rc.3 <0.1.7-rc.2",
+		"@deepseek-ai/dsh-schedule": ">=0.1.5-rc.3 <0.1.7-rc.2",
+		"@deepseek-ai/dsh-time-context": ">=0.1.5-rc.3 <0.1.7-rc.2"
 	}
 }
