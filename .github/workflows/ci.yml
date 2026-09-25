@@ -76,6 +76,13 @@ jobs:
                   },
                 },
                 effect: async (fn) => { await fn(); },
+                systemPrompt: {
+                  section: () => {},
+                },
+                tools: {
+                  get: () => undefined,
+                },
+                on: () => () => {},
                 provide: (name) => { seen.push("provide:" + name); },
               };
               await plugin.apply(ctx);
