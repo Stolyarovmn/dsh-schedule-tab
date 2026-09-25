@@ -46,7 +46,19 @@ jobs:
           grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
           grep -F "session-controller" /tmp/dsh-config.txt
           grep -F "scheduleTabBootstrap" /tmp/dsh-config.txt
-          if [ "${{ matrix.dsh }}" = "0.1.7-rc.1" ]; then
-            pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --dump-config-schema > /tmp/dsh-schema.json
-            test -s /tmp/dsh-schema.json
-          fi
+          (
+            cd "$DSH_HOME/profiles/smoke"
+            node --input-type=module -e '
+              const plugin = await import("@stolyarovmn/dsh-client-ui-schedule-tab");
+              const seen = [];
+              const ctx = {
+                plugin: async (child) => { seen.push(child.name); },
+                provide: (name) => { seen.push(name); },
+              };
+              await plugin.apply(ctx);
+              const expected = ["time-context", "schedule", "scheduleTabBootstrap"];
+              if (JSON.stringify(seen) !== JSON.stringify(expected)) {
+                throw new Error("unexpected bootstrap order: " + JSON.stringify(seen));
+              }
+            '
+          )
