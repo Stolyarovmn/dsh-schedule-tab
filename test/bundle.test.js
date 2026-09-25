@@ -21,6 +21,10 @@ assert.ok(pkg.files.includes("cordis.patch.yml"));
 assert.ok(pkg.files.includes("lib/index.js"));
 assert.ok(pkg.files.includes("lib/client.js"));
 
+assert.match(patch, /id:\s*schedule-tab-time-context/);
+assert.match(patch, /name:\s*['"]@deepseek-ai\/dsh-time-context['"]/);
+assert.match(patch, /id:\s*schedule-tab-host/);
+assert.match(patch, /name:\s*['"]@deepseek-ai\/dsh-schedule['"]/);
 assert.match(patch, /id:\s*schedule-tab/);
 assert.match(patch, /name:\s*['"]@stolyarovmn\/dsh-client-ui-schedule-tab['"]/);
 

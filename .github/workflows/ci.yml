@@ -43,3 +43,7 @@ jobs:
           pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --dump-config > /tmp/dsh-config.txt
           grep -F "schedule-tab" /tmp/dsh-config.txt
           grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
+          grep -F "schedule-tab-host" /tmp/dsh-config.txt
+          grep -F "@deepseek-ai/dsh-schedule" /tmp/dsh-config.txt
+          grep -F "schedule-tab-time-context" /tmp/dsh-config.txt
+          grep -F "@deepseek-ai/dsh-time-context" /tmp/dsh-config.txt

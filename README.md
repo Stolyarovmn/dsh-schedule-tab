@@ -22,7 +22,7 @@ dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab
 Pinned to this release:
 
 ```sh
-dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab.git#v0.4.3
+dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.4.5
 ```
 
 For local development:
@@ -46,7 +46,7 @@ The package declares `dsh.bundle.patch`, so `dsh plugin add` activates the plugi
 Declared DSH peer range:
 
 ```text
->=0.1.5-rc.3 <0.2.0
+>=0.1.5-rc.3 <0.1.7-rc.2
 ```
 
 CI runs installation smoke tests against:
@@ -61,26 +61,13 @@ The client supports both projection shapes used by those releases: legacy
 
 ### Schedule service on DSH 0.1.5-rc.3 through 0.1.7-rc.1
 
-Those DSH releases ship the Host Schedule service as opt-in. This plugin displays
-real Schedule records; it intentionally does not reinterpret background
-`bash`/`pwsh` jobs as reminders. If the model starts `Start-Sleep` or another
-background command instead of calling `schedule_create`, enable the built-in
-Schedule service in the Web profile first.
+Those DSH releases ship the Host Schedule service as opt-in. Since `0.4.5`,
+this bundle activates the required time-context and Schedule Host services
+itself; no extra profile patch is needed.
 
-A minimal patch for those releases is:
-
-```yaml
-- insert:
-    - id: time-context
-      name: '@deepseek-ai/dsh-time-context'
-
-    - id: schedule
-      name: '@deepseek-ai/dsh-schedule'
-```
-
-Then pass that file to DSH with `--patch`. Do not apply this insert patch to a
-newer DSH profile that already declares those ids; enable its existing Schedule
-rows instead.
+The tab only displays real Schedule records. It does not treat background
+`bash`/`pwsh` jobs as reminders. Restart `dsh web` after installing or
+upgrading so newly created Agents receive the Schedule tools.
 
 ## Development
 
