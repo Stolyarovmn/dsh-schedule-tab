@@ -22,7 +22,7 @@ dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab
 Pinned to this release:
 
 ```sh
-dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.4.5
+dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.4.6
 ```
 
 For local development:
@@ -61,13 +61,18 @@ The client supports both projection shapes used by those releases: legacy
 
 ### Schedule service on DSH 0.1.5-rc.3 through 0.1.7-rc.1
 
-Those DSH releases ship the Host Schedule service as opt-in. Since `0.4.5`,
-this bundle activates the required time-context and Schedule Host services
-itself; no extra profile patch is needed.
+Those DSH releases ship the Host Schedule service as opt-in, and their
+Schedule implementation intentionally attaches only to root Agents created
+after the Schedule plugin has loaded. Since `0.4.6`, this bundle makes the
+Web `session-controller` wait for a Host bootstrap. The bootstrap mounts
+`time-context` and `schedule` first and only then releases Session creation,
+so restored dialogs receive `schedule_create`, `schedule_list` and
+`schedule_delete` after a full process restart.
 
 The tab only displays real Schedule records. It does not treat background
-`bash`/`pwsh` jobs as reminders. Restart `dsh web` after installing or
-upgrading so newly created Agents receive the Schedule tools.
+`bash`/`pwsh` jobs as reminders. A full `dsh web` process restart is
+required after installing or upgrading; HMR cannot retrofit the legacy
+Schedule runtime into an Agent that is already live.
 
 ## Development
 
