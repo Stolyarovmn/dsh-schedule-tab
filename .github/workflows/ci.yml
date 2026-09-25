@@ -39,9 +39,12 @@ jobs:
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
         run: |
+          pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --from-default-profile web --dump-config > /dev/null
           pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} plugin --profile smoke add "file:$GITHUB_WORKSPACE"
           pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --dump-config > /tmp/dsh-config.txt
           grep -F "schedule-tab" /tmp/dsh-config.txt
           grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
           grep -F "session-controller" /tmp/dsh-config.txt
           grep -F "scheduleTabBootstrap" /tmp/dsh-config.txt
+          pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --dump-config-schema > /tmp/dsh-schema.json
+          test -s /tmp/dsh-schema.json
