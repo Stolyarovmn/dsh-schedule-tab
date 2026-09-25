@@ -21,12 +21,17 @@ assert.ok(pkg.files.includes("cordis.patch.yml"));
 assert.ok(pkg.files.includes("lib/index.js"));
 assert.ok(pkg.files.includes("lib/client.js"));
 
-assert.match(patch, /id:\s*schedule-tab-time-context/);
-assert.match(patch, /name:\s*['"]@deepseek-ai\/dsh-time-context['"]/);
-assert.match(patch, /id:\s*schedule-tab-host/);
-assert.match(patch, /name:\s*['"]@deepseek-ai\/dsh-schedule['"]/);
+assert.match(patch, /id:\s*session-controller/);
+assert.match(patch, /inject:\s*\[scheduleTabBootstrap\]/);
 assert.match(patch, /id:\s*schedule-tab/);
 assert.match(patch, /name:\s*['"]@stolyarovmn\/dsh-client-ui-schedule-tab['"]/);
+
+const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
+assert.match(host, /@deepseek-ai\/dsh-schedule/);
+assert.match(host, /@deepseek-ai\/dsh-time-context/);
+assert.match(host, /ctx\.provide\(["']scheduleTabBootstrap["']/);
+assert.ok(host.indexOf("ctx.plugin(TimeContext)") < host.indexOf("ctx.provide(\"scheduleTabBootstrap\""));
+assert.ok(host.indexOf("ctx.plugin(Schedule)") < host.indexOf("ctx.provide(\"scheduleTabBootstrap\""));
 
 for (const script of ["preinstall", "install", "postinstall", "prepare"]) {
   assert.equal(pkg.scripts?.[script], undefined, `${script} must not execute during installation`);
