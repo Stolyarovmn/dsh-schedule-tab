@@ -320,14 +320,14 @@ export function makeSessions(initialSnapshot) {
 	return { list, calls, open: (id) => { calls.open.push(id); } };
 }
 
-// Layout service mock (selectPanel call recording)
-export function makeLayout() {
-	const calls = { selectPanel: [] };
-	return { calls, selectPanel: (id) => { calls.selectPanel.push(id); } };
+// Workspace navigation service mock.
+export function makeUiWorkspace() {
+	const calls = { openSession: [] };
+	return { calls, openSession: (id) => { calls.openSession.push(id); } };
 }
 
 // Slot ctx mock (records every registration)
-export function makeCtx(locale, { sessions, layout } = {}) {
+export function makeCtx(locale, { sessions, uiWorkspace } = {}) {
 	const recorded = {
 		effects: [],
 		panellist: [],
@@ -368,7 +368,7 @@ export function makeCtx(locale, { sessions, layout } = {}) {
 			slots,
 			locale,
 			sessions,
-			layout,
+			uiWorkspace,
 		},
 	};
 }
