@@ -1,12 +1,10 @@
+# dsh 0.1.5-rc.3 through 0.1.7-rc.1 create/restore Web root Agents through
+# session-controller. The legacy Schedule plugin intentionally attaches only to
+# Agents created after Schedule loads, so hold the controller until this
+# bundle's Host bootstrap has mounted Schedule and time-context.
+- id: session-controller
+  inject: [scheduleTabBootstrap]
+
 - insert:
-    # dsh 0.1.5-rc.3 through 0.1.7-rc.1 ship Schedule as an opt-in Host overlay.
-    # Mount the same two Host services with this bundle so installing the tab
-    # also makes schedule_create/list/delete available to newly created Agents.
-    - id: schedule-tab-time-context
-      name: '@deepseek-ai/dsh-time-context'
-
-    - id: schedule-tab-host
-      name: '@deepseek-ai/dsh-schedule'
-
     - id: schedule-tab
       name: '@stolyarovmn/dsh-client-ui-schedule-tab'
