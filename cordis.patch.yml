@@ -1,9 +1,13 @@
-# dsh 0.1.5-rc.3 through 0.1.7-rc.1 create/restore Web root Agents through
-# session-controller. The legacy Schedule plugin intentionally attaches only to
-# Agents created after Schedule loads, so hold the controller until this
-# bundle's Host bootstrap has mounted Schedule and time-context.
-- id: session-controller
-  inject: [scheduleTabBootstrap]
+# DSH 0.1.7-rc.2 ships Host-wide Schedule and time-context rows in the Web
+# bundle, disabled by default. Enable those native rows and add only our custom
+# global Schedule tab. Do not use the rc.1 session-controller bootstrap here:
+# rc.2 Schedule already attaches to existing root Agents and itself depends on
+# sessionController.
+- id: time-context
+  disabled: false
+
+- id: schedule
+  disabled: false
 
 - insert:
     - id: schedule-tab
