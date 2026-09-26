@@ -10,6 +10,11 @@ A DeepSeek Harness Web plugin that adds a global **Schedule** tab. It lists sche
 - Groups the visible reminders by date or by source dialog.
 - Orders overdue reminders first, then upcoming reminders by time.
 - Shows Schedule state (Scheduled / Overdue), Session activity (Running / Idle), and marks the current dialog when the client exposes it.
+- Turns the sidebar alarm icon into a notification indicator: new unseen reminders color the icon; unread overdue reminders get warning priority.
+- Shows **new/total** in the expanded sidebar (for example `3/10`); after opening Schedule, the same counter becomes just the current total. The total drops automatically when active reminders disappear.
+- Keeps a notification dot instead of the number in the collapsed sidebar rail.
+- Persists seen reminder ids in browser local storage so a reload does not make already viewed active reminders look new again.
+- Includes overdue and recurring counts in the sidebar indicator tooltip so categories stay distinguishable without crowding the row.
 - Labels the stored target as **Next** for recurring reminders and **At** for one-shot reminders.
 - Opens the source dialog by mouse or keyboard.
 - Supports both legacy `ids/byId` Session-list snapshots and the newer `items` shape without changing the Schedule data source.
