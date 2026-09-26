@@ -637,6 +637,47 @@ await scenario("sidebar notifications: source mark selector supports canonical S
 	assertIncludes(style.textContent, "!important", "notification color overrides the native gray mark color");
 });
 
+await scenario("control center: recurring reminders carry an explicit Recurring tag", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s1", "Recurring", [
+			record("r1", "every", "Repeat me", inMin(5), { everySeconds: 300 }),
+			record("r2", "at", "One shot", inMin(10)),
+		]),
+	]));
+	env0.harness.rerender();
+	const recurringRow = rows(env0.tree).find((row) => textOf(byClassExact(row, "st_prompt")[0]) === "Repeat me");
+	const onceRow = rows(env0.tree).find((row) => textOf(byClassExact(row, "st_prompt")[0]) === "One shot");
+	assert(recurringRow, "recurring row exists");
+	assert(onceRow, "one-shot row exists");
+	assert(textOf(byClassExact(recurringRow, "st_badgeRecurring")[0]) === "Recurring",
+		"recurring task has an explicit Recurring tag");
+	assert(byClassExact(onceRow, "st_badgeRecurring").length === 0,
+		"one-shot task does not get a Recurring tag");
+});
+
+await scenario("sidebar notifications: rc1 trailing active-Schedule alarm selector gets unread color", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s-rc1", "RC1 dialog", [record("a1", "at", "RC1 task", inMin(10))]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	env0.harness.render({
+		type: glyph,
+		props: { size: 16, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	const styleId = "@stolyarovmn/dsh-client-ui-schedule-tab/SessionScheduleMarks.css";
+	const style = env0.harness.document.querySelector('style[data-plugin-css="' + styleId + '"]');
+	assert(style, "per-session Schedule-mark stylesheet is installed");
+	assertIncludes(style.textContent,
+		'[data-row-key="session:s-rc1"] > span[role="img"][aria-label="Has active scheduled task"]',
+		"DSH 0.1.7-rc.1 English trailing alarm selector");
+	assertIncludes(style.textContent,
+		'[data-row-key="session:s-rc1"] > span[role="img"][aria-label="有活动定时任务"]',
+		"DSH 0.1.7-rc.1 Chinese trailing alarm selector");
+});
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} scenarios passed`);
 if (failed.length > 0) {
