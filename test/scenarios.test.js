@@ -543,7 +543,7 @@ await scenario("sidebar notifications: unread overdue has warning priority and s
 	});
 	assert(byClassExact(tree, "st_sidebarCountWarn").length === 1, "unread overdue reminder uses warning color");
 	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2/2", "warning state preserves unread/total notation");
-	const glyphNode = tree.childNodes?.[0];
+	const glyphNode = tree;
 	assert(glyphNode?.el?.props?.title, "glyph exposes a category summary tooltip");
 	assertIncludes(glyphNode.el.props.title, "1 overdue", "sidebar summary reports overdue category");
 	assertIncludes(glyphNode.el.props.title, "1 recurring", "sidebar summary reports recurring category");
