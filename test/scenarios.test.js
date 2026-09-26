@@ -9,6 +9,7 @@ import {
 	makeUiWorkspace,
 	makeLocale,
 	makeSessions,
+	makeRemote,
 	textOf,
 	loadBundle,
 } from "./harness.js";
@@ -65,7 +66,7 @@ function makePrimitives({ withClock = true } = {}) {
 	return withClock ? { IconClockOutline16: IconClock } : {};
 }
 
-async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspace } = {}) {
+async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspace, remote } = {}) {
 	const localeMock = locale ?? makeLocale();
 	const sessions = sessionsMock ?? makeSessions(listSnapshot([]));
 	const uiWorkspaceMock = uiWorkspace ?? makeUiWorkspace();
@@ -75,7 +76,7 @@ async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspa
 	});
 	assert(registration.id === "@stolyarovmn/dsh-client-ui-schedule-tab",
 		`bundle registration id must be the package name, got ${registration.id}`);
-	const { ctx, recorded } = makeCtx(localeMock, { sessions, uiWorkspace: uiWorkspaceMock });
+	const { ctx, recorded } = makeCtx(localeMock, { sessions, uiWorkspace: uiWorkspaceMock, remote });
 	assert(Array.isArray(exports.inject), "bundle must export the inject array");
 	exports.apply(ctx);
 	const mainReg = recorded.main.find((r) => r.meta.key === "schedule");
@@ -119,7 +120,7 @@ await scenario("registration: dictionaries, tab entry, single global main key, i
 	assert(recorded.main[0].meta.children === undefined, "global occupant declares no session-maybe child (data is global)");
 	assert(recorded.mainSchedule.length === 0, "no main.schedule child registration in the global design");
 	assert(typeof exports.apply === "function", "bundle exports apply");
-	for (const name of ["slots", "locale", "sessions", "uiWorkspace"]) {
+	for (const name of ["slots", "locale", "sessions", "uiWorkspace", "remote"]) {
 		assert(exports.inject.includes(name), `inject must name the '${name}' service`);
 	}
 });
@@ -311,6 +312,75 @@ await scenario("0.1.7 precedence: projectionsBySession wins over legacy list hin
 	const env0 = await env({ sessions });
 	assert(rowPrompts(env0.tree).join("|") === "Fresh modern",
 		`modern projection must replace stale list hint, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+});
+
+
+await scenario("0.1.7-rc.2: Host catalog is authoritative and inactive tasks stay hidden", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Inbox"),
+		session("s2", "Deployments"),
+	]));
+	const remote = makeRemote([
+		{ ...record("host-1", "after", "Check messages", inMin(5), { afterSeconds: 300, title: "Messages" }), sessionId: "s1", status: "active" },
+		{ ...record("host-2", "daily", "Review deployments", inHour(1), { title: "Deployments", time: "13:00:00.000", timeZone: "Europe/Moscow" }), sessionId: "s2", status: "active" },
+		{ ...record("host-old", "at", "Already delivered", agoMin(5), { title: "Old" }), sessionId: "s1", status: "inactive" },
+	]);
+	const env0 = await env({ sessions, remote });
+	await Promise.resolve();
+	await Promise.resolve();
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Check messages|Review deployments",
+		`rc.2 active Host tasks should render, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+	assert(rowSources(env0.tree).join("|") === "Inbox|Deployments",
+		`rc.2 task Session bindings should resolve titles, got ${JSON.stringify(rowSources(env0.tree))}`);
+	assert(rowMetas(env0.tree)[1][0] === "Daily", `daily task must not be mislabeled Once, got ${JSON.stringify(rowMetas(env0.tree)[1][0])}`);
+	assert(textOf(byClassExact(env0.tree, "st_count")[0]) === "2 items", "inactive retained task is not counted as scheduled");
+});
+
+await scenario("0.1.7-rc.2: schedule/changed refetches the Host catalog", async () => {
+	const sessions = makeSessions(listSnapshot([session("s1", "Mail")]));
+	const remote = makeRemote([
+		{ ...record("host-1", "at", "First", inMin(5), { title: "First" }), sessionId: "s1", status: "active" },
+	]);
+	const env0 = await env({ sessions, remote });
+	await Promise.resolve();
+	await Promise.resolve();
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "First", "initial Host catalog record is visible");
+	remote.setCatalog([
+		{ ...record("host-2", "at", "Second", inMin(10), { title: "Second" }), sessionId: "s1", status: "active" },
+	]);
+	await Promise.resolve();
+	await Promise.resolve();
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Second", "Host change notification replaces the catalog");
+});
+
+await scenario("0.1.7-rc.2: Host catalog wins over obsolete Session projection", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Mixed", [record("legacy", "at", "Legacy projection", inMin(1))]),
+	]));
+	const remote = makeRemote([
+		{ ...record("host", "at", "Host task", inMin(8), { title: "Host" }), sessionId: "s1", status: "active" },
+	]);
+	const env0 = await env({ sessions, remote });
+	await Promise.resolve();
+	await Promise.resolve();
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Host task",
+		`rc.2 Host catalog must replace legacy Session projections, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+});
+
+await scenario("0.1.7-rc.2: unknown Session remains identifiable by its id", async () => {
+	const remote = makeRemote([
+		{ ...record("host", "cron", "Archived task", inMin(15), { title: "Archived", expression: "*/15 * * * *", timeZone: "UTC" }), sessionId: "archived-session", status: "active" },
+	]);
+	const env0 = await env({ remote });
+	await Promise.resolve();
+	await Promise.resolve();
+	env0.harness.rerender();
+	assert(rowSources(env0.tree)[0] === "archived-session", "missing Session metadata falls back to the persisted binding");
+	assert(rowMetas(env0.tree)[0][0] === "Cron", "cron recurrence is identified");
 });
 
 await scenario("click-through: clicking a row opens its dialog through uiWorkspace", async () => {
