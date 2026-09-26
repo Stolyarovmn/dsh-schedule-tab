@@ -4,12 +4,17 @@ A DeepSeek Harness Web plugin that adds a global **Schedule** tab. It lists sche
 
 ## Features
 
-- Shows scheduled reminders from all dialogs in one list.
-- Shows the source dialog for each reminder.
+- Shows built-in Schedule reminders from all dialogs in one global tab.
+- Searches by reminder text, reminder id, dialog name, or dialog id.
+- Filters reminders by All, Today, Overdue, or Recurring.
+- Groups the visible reminders by date or by source dialog.
 - Orders overdue reminders first, then upcoming reminders by time.
+- Shows Schedule state (Scheduled / Overdue), Session activity (Running / Idle), and marks the current dialog when the client exposes it.
+- Labels the stored target as **Next** for recurring reminders and **At** for one-shot reminders.
 - Opens the source dialog by mouse or keyboard.
+- Supports both legacy `ids/byId` Session-list snapshots and the newer `items` shape without changing the Schedule data source.
 - Supports English and Chinese UI strings.
-- Keeps reminder creation, editing, and cancellation in the built-in Schedule tools.
+- Keeps reminder creation, editing, and cancellation in the built-in Schedule tools; the plugin does not create a second scheduler or a second reminder store.
 
 ## Install
 
@@ -39,7 +44,8 @@ The package declares `dsh.bundle.patch`, so `dsh plugin add` activates the plugi
 
 1. Create a reminder in any dialog.
 2. Open the **Schedule** tab.
-3. Select a reminder to open its source dialog.
+3. Search, filter, or switch grouping between **Date** and **Dialog**.
+4. Select a reminder to open its source dialog.
 
 ## Compatibility
 
