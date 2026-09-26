@@ -387,6 +387,223 @@ await scenario("css: style tag injected once, deduped across re-materialization"
 	assert(tags().length === 1, "re-materialization must not duplicate the style tag");
 });
 
+await scenario("control center: search filters prompt and source with visible/total count", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s1", "Build pipeline", [record("a1", "at", "Check deploy", inMin(10))]),
+		session("s2", "Database", [record("b1", "at", "Vacuum report", inMin(20))]),
+	]));
+	env0.harness.rerender();
+	const search = byClassExact(env0.tree, "st_search")[0];
+	assert(search, "search input is rendered");
+	search.el.props.onChange({ target: { value: "database" } });
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Vacuum report", `search by source dialog must keep the matching reminder, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+	assert(textOf(byClassExact(env0.tree, "st_count")[0]) === "1 / 2 items", `filtered count must show visible/total, got ${JSON.stringify(textOf(byClassExact(env0.tree, "st_count")[0]))}`);
+	search.el.props.onChange({ target: { value: "deploy" } });
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Check deploy", "search by prompt must work");
+});
+
+await scenario("control center: overdue and recurring filters combine with existing ordering", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s1", "Mixed", [
+			record("a1", "at", "Old once", agoMin(5)),
+			record("a2", "every", "Recurring future", inMin(30), { everySeconds: 3600 }),
+			record("a3", "at", "Future once", inMin(40)),
+		]),
+	]));
+	env0.harness.rerender();
+	const buttonByText = (label) => byTag(env0.tree, "button").find((node) => textOf(node) === label);
+	buttonByText("Overdue").el.props.onClick();
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Old once", `overdue filter mismatch: ${JSON.stringify(rowPrompts(env0.tree))}`);
+	buttonByText("Recurring").el.props.onClick();
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Recurring future", `recurring filter mismatch: ${JSON.stringify(rowPrompts(env0.tree))}`);
+	assertIncludes(rowMetas(env0.tree)[0][2], "Next", "recurring row labels its next run");
+});
+
+await scenario("control center: no matches has a distinct filtered empty state", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([session("s1", "Alpha", [record("a1", "at", "Visible reminder", inMin(10))])]));
+	env0.harness.rerender();
+	const search = byClassExact(env0.tree, "st_search")[0];
+	search.el.props.onChange({ target: { value: "does-not-exist" } });
+	env0.harness.rerender();
+	assert(rows(env0.tree).length === 0, "search can hide every reminder");
+	assertIncludes(textOf(byClassExact(env0.tree, "st_emptyTitle")[0]), "No matching reminders", "filtered empty title");
+	assert(textOf(byClassExact(env0.tree, "st_count")[0]) === "0 / 1 items", "filtered empty count keeps the total");
+});
+
+await scenario("control center: grouping switches from date buckets to dialog buckets", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha one", inMin(10)), record("a2", "at", "Alpha two", inMin(30))]),
+		session("s2", "Beta", [record("b1", "at", "Beta one", inMin(20))]),
+	]));
+	env0.harness.rerender();
+	assert(byClassExact(env0.tree, "st_groupHeader").length >= 1, "date grouping renders group headers");
+	const buttonByText = (label) => byTag(env0.tree, "button").find((node) => textOf(node) === label);
+	buttonByText("Dialog").el.props.onClick();
+	env0.harness.rerender();
+	const labels = byClassExact(env0.tree, "st_groupHeader").map((node) => textOf(node));
+	assert(labels.some((label) => label.startsWith("Alpha")), `dialog grouping must include Alpha, got ${JSON.stringify(labels)}`);
+	assert(labels.some((label) => label.startsWith("Beta")), `dialog grouping must include Beta, got ${JSON.stringify(labels)}`);
+});
+
+await scenario("control center: session badges distinguish running, idle and current dialog", async () => {
+	const env0 = await env();
+	env0.sessions.list.set(listSnapshot([
+		session("s-running", "Running dialog", [record("r1", "at", "Running reminder", inMin(10))], { running: true }),
+		session("s-idle", "Idle dialog", [record("r2", "at", "Idle reminder", inMin(20))], { running: false }),
+	], "s-running"));
+	env0.harness.rerender();
+	const rowFor = (prompt) => rows(env0.tree).find((row) => textOf(byClassExact(row, "st_prompt")[0]) === prompt);
+	const runningText = textOf(byClassExact(rowFor("Running reminder"), "st_badges")[0]);
+	const idleText = textOf(byClassExact(rowFor("Idle reminder"), "st_badges")[0]);
+	assertIncludes(runningText, "Running", "running badge");
+	assertIncludes(runningText, "Current dialog", "current dialog badge");
+	assertIncludes(idleText, "Idle", "idle badge");
+});
+
+await scenario("control center: current items-shaped session list remains readable", async () => {
+	const modernSession = {
+		sessionId: "s-modern-items",
+		title: "Modern items row",
+		running: false,
+		blank: false,
+		updatedAt: T0,
+		projectionValues: { schedule: [record("r-modern-items", "at", "Items projection", inMin(9))] },
+	};
+	const sessions = makeSessions({ items: [modernSession], state: "idle", phase: "ready", error: null, projectionsBySession: {} });
+	const env0 = await env({ sessions });
+	assert(rows(env0.tree).length === 1, "items-shaped list produces a reminder row");
+	assert(rowPrompts(env0.tree)[0] === "Items projection", "items-shaped list preserves the reminder");
+	assert(rowSources(env0.tree)[0] === "Modern items row", "items-shaped list preserves source metadata");
+});
+
+await scenario("sidebar notifications: new/total count clears when Schedule becomes active and returns for new tasks", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	let active = false;
+	const Root = () => ({
+		type: glyph,
+		props: { size: 16, active, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	const tree = env0.harness.render({ type: Root, props: {}, children: [] });
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2/2",
+		`two unseen reminders must render 2/2, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
+	assert(byClassExact(tree, "st_sidebarCountNew").length === 1, "unseen reminders use the accent notification color");
+
+	active = true;
+	env0.harness.rerender();
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2",
+		`opening Schedule marks current reminders seen, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
+	assert(byClassExact(tree, "st_sidebarCountNew").length === 0, "seen reminders clear the accent notification state");
+
+	active = false;
+	env0.harness.rerender();
+	sessions.list.set(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10)), record("a2", "at", "New Alpha task", inMin(30))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+	]));
+	env0.harness.rerender();
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "1/3",
+		`a later reminder must become unread while old ones stay seen, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
+
+	sessions.list.set(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+	]));
+	env0.harness.rerender();
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2",
+		"when the unread task completes/disappears, unread and total counts both shrink");
+});
+
+await scenario("sidebar notifications: unread overdue has warning priority and summary carries category counts", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Mixed", [
+			record("o1", "at", "Late task", agoMin(2)),
+			record("r1", "every", "Recurring task", inMin(30), { everySeconds: 3600 }),
+		]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	const tree = env0.harness.render({
+		type: glyph,
+		props: { size: 16, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	assert(byClassExact(tree, "st_sidebarCountWarn").length === 1, "unread overdue reminder uses warning color");
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2/2", "warning state preserves unread/total notation");
+	const glyphNode = tree;
+	assert(glyphNode?.el?.props?.title, "glyph exposes a category summary tooltip");
+	assertIncludes(glyphNode.el.props.title, "1 overdue", "sidebar summary reports overdue category");
+	assertIncludes(glyphNode.el.props.title, "1 recurring", "sidebar summary reports recurring category");
+});
+
+await scenario("sidebar notifications: collapsed rail keeps a colored dot instead of the numeric count", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10))]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	const tree = env0.harness.render({
+		type: glyph,
+		props: { size: 18, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	assert(byClassExact(tree, "st_sidebarCount").length === 0, "collapsed glyph does not squeeze in a numeric count");
+	assert(byClassExact(tree, "st_sidebarDot").length === 1, "collapsed glyph keeps an unread notification dot");
+});
+
+await scenario("sidebar notifications: zero total is omitted instead of rendering 0", async () => {
+	const sessions = makeSessions(listSnapshot([]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	const tree = env0.harness.render({
+		type: glyph,
+		props: { size: 16, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	assert(byClassExact(tree, "st_sidebarCount").length === 0, "empty Schedule must not render a numeric zero");
+	assert(tree.el.props["data-has-count"] === "false", "empty Schedule reports no sidebar count space");
+});
+
+await scenario("sidebar notifications: source Session clock mark follows unseen and overdue state", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s-accent", "Accent", [record("a1", "at", "New task", inMin(10))]),
+		session("s-warn", "Warn", [record("w1", "at", "Late task", agoMin(1))]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	let active = false;
+	const Root = () => ({
+		type: glyph,
+		props: { size: 16, active, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	env0.harness.render({ type: Root, props: {}, children: [] });
+	const styleId = "@stolyarovmn/dsh-client-ui-schedule-tab/SessionScheduleMarks.css";
+	const style = env0.harness.document.querySelector('style[data-plugin-css="' + styleId + '"]');
+	assert(style, "per-session Schedule-mark stylesheet is installed");
+	assertIncludes(style.textContent, '[data-row-key="session:s-accent"] [data-session-schedule-mark]', "accent Session selector");
+	assertIncludes(style.textContent, "var(--dsw-alias-state-business-primary)", "new Session mark uses accent color");
+	assertIncludes(style.textContent, '[data-row-key="session:s-warn"] [data-session-schedule-mark]', "overdue Session selector");
+	assertIncludes(style.textContent, "var(--dsw-alias-state-warn-primary)", "overdue Session mark uses warning color");
+
+	active = true;
+	env0.harness.rerender();
+	assert(style.textContent === "", `opening Schedule must return source Session marks to their native gray color, got ${JSON.stringify(style.textContent)}`);
+});
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} scenarios passed`);
 if (failed.length > 0) {

@@ -9,12 +9,13 @@ on:
       - icon.svg
       - cordis.patch.yml
       - .github/workflows/publish.yml
+      - .github/release-notes/**
   release:
     types: [published]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -68,3 +69,22 @@ jobs:
         run: |
           unset NODE_AUTH_TOKEN
           npm publish --access public
+
+      - name: Create GitHub release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v$VERSION"
+          NOTES=".github/release-notes/$TAG.md"
+          test -f "$NOTES"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub release $TAG already exists; nothing to create."
+          else
+            gh release create "$TAG" \
+              --target "$GITHUB_SHA" \
+              --title "ui-schedule-tab $VERSION" \
+              --notes-file "$NOTES"
+          fi

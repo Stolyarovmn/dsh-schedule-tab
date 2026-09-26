@@ -2,14 +2,35 @@
 
 A DeepSeek Harness Web plugin that adds a global **Schedule** tab. It lists scheduled reminders from all dialogs and opens the source dialog when a reminder is selected.
 
+## Screenshots
+
+### Schedule control center
+
+<img src="https://raw.githubusercontent.com/Stolyarovmn/dsh-schedule-tab/main/docs/screenshots/schedule-control-center.webp" alt="Schedule control center with search, filters, grouping and reminder status" width="1200">
+
+### Sidebar notifications
+
+<img src="https://raw.githubusercontent.com/Stolyarovmn/dsh-schedule-tab/main/docs/screenshots/sidebar-notifications.webp" alt="Schedule unread and total counters in the DeepSeek Harness sidebar" width="350">
+
 ## Features
 
-- Shows scheduled reminders from all dialogs in one list.
-- Shows the source dialog for each reminder.
+- Shows built-in Schedule reminders from all dialogs in one global tab.
+- Searches by reminder text, reminder id, dialog name, or dialog id.
+- Filters reminders by All, Today, Overdue, or Recurring.
+- Groups the visible reminders by date or by source dialog.
 - Orders overdue reminders first, then upcoming reminders by time.
+- Shows Schedule state (Scheduled / Overdue), Session activity (Running / Idle), and marks the current dialog when the client exposes it.
+- Turns the sidebar alarm icon into a notification indicator: new unseen reminders color the icon; unread overdue reminders get warning priority.
+- Colors the built-in clock mark on the source Session row with the same unseen state, so the conversation that owns a new reminder is visible at a glance; opening Schedule returns it to the native gray.
+- Shows **new/total** in the expanded sidebar (for example `3/10`); after opening Schedule, the same counter becomes just the current total. The total drops automatically when active reminders disappear, and no `0` is shown when there are no active reminders.
+- Keeps a notification dot instead of the number in the collapsed sidebar rail.
+- Persists seen reminder ids in browser local storage so a reload does not make already viewed active reminders look new again.
+- Includes overdue and recurring counts in the sidebar indicator tooltip so categories stay distinguishable without crowding the row.
+- Labels the stored target as **Next** for recurring reminders and **At** for one-shot reminders.
 - Opens the source dialog by mouse or keyboard.
+- Supports both legacy `ids/byId` Session-list snapshots and the newer `items` shape without changing the Schedule data source.
 - Supports English and Chinese UI strings.
-- Keeps reminder creation, editing, and cancellation in the built-in Schedule tools.
+- Keeps reminder creation, editing, and cancellation in the built-in Schedule tools; the plugin does not create a second scheduler or a second reminder store.
 
 ## Install
 
@@ -22,7 +43,7 @@ dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab
 Pinned to this release:
 
 ```sh
-dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.4.7
+dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.5.0
 ```
 
 For local development:
@@ -39,7 +60,8 @@ The package declares `dsh.bundle.patch`, so `dsh plugin add` activates the plugi
 
 1. Create a reminder in any dialog.
 2. Open the **Schedule** tab.
-3. Select a reminder to open its source dialog.
+3. Search, filter, or switch grouping between **Date** and **Dialog**.
+4. Select a reminder to open its source dialog.
 
 ## Compatibility
 
