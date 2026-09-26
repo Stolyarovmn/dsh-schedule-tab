@@ -500,13 +500,13 @@ await scenario("sidebar notifications: new/total count clears when Schedule beco
 	const tree = env0.harness.render({ type: Root, props: {}, children: [] });
 	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2/2",
 		`two unseen reminders must render 2/2, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
-	assert(byClassExact(tree, "st_sidebarGlyph st_sidebarNew").length === 1, "unseen reminders color the alarm icon");
+	assert(byClassExact(tree, "st_sidebarCountNew").length === 1, "unseen reminders use the accent notification color");
 
 	active = true;
 	env0.harness.rerender();
 	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2",
 		`opening Schedule marks current reminders seen, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
-	assert(byClassExact(tree, "st_sidebarGlyph st_sidebarNew").length === 0, "seen reminders return the icon to the quiet color");
+	assert(byClassExact(tree, "st_sidebarCountNew").length === 0, "seen reminders clear the accent notification state");
 
 	active = false;
 	env0.harness.rerender();
@@ -541,9 +541,10 @@ await scenario("sidebar notifications: unread overdue has warning priority and s
 		props: { size: 16, active: false, t: env0.locale.bind("schedule-tab") },
 		children: [],
 	});
-	assert(byClassExact(tree, "st_sidebarGlyph st_sidebarNew st_sidebarWarn").length === 1, "unread overdue reminder uses warning color");
+	assert(byClassExact(tree, "st_sidebarCountWarn").length === 1, "unread overdue reminder uses warning color");
 	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2/2", "warning state preserves unread/total notation");
-	const glyphNode = byClass(tree, "st_sidebarGlyph")[0];
+	const glyphNode = tree.childNodes?.[0];
+	assert(glyphNode?.el?.props?.title, "glyph exposes a category summary tooltip");
 	assertIncludes(glyphNode.el.props.title, "1 overdue", "sidebar summary reports overdue category");
 	assertIncludes(glyphNode.el.props.title, "1 recurring", "sidebar summary reports recurring category");
 });
