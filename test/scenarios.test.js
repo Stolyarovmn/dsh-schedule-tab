@@ -146,8 +146,7 @@ function makeRc2Remote(initialRecords = [], historyById = {}) {
 	return remote;
 }
 const settle = async (harness) => {
-	await Promise.resolve();
-	await Promise.resolve();
+	for (let index = 0; index < 8; index++) await Promise.resolve();
 	harness.rerender();
 };
 
@@ -767,6 +766,111 @@ await scenario("sidebar notifications: rc1 trailing active-Schedule alarm select
 	assertIncludes(style.textContent,
 		'[data-row-key="session:s-rc1"] > span[role="img"][aria-label="有活动定时任务"]',
 		"DSH 0.1.7-rc.1 Chinese trailing alarm selector");
+});
+
+await scenario("rc2 catalog: host tasks replace projections, expose active/inactive and new recurrence kinds", async () => {
+	const remote = makeRc2Remote([
+		{ id: "daily-1", sessionId: "s1", status: "active", kind: "daily", title: "Morning brief", prompt: "Summarize overnight changes", time: "09:00:00.000", timeZone: "Europe/Moscow", scheduledAt: inHour(2) },
+		{ id: "weekly-1", sessionId: "s1", status: "active", kind: "weekly", title: "Weekly review", prompt: "Review incidents", time: "18:30:00.000", timeZone: "Europe/Moscow", weekdays: [1, 3, 5], scheduledAt: inHour(4) },
+		{ id: "cron-1", sessionId: "s2", status: "active", kind: "cron", title: "Weekday check", prompt: "Check calls", expression: "0 9 * * 1-5", timeZone: "UTC", scheduledAt: inHour(6) },
+		{ id: "done-1", sessionId: "s2", status: "inactive", kind: "at", title: "Old call", prompt: "Call back", scheduledAt: agoMin(5), lastDelivery: { scheduledAt: agoMin(5), deliveredAt: agoMin(4), messageId: "m-old" } },
+	]);
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Ops", [record("legacy", "at", "Legacy projection must not show", inMin(1))]),
+		session("s2", "Calls"),
+	]));
+	const env0 = await env({ remote, sessions });
+	await settle(env0.harness);
+	assert(rowPrompts(env0.tree).join("|") === "Morning brief|Weekly review|Weekday check",
+		`rc2 defaults to active Host catalog and ignores legacy projection rows, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+	const metas = rowMetas(env0.tree).map((parts) => parts.join(" "));
+	assert(metas.some((value) => value.includes("Daily 09:00")), `daily rule is formatted, got ${JSON.stringify(metas)}`);
+	assert(metas.some((value) => value.includes("Weekly")), "weekly rule is formatted");
+	assert(metas.some((value) => value.includes("Cron 0 9 * * 1-5")), "cron rule is formatted");
+	const buttonByText = (label) => byTag(env0.tree, "button").find((node) => textOf(node) === label);
+	buttonByText("Inactive").el.props.onClick();
+	env0.harness.rerender();
+	assert(rowPrompts(env0.tree).join("|") === "Old call", `inactive filter exposes completed retained tasks, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+	assert(rowStatuses(env0.tree)[0] === "Inactive", "inactive task has an explicit inactive status");
+	assertIncludes(textOf(rows(env0.tree)[0]), "Last delivered", "inactive card shows last delivery");
+});
+
+await scenario("rc2 catalog: schedule/changed refreshes the global list in real time", async () => {
+	const first = { id: "a1", sessionId: "s1", status: "active", kind: "at", title: "First", prompt: "First prompt", scheduledAt: inMin(10) };
+	const second = { id: "a2", sessionId: "s1", status: "active", kind: "at", title: "Second", prompt: "Second prompt", scheduledAt: inMin(20) };
+	const remote = makeRc2Remote([first]);
+	const env0 = await env({ remote, sessions: makeSessions(listSnapshot([session("s1", "Dialog")])) });
+	await settle(env0.harness);
+	assert(rowPrompts(env0.tree).join("|") === "First", "initial Host catalog is visible");
+	const readsBefore = remote.calls.catalog;
+	remote.setRecords([first, second]);
+	await settle(env0.harness);
+	assert(rowPrompts(env0.tree).join("|") === "First|Second", `schedule/changed refetches catalog, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+	assert(remote.calls.catalog > readsBefore, "schedule/changed caused an authoritative catalog read");
+});
+
+await scenario("rc2 delete: card action deletes through native Schedule Remote and removes the task", async () => {
+	const remote = makeRc2Remote([
+		{ id: "del-1", sessionId: "s1", status: "active", kind: "at", title: "Delete me", prompt: "Delete prompt", scheduledAt: inMin(10) },
+	]);
+	const env0 = await env({ remote, sessions: makeSessions(listSnapshot([session("s1", "Dialog")])) });
+	await settle(env0.harness);
+	const deleteButton = byTag(env0.tree, "button").find((node) => textOf(node) === "Delete");
+	assert(deleteButton, "rc2 row has Delete action");
+	deleteButton.el.props.onClick({ stopPropagation() {} });
+	await settle(env0.harness);
+	assert(remote.calls.delete.length === 1, "native delete called once");
+	assert(remote.calls.delete[0].sessionId === "s1" && remote.calls.delete[0].id === "del-1", "delete keeps original Session binding");
+	assert(rows(env0.tree).length === 0, "deleted task leaves the Host catalog view");
+});
+
+await scenario("rc2 history: saved delivery receipts are loaded on demand and labeled as delivery history", async () => {
+	const remote = makeRc2Remote([
+		{ id: "hist-1", sessionId: "s1", status: "active", kind: "every", title: "Heartbeat", prompt: "Check health", everySeconds: 300, scheduledAt: inMin(5) },
+	], {
+		"hist-1": [
+			{ messageId: "m2", scheduledAt: agoMin(5), deliveredAt: agoMin(4), prompt: "Check health" },
+			{ messageId: "m1", scheduledAt: agoMin(10), deliveredAt: agoMin(9), prompt: "Check health" },
+		],
+	});
+	const env0 = await env({ remote, sessions: makeSessions(listSnapshot([session("s1", "Dialog")])) });
+	await settle(env0.harness);
+	const historyButton = byTag(env0.tree, "button").find((node) => textOf(node) === "History");
+	historyButton.el.props.onClick({ stopPropagation() {} });
+	await settle(env0.harness);
+	assert(remote.calls.history.length === 1 && remote.calls.history[0].limit === 20, "history uses native bounded history API");
+	assert(byClassExact(env0.tree, "st_historyRow").length === 2, "saved delivery receipts render as history rows");
+	assertIncludes(textOf(byClassExact(env0.tree, "st_detail")[0]), "Delivery history", "history is explicitly delivery history");
+	assertIncludes(textOf(byClassExact(env0.tree, "st_detail")[0]), "Delivered", "history distinguishes delivery time");
+});
+
+await scenario("rc2 edit: title, prompt and timing update through native compare-and-update API", async () => {
+	const remote = makeRc2Remote([
+		{ id: "edit-1", sessionId: "s1", status: "active", kind: "every", title: "Old title", prompt: "Old prompt", everySeconds: 300, scheduledAt: inMin(5) },
+	]);
+	const env0 = await env({ remote, sessions: makeSessions(listSnapshot([session("s1", "Dialog")])) });
+	await settle(env0.harness);
+	const editButton = byTag(env0.tree, "button").find((node) => textOf(node) === "Edit");
+	editButton.el.props.onClick({ stopPropagation() {} });
+	env0.harness.rerender();
+	const inputs = byClassExact(env0.tree, "st_input");
+	const titleInput = inputs[0];
+	const minutesInput = inputs.find((node) => node.el.props.type === "number");
+	const promptInput = byClassExact(env0.tree, "st_textarea")[0];
+	titleInput.el.props.onChange({ target: { value: "New title" } });
+	promptInput.el.props.onChange({ target: { value: "New prompt" } });
+	minutesInput.el.props.onChange({ target: { value: "10" } });
+	env0.harness.rerender();
+	const saveButton = byTag(env0.tree, "button").find((node) => textOf(node) === "Save");
+	saveButton.el.props.onClick({ stopPropagation() {} });
+	await settle(env0.harness);
+	assert(remote.calls.update.length === 1, "native update called once");
+	const request = remote.calls.update[0];
+	assert(request.title === "New title" && request.prompt === "New prompt", "content edits are forwarded");
+	assert(request.change?.kind === "every" && request.change.every_seconds === 600, "timing edit is forwarded as every_seconds");
+	assert(request.expected.id === "edit-1" && request.expected.sessionId === undefined && request.expected.status === undefined,
+		"compare-and-update expected value strips catalog-only fields");
+	assert(rowPrompts(env0.tree)[0] === "New title", "authoritative catalog refresh shows the saved title");
 });
 
 const failed = results.filter((r) => !r.ok);
