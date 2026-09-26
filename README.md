@@ -2,6 +2,16 @@
 
 A DeepSeek Harness Web plugin that adds a global **Schedule** tab. It lists scheduled reminders from all dialogs and opens the source dialog when a reminder is selected.
 
+## Screenshots
+
+### Schedule control center
+
+<img src="https://raw.githubusercontent.com/Stolyarovmn/dsh-schedule-tab/main/docs/screenshots/schedule-control-center.webp" alt="Schedule control center with search, filters, grouping and reminder status" width="1200">
+
+### Sidebar notifications
+
+<img src="https://raw.githubusercontent.com/Stolyarovmn/dsh-schedule-tab/main/docs/screenshots/sidebar-notifications.webp" alt="Schedule unread and total counters in the DeepSeek Harness sidebar" width="350">
+
 ## Features
 
 - Shows built-in Schedule reminders from all dialogs in one global tab.
@@ -33,7 +43,7 @@ dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab
 Pinned to this release:
 
 ```sh
-dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.4.7
+dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.5.0
 ```
 
 For local development:
