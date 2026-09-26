@@ -326,8 +326,33 @@ export function makeUiWorkspace() {
 	return { calls, openSession: (id) => { calls.openSession.push(id); } };
 }
 
+// Host Remote mock for DSH 0.1.7-rc.2 Schedule catalog.
+export function makeRemote(initialRecords = []) {
+	let records = initialRecords;
+	let failure = false;
+	const listeners = new Map();
+	const emit = (event) => {
+		for (const listener of [...(listeners.get(event) ?? [])]) listener();
+	};
+	return {
+		schedule: {
+			catalog: async () => failure
+				? { ok: false, error: { code: "schedule_unavailable", message: "unavailable" } }
+				: { ok: true, value: records },
+		},
+		$on(event, listener) {
+			const set = listeners.get(event) ?? new Set();
+			set.add(listener);
+			listeners.set(event, set);
+			return () => { set.delete(listener); };
+		},
+		setCatalog(value) { records = value; emit("schedule/changed"); },
+		setFailure(value) { failure = value; emit("schedule/changed"); },
+	};
+}
+
 // Slot ctx mock (records every registration)
-export function makeCtx(locale, { sessions, uiWorkspace } = {}) {
+export function makeCtx(locale, { sessions, uiWorkspace, remote } = {}) {
 	const recorded = {
 		effects: [],
 		panellist: [],
@@ -369,6 +394,8 @@ export function makeCtx(locale, { sessions, uiWorkspace } = {}) {
 			locale,
 			sessions,
 			uiWorkspace,
+			remote,
+			on: () => () => {},
 		},
 	};
 }
