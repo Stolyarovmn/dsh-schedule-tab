@@ -146,7 +146,10 @@ function makeRc2Remote(initialRecords = [], historyById = {}) {
 	return remote;
 }
 const settle = async (harness) => {
-	for (let index = 0; index < 8; index++) await Promise.resolve();
+	for (let pass = 0; pass < 3; pass++) {
+		harness.rerender();
+		for (let index = 0; index < 4; index++) await Promise.resolve();
+	}
 	harness.rerender();
 };
 
