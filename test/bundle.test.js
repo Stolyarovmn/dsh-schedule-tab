@@ -5,6 +5,7 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf8");
 
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
+assert.equal(pkg.version, "0.4.7");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
 assert.ok(pkg.keywords.includes("dsh-plugin"));
@@ -32,6 +33,9 @@ assert.match(host, /@deepseek-ai\/dsh-time-context/);
 assert.match(host, /ctx\.loader\.create/);
 assert.match(host, /entry\.fiber\.await/);
 assert.match(host, /ctx\.provide\(["']scheduleTabBootstrap["']/);
+assert.match(host, /schedule-tab:reminder-tool-routing/);
+assert.match(host, /tools\/pre-execute/);
+assert.match(host, /Background shell timers are not reminders/);
 assert.ok(!host.includes('from "@deepseek-ai/dsh-schedule"'));
 assert.ok(!host.includes('from "@deepseek-ai/dsh-time-context"'));
 
