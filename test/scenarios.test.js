@@ -484,6 +484,85 @@ await scenario("control center: current items-shaped session list remains readab
 	assert(rowSources(env0.tree)[0] === "Modern items row", "items-shaped list preserves source metadata");
 });
 
+await scenario("sidebar notifications: new/total count clears when Schedule becomes active and returns for new tasks", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	let active = false;
+	const Root = () => ({
+		type: glyph,
+		props: { size: 16, active, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	const tree = env0.harness.render({ type: Root, props: {}, children: [] });
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2/2",
+		`two unseen reminders must render 2/2, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
+	assert(byClass(tree, "st_sidebarNew").length === 1, "unseen reminders color the alarm icon");
+
+	active = true;
+	env0.harness.rerender();
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2",
+		`opening Schedule marks current reminders seen, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
+	assert(byClass(tree, "st_sidebarNew").length === 0, "seen reminders return the icon to the quiet color");
+
+	active = false;
+	env0.harness.rerender();
+	sessions.list.set(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10)), record("a2", "at", "New Alpha task", inMin(30))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+	]));
+	env0.harness.rerender();
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "1/3",
+		`a later reminder must become unread while old ones stay seen, got ${JSON.stringify(textOf(byClassExact(tree, "st_sidebarCount")[0]))}`);
+
+	sessions.list.set(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10))]),
+		session("s2", "Beta", [record("b1", "at", "Beta task", inMin(20))]),
+	]));
+	env0.harness.rerender();
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2",
+		"when the unread task completes/disappears, unread and total counts both shrink");
+});
+
+await scenario("sidebar notifications: unread overdue has warning priority and summary carries category counts", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Mixed", [
+			record("o1", "at", "Late task", agoMin(2)),
+			record("r1", "every", "Recurring task", inMin(30), { everySeconds: 3600 }),
+		]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	const tree = env0.harness.render({
+		type: glyph,
+		props: { size: 16, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	assert(byClass(tree, "st_sidebarWarn").length === 1, "unread overdue reminder uses warning color");
+	assert(textOf(byClassExact(tree, "st_sidebarCount")[0]) === "2/2", "warning state preserves unread/total notation");
+	const glyphNode = byClass(tree, "st_sidebarGlyph")[0];
+	assertIncludes(glyphNode.el.props.title, "1 overdue", "sidebar summary reports overdue category");
+	assertIncludes(glyphNode.el.props.title, "1 recurring", "sidebar summary reports recurring category");
+});
+
+await scenario("sidebar notifications: collapsed rail keeps a colored dot instead of the numeric count", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Alpha", [record("a1", "at", "Alpha task", inMin(10))]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	const tree = env0.harness.render({
+		type: glyph,
+		props: { size: 18, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	assert(byClassExact(tree, "st_sidebarCount").length === 0, "collapsed glyph does not squeeze in a numeric count");
+	assert(byClassExact(tree, "st_sidebarDot").length === 1, "collapsed glyph keeps an unread notification dot");
+});
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} scenarios passed`);
 if (failed.length > 0) {
