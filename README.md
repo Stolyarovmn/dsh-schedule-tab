@@ -11,7 +11,8 @@ A DeepSeek Harness Web plugin that adds a global **Schedule** tab. It lists sche
 - Orders overdue reminders first, then upcoming reminders by time.
 - Shows Schedule state (Scheduled / Overdue), Session activity (Running / Idle), and marks the current dialog when the client exposes it.
 - Turns the sidebar alarm icon into a notification indicator: new unseen reminders color the icon; unread overdue reminders get warning priority.
-- Shows **new/total** in the expanded sidebar (for example `3/10`); after opening Schedule, the same counter becomes just the current total. The total drops automatically when active reminders disappear.
+- Colors the built-in clock mark on the source Session row with the same unseen state, so the conversation that owns a new reminder is visible at a glance; opening Schedule returns it to the native gray.
+- Shows **new/total** in the expanded sidebar (for example `3/10`); after opening Schedule, the same counter becomes just the current total. The total drops automatically when active reminders disappear, and no `0` is shown when there are no active reminders.
 - Keeps a notification dot instead of the number in the collapsed sidebar rail.
 - Persists seen reminder ids in browser local storage so a reload does not make already viewed active reminders look new again.
 - Includes overdue and recurring counts in the sidebar indicator tooltip so categories stay distinguishable without crowding the row.
