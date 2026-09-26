@@ -327,7 +327,7 @@ export function makeUiWorkspace() {
 }
 
 // Slot ctx mock (records every registration)
-export function makeCtx(locale, { sessions, uiWorkspace } = {}) {
+export function makeCtx(locale, { sessions, uiWorkspace, remote } = {}) {
 	const recorded = {
 		effects: [],
 		panellist: [],
@@ -369,6 +369,8 @@ export function makeCtx(locale, { sessions, uiWorkspace } = {}) {
 			locale,
 			sessions,
 			uiWorkspace,
+			remote,
+			on: () => () => {},
 		},
 	};
 }
