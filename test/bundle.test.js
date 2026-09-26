@@ -5,6 +5,8 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf8");
 
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
+assert.equal(pkg.version, "0.5.0-rc2-test.1");
+assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], ">=0.1.7-rc.2 <0.1.7-rc.3");
 assert.equal(pkg.version, "0.4.7");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
@@ -17,27 +19,25 @@ assert.ok(pkg.dsh.catalog.summary.en.length <= 200);
 assert.ok(pkg.dsh.catalog.summary.zh.length <= 200);
 assert.deepEqual(pkg.dsh?.catalog?.capabilities, ["slots", "locale", "sessions", "workspace"]);
 assert.ok(pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-client-ui-workspace"));
+assert.ok(pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-api-remotes"));
 assert.ok(!pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-client-ui-layout"));
 assert.ok(pkg.files.includes("cordis.patch.yml"));
 assert.ok(pkg.files.includes("lib/index.js"));
 assert.ok(pkg.files.includes("lib/client.js"));
 
-assert.match(patch, /id:\s*session-controller/);
-assert.match(patch, /inject:\s*\[scheduleTabBootstrap\]/);
+assert.match(patch, /id:\s*time-context\s*\n\s*disabled:\s*false/);
+assert.match(patch, /id:\s*schedule\s*\n\s*disabled:\s*false/);
+assert.doesNotMatch(patch, /scheduleTabBootstrap/);
+assert.doesNotMatch(patch, /id:\s*session-controller/);
 assert.match(patch, /id:\s*schedule-tab/);
 assert.match(patch, /name:\s*['"]@stolyarovmn\/dsh-client-ui-schedule-tab['"]/);
 
 const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
-assert.match(host, /@deepseek-ai\/dsh-schedule/);
-assert.match(host, /@deepseek-ai\/dsh-time-context/);
-assert.match(host, /ctx\.loader\.create/);
-assert.match(host, /entry\.fiber\.await/);
-assert.match(host, /ctx\.provide\(["']scheduleTabBootstrap["']/);
 assert.match(host, /schedule-tab:reminder-tool-routing/);
 assert.match(host, /tools\/pre-execute/);
 assert.match(host, /Background shell timers are not reminders/);
-assert.ok(!host.includes('from "@deepseek-ai/dsh-schedule"'));
-assert.ok(!host.includes('from "@deepseek-ai/dsh-time-context"'));
+assert.doesNotMatch(host, /ctx\.loader/);
+assert.doesNotMatch(host, /scheduleTabBootstrap/);
 
 for (const script of ["preinstall", "install", "postinstall", "prepare"]) {
   assert.equal(pkg.scripts?.[script], undefined, `${script} must not execute during installation`);
