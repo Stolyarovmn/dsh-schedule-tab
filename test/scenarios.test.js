@@ -177,7 +177,7 @@ async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspa
 		children: [],
 	});
 	return {
-		harness, tree, recorded, exports, panel, locale: localeMock,
+		harness, tree, recorded, exports, panel, locale: localeMock, ctx,
 		sessions, uiWorkspace: uiWorkspaceMock, remote,
 		calls: { openSession: uiWorkspaceMock.calls.openSession },
 	};
@@ -871,6 +871,23 @@ await scenario("rc2 edit: title, prompt and timing update through native compare
 	assert(request.expected.id === "edit-1" && request.expected.sessionId === undefined && request.expected.status === undefined,
 		"compare-and-update expected value strips catalog-only fields");
 	assert(rowPrompts(env0.tree)[0] === "New title", "authoritative catalog refresh shows the saved title");
+});
+
+await scenario("rc2 availability: plugin switches from projection fallback when remote.schedule appears after apply", async () => {
+	const remote = { $on: () => () => {} };
+	const sessions = makeSessions(listSnapshot([
+		session("s1", "Dialog", [record("legacy", "at", "Legacy projection", inMin(5))]),
+	]));
+	const env0 = await env({ remote, sessions });
+	assert(rowPrompts(env0.tree).join("|") === "Legacy projection", "before rc2 namespace appears the legacy projection path stays active");
+	const scheduleFace = makeRc2Remote([
+		{ id: "host-1", sessionId: "s1", status: "active", kind: "at", title: "Host task", prompt: "Host prompt", scheduledAt: inMin(10) },
+	]).schedule;
+	env0.ctx.provide("remote.schedule", scheduleFace);
+	await settle(env0.harness);
+	assert(rowPrompts(env0.tree).join("|") === "Host task",
+		`late remote.schedule registration activates Host catalog mode, got ${JSON.stringify(rowPrompts(env0.tree))}`);
+	assert(byClassExact(env0.tree, "st_rc2").length === 1, "Host-mode badge appears after the namespace becomes available");
 });
 
 const failed = results.filter((r) => !r.ok);
