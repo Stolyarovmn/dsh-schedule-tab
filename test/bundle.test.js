@@ -5,7 +5,7 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf8");
 
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
-assert.equal(pkg.version, "0.4.7-dev.1");
+assert.equal(pkg.version, "0.4.7");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
 assert.ok(pkg.keywords.includes("dsh-plugin"));
