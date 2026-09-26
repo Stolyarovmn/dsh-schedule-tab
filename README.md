@@ -1,6 +1,6 @@
 # @stolyarovmn/dsh-client-ui-schedule-tab
 
-A DeepSeek Harness Web plugin that adds a global **Schedule** tab. It lists scheduled reminders from all dialogs and opens the source dialog when a reminder is selected.
+A DeepSeek Harness Web plugin that adds a global **Schedule** control center. On DSH 0.1.7-rc.2 it uses the native Host Schedule catalog for cross-session task management; older supported DSH releases keep the projection-based read-only compatibility path.
 
 ## Screenshots
 
@@ -14,23 +14,38 @@ A DeepSeek Harness Web plugin that adds a global **Schedule** tab. It lists sche
 
 ## Features
 
-- Shows built-in Schedule reminders from all dialogs in one global tab.
-- Searches by reminder text, reminder id, dialog name, or dialog id.
-- Filters reminders by All, Today, Overdue, or Recurring.
-- Groups the visible reminders by date or by source dialog.
-- Orders overdue reminders first, then upcoming reminders by time.
-- Shows Schedule state (Scheduled / Overdue), Session activity (Running / Idle), marks the current dialog when the client exposes it, and adds an explicit **Recurring** tag to repeating reminders.
-- Turns the sidebar alarm icon into a notification indicator: new unseen reminders color the icon; unread overdue reminders get warning priority.
-- Colors the built-in clock/alarm mark on the source Session row with the same unseen state, including the trailing alarm used by DSH 0.1.7-rc.1 and the newer leading Schedule mark; opening Schedule returns it to the native gray.
-- Shows **new/total** in the expanded sidebar (for example `3/10`); after opening Schedule, the same counter becomes just the current total. The total drops automatically when active reminders disappear, and no `0` is shown when there are no active reminders.
-- Keeps a notification dot instead of the number in the collapsed sidebar rail.
-- Persists seen reminder ids in browser local storage so a reload does not make already viewed active reminders look new again.
-- Includes overdue and recurring counts in the sidebar indicator tooltip so categories stay distinguishable without crowding the row.
-- Labels the stored target as **Next** for recurring reminders and **At** for one-shot reminders.
-- Opens the source dialog by mouse or keyboard.
-- Supports both legacy `ids/byId` Session-list snapshots and the newer `items` shape without changing the Schedule data source.
-- Supports English and Chinese UI strings.
-- Keeps reminder creation, editing, and cancellation in the built-in Schedule tools; the plugin does not create a second scheduler or a second reminder store.
+### DSH 0.1.7-rc.2 Host mode
+
+- Uses the authoritative Host-wide `schedule.catalog()` instead of assembling a catalog from Session projections.
+- Refreshes immediately from the native `schedule/changed` event.
+- Searches by task title, reminder prompt, task id, dialog name, or Session id.
+- Filters by **Active**, **All**, **Inactive**, **Today**, **Overdue**, and **Recurring**.
+- Groups tasks by date or source dialog.
+- Shows retained inactive one-shot tasks and the latest durable delivery receipt.
+- Supports and formats **Every**, **Daily**, **Weekly**, and **Cron** recurrence, including IANA time zones.
+- Shows an explicit **Recurring** tag on repeating tasks.
+- Edits active tasks through native `schedule.update()`: title, prompt, and timing/rule type.
+- Deletes tasks through native `schedule.delete()`. Deletion also removes saved delivery history, matching DSH semantics.
+- Loads paged **Delivery history** through native `schedule.history()`; history is labeled as delivery history because DSH receipts confirm inbox delivery, not successful Agent execution.
+- Opens the original Session from any task card.
+- Keeps notification-style sidebar behavior: unseen/total counts, warning priority for overdue unseen tasks, and per-Session alarm coloring.
+
+### Compatibility mode for older DSH releases
+
+- Shows built-in Schedule reminders from all dialogs using Session projections.
+- Searches, filters, groups, sorts overdue-first, and opens the source dialog.
+- Supports legacy `SessionSummary.projectionValues.schedule` and the later `refreshProjections()/projectionsBySession` shape.
+- Keeps reminder creation/edit/delete with the model-facing built-in Schedule tools because the older browser API is read-only.
+
+### Notification behavior
+
+- New unseen active reminders color the Schedule alarm icon.
+- Expanded sidebar shows **new/total** (for example `3/10`); after opening Schedule it shows only the current active total.
+- No `0` is shown when there are no active reminders.
+- Unread overdue reminders take warning-color priority.
+- The source Session's built-in Schedule mark follows the same unseen state.
+- Seen reminder ids persist in browser local storage.
+- The collapsed sidebar rail uses a notification dot instead of squeezing in the numeric counter.
 
 ## Install
 
@@ -43,7 +58,7 @@ dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab
 Pinned to this release:
 
 ```sh
-dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.5.1
+dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.0
 ```
 
 For local development:
@@ -58,28 +73,35 @@ The package declares `dsh.bundle.patch`, so `dsh plugin add` activates the plugi
 
 ## Usage
 
-1. Create a reminder in any dialog.
+1. Create a reminder in any dialog with the built-in Schedule tools.
 2. Open the **Schedule** tab.
 3. Search, filter, or switch grouping between **Date** and **Dialog**.
-4. Select a reminder to open its source dialog.
+4. On DSH 0.1.7-rc.2, use **History**, **Edit**, or **Delete** directly from a task card.
+5. Select the task card itself to open its source dialog.
+
+The plugin deliberately does not implement its own scheduler or reminder database. DSH remains the single source of truth.
 
 ## Compatibility
 
 Declared DSH peer range:
 
 ```text
->=0.1.5-rc.3 <0.1.7-rc.2
+>=0.1.5-rc.3 <0.1.7-rc.3
 ```
 
 CI runs installation smoke tests against:
 
 - `0.1.5-rc.3`
 - `0.1.7-rc.1`
+- `0.1.7-rc.2`
 
-The client supports both projection shapes used by those releases: legacy
-`SessionSummary.projectionValues.schedule` and the 0.1.7
-`refreshProjections()/projectionsBySession` API. Session navigation uses
-`uiWorkspace.openSession()`, which is available in both releases.
+On `0.1.7-rc.2`, the client uses the native browser-safe Host Schedule Remote API:
+`catalog`, `history`, `update`, and `delete`, plus the `schedule/changed` invalidation event.
+
+On older supported releases, it falls back to the legacy
+`SessionSummary.projectionValues.schedule` and
+`refreshProjections()/projectionsBySession` APIs. Session navigation uses
+`uiWorkspace.openSession()` in both modes.
 
 ### Schedule service on DSH 0.1.5-rc.3 through 0.1.7-rc.1
 
