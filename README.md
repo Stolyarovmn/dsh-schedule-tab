@@ -19,10 +19,10 @@ From GitHub:
 dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab.git
 ```
 
-Pinned to this release:
+DSH 0.1.7-rc.2 test branch (not published to npm):
 
 ```sh
-dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.4.7
+dsh plugin --profile web add "git+https://github.com/Stolyarovmn/dsh-schedule-tab.git#feat/dsh-0.1.7-rc.2"
 ```
 
 For local development:
@@ -43,40 +43,29 @@ The package declares `dsh.bundle.patch`, so `dsh plugin add` activates the plugi
 
 ## Compatibility
 
-Declared DSH peer range:
+This test branch targets:
 
 ```text
->=0.1.5-rc.3 <0.1.7-rc.2
+>=0.1.7-rc.2 <0.1.7-rc.3
 ```
 
-CI runs installation smoke tests against:
+CI installs it into a real `0.1.7-rc.2` Web profile.
 
-- `0.1.5-rc.3`
-- `0.1.7-rc.1`
+### Native Schedule integration in DSH 0.1.7-rc.2
 
-The client supports both projection shapes used by those releases: legacy
-`SessionSummary.projectionValues.schedule` and the 0.1.7
-`refreshProjections()/projectionsBySession` API. Session navigation uses
-`uiWorkspace.openSession()`, which is available in both releases.
+DSH 0.1.7-rc.2 moved reminders from the old Session `schedule` projection to
+the Host-wide durable Schedule service. This branch enables DSH's shipped
+`time-context` and `schedule` rows and reads the authoritative browser
+catalog from `remote.schedule.catalog()`. Only active tasks are shown in this
+compact tab; retained inactive tasks remain the responsibility of DSH's native
+task manager.
 
-### Schedule service on DSH 0.1.5-rc.3 through 0.1.7-rc.1
-
-Those DSH releases ship the Host Schedule service as opt-in, and their
-Schedule implementation intentionally attaches only to root Agents created
-after the Schedule plugin has loaded. Since `0.4.6`, this bundle makes the
-Web `session-controller` wait for a Host bootstrap. The bootstrap mounts
-`time-context` and `schedule` first and only then releases Session creation,
-so restored dialogs receive `schedule_create`, `schedule_list` and
-`schedule_delete` after a full process restart.
-
-The tab only displays real Schedule records. It does not treat background
-`bash`/`pwsh` jobs as reminders. Since `0.4.7`, the bundle adds model-facing
-Schedule routing guidance and rejects the narrow background shell-timer pattern
-(`Start-Sleep ...; Write-Output ...` / `sleep ...; echo ...`) when
-`schedule_create` is available, so a model cannot silently substitute shell
-jobs for reminders. A full `dsh web` process restart is required after
-installing or upgrading; HMR cannot retrofit the legacy Schedule runtime into
-an Agent that is already live.
+The rc.1 `session-controller -> scheduleTabBootstrap` workaround is removed:
+rc.2 Schedule attaches to already-live root Agents itself and depends on
+`sessionController`, so keeping that gate would create a dependency cycle.
+Model-facing reminder guidance and the narrow shell-timer guard remain, so
+`Start-Sleep ...; Write-Output ...` / `sleep ...; echo ...` cannot silently
+replace `schedule_create` when the native tool is available.
 
 ## Development
 
