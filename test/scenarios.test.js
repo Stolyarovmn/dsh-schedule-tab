@@ -564,6 +564,46 @@ await scenario("sidebar notifications: collapsed rail keeps a colored dot instea
 	assert(byClassExact(tree, "st_sidebarDot").length === 1, "collapsed glyph keeps an unread notification dot");
 });
 
+await scenario("sidebar notifications: zero total is omitted instead of rendering 0", async () => {
+	const sessions = makeSessions(listSnapshot([]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	const tree = env0.harness.render({
+		type: glyph,
+		props: { size: 16, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	assert(byClassExact(tree, "st_sidebarCount").length === 0, "empty Schedule must not render a numeric zero");
+	assert(tree.el.props["data-has-count"] === "false", "empty Schedule reports no sidebar count space");
+});
+
+await scenario("sidebar notifications: source Session clock mark follows unseen and overdue state", async () => {
+	const sessions = makeSessions(listSnapshot([
+		session("s-accent", "Accent", [record("a1", "at", "New task", inMin(10))]),
+		session("s-warn", "Warn", [record("w1", "at", "Late task", agoMin(1))]),
+	]));
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	let active = false;
+	const Root = () => ({
+		type: glyph,
+		props: { size: 16, active, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	env0.harness.render({ type: Root, props: {}, children: [] });
+	const styleId = "@stolyarovmn/dsh-client-ui-schedule-tab/SessionScheduleMarks.css";
+	const style = env0.harness.document.querySelector('style[data-plugin-css="' + styleId + '"]');
+	assert(style, "per-session Schedule-mark stylesheet is installed");
+	assertIncludes(style.textContent, '[data-row-key="session:s-accent"] [data-session-schedule-mark]', "accent Session selector");
+	assertIncludes(style.textContent, "var(--dsw-alias-state-business-primary)", "new Session mark uses accent color");
+	assertIncludes(style.textContent, '[data-row-key="session:s-warn"] [data-session-schedule-mark]', "overdue Session selector");
+	assertIncludes(style.textContent, "var(--dsw-alias-state-warn-primary)", "overdue Session mark uses warning color");
+
+	active = true;
+	env0.harness.rerender();
+	assert(style.textContent === "", `opening Schedule must return source Session marks to their native gray color, got ${JSON.stringify(style.textContent)}`);
+});
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} scenarios passed`);
 if (failed.length > 0) {
