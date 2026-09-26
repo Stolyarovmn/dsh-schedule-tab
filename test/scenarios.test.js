@@ -650,9 +650,9 @@ await scenario("control center: recurring reminders carry an explicit Recurring 
 	const onceRow = rows(env0.tree).find((row) => textOf(byClassExact(row, "st_prompt")[0]) === "One shot");
 	assert(recurringRow, "recurring row exists");
 	assert(onceRow, "one-shot row exists");
-	assert(textOf(byClassExact(recurringRow, "st_badgeRecurring")[0]) === "Recurring",
+	assert(textOf(byClass(recurringRow, "st_badgeRecurring")[0]) === "Recurring",
 		"recurring task has an explicit Recurring tag");
-	assert(byClassExact(onceRow, "st_badgeRecurring").length === 0,
+	assert(byClass(onceRow, "st_badgeRecurring").length === 0,
 		"one-shot task does not get a Recurring tag");
 });
 
