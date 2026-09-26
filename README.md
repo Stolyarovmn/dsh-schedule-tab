@@ -43,7 +43,7 @@ dsh plugin --profile web add git+https://github.com/Stolyarovmn/dsh-schedule-tab
 Pinned to this release:
 
 ```sh
-dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.5.0
+dsh plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.5.1
 ```
 
 For local development:
