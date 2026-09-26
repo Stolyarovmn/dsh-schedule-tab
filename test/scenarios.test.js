@@ -67,6 +67,7 @@ function makeRc2Remote(initialRecords = [], historyById = {}) {
 	const emitChanged = () => { for (const listener of [...listeners]) listener(); };
 	const remote = {
 		calls,
+		setRecords(value) { records = [...value]; emitChanged(); },
 		$on(event, listener) {
 			if (event !== "schedule/changed") return () => {};
 			listeners.add(listener);
