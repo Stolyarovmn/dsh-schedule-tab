@@ -5,7 +5,7 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf8");
 
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
-assert.equal(pkg.version, "0.5.1");
+assert.equal(pkg.version, "0.6.0");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
 assert.ok(pkg.keywords.includes("dsh-plugin"));
@@ -17,6 +17,7 @@ assert.ok(pkg.dsh.catalog.summary.en.length <= 200);
 assert.ok(pkg.dsh.catalog.summary.zh.length <= 200);
 assert.deepEqual(pkg.dsh?.catalog?.capabilities, ["slots", "locale", "sessions", "workspace"]);
 assert.ok(pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-client-ui-workspace"));
+assert.ok(pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-api-remotes"));
 assert.ok(!pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-client-ui-layout"));
 assert.ok(pkg.files.includes("cordis.patch.yml"));
 assert.ok(pkg.files.includes("lib/index.js"));
