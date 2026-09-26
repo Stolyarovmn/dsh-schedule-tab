@@ -791,7 +791,7 @@ await scenario("rc2 catalog: host tasks replace projections, expose active/inact
 	buttonByText("Inactive").el.props.onClick();
 	env0.harness.rerender();
 	assert(rowPrompts(env0.tree).join("|") === "Old call", `inactive filter exposes completed retained tasks, got ${JSON.stringify(rowPrompts(env0.tree))}`);
-	assert(rowStatuses(env0.tree)[0] === "Inactive", "inactive task has an explicit inactive status");
+	assert(textOf(byClass(env0.tree, "st_badgeInactive")[0]) === "Inactive", "inactive task has an explicit inactive status");
 	assertIncludes(textOf(rows(env0.tree)[0]), "Last delivered", "inactive card shows last delivery");
 });
 
