@@ -604,6 +604,39 @@ await scenario("sidebar notifications: source Session clock mark follows unseen 
 	assert(style.textContent === "", `opening Schedule must return source Session marks to their native gray color, got ${JSON.stringify(style.textContent)}`);
 });
 
+await scenario("sidebar notifications: source mark selector supports canonical Session id when list key differs", async () => {
+	const canonical = session("legacy-key", "Mapped dialog", [record("a1", "at", "Mapped task", inMin(10))], {
+		sessionId: "canonical-session-id",
+	});
+	const snapshot = {
+		ids: ["legacy-key"],
+		byId: { "legacy-key": canonical },
+		current: "legacy-key",
+		phase: "live",
+	};
+	const sessions = makeSessions(snapshot);
+	const env0 = await env({ sessions });
+	const glyph = env0.recorded.panellist[0].Component;
+	env0.harness.render({
+		type: glyph,
+		props: { size: 16, active: false, t: env0.locale.bind("schedule-tab") },
+		children: [],
+	});
+	const styleId = "@stolyarovmn/dsh-client-ui-schedule-tab/SessionScheduleMarks.css";
+	const style = env0.harness.document.querySelector('style[data-plugin-css="' + styleId + '"]');
+	assert(style, "per-session Schedule-mark stylesheet is installed");
+	assertIncludes(style.textContent,
+		'[data-row-key="session:legacy-key"] [data-session-schedule-mark]',
+		"legacy map key selector is preserved");
+	assertIncludes(style.textContent,
+		'[data-row-key="session:canonical-session-id"] [data-session-schedule-mark]',
+		"canonical Session id also receives notification color");
+	assertIncludes(style.textContent,
+		'[data-row-key$="canonical-session-id"] [data-session-schedule-mark]',
+		"suffix selector covers workspace-prefixed row keys");
+	assertIncludes(style.textContent, "!important", "notification color overrides the native gray mark color");
+});
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} scenarios passed`);
 if (failed.length > 0) {
