@@ -60,12 +60,102 @@ const listSnapshot = (sessions, current) => ({
 	phase: "live",
 });
 
+function makeRc2Remote(initialRecords = [], historyById = {}) {
+	let records = [...initialRecords];
+	const listeners = new Set();
+	const calls = { catalog: 0, delete: [], update: [], history: [] };
+	const emitChanged = () => { for (const listener of [...listeners]) listener(); };
+	const remote = {
+		calls,
+		$on(event, listener) {
+			if (event !== "schedule/changed") return () => {};
+			listeners.add(listener);
+			return () => listeners.delete(listener);
+		},
+		schedule: {
+			async catalog() {
+				calls.catalog += 1;
+				return { ok: true, value: records.map((item) => ({ ...item })) };
+			},
+			async delete(request) {
+				calls.delete.push(request);
+				const before = records.length;
+				records = records.filter((item) => !(item.sessionId === request.sessionId && item.id === request.id));
+				const deleted = records.length !== before;
+				emitChanged();
+				return { ok: true, value: deleted ? { id: request.id, deleted: true } : { id: request.id, deleted: false, code: "schedule_not_found" } };
+			},
+			async update(request) {
+				calls.update.push(request);
+				const index = records.findIndex((item) => item.sessionId === request.sessionId && item.id === request.id);
+				if (index < 0) return { ok: true, value: { id: request.id, updated: false, code: "schedule_not_found" } };
+				const current = records[index];
+				const next = { ...current };
+				if (request.title !== undefined) next.title = request.title;
+				if (request.prompt !== undefined) next.prompt = request.prompt;
+				if (request.change?.kind === "every") {
+					next.kind = "every";
+					next.everySeconds = request.change.every_seconds;
+					delete next.time; delete next.timeZone; delete next.weekdays; delete next.expression;
+				}
+				if (request.change?.kind === "daily") {
+					next.kind = "daily"; next.time = request.change.daily.time; next.timeZone = request.change.daily.time_zone;
+					delete next.everySeconds; delete next.weekdays; delete next.expression;
+				}
+				if (request.change?.kind === "weekly") {
+					next.kind = "weekly"; next.time = request.change.weekly.time; next.timeZone = request.change.weekly.time_zone; next.weekdays = request.change.weekly.weekdays;
+					delete next.everySeconds; delete next.expression;
+				}
+				if (request.change?.kind === "cron") {
+					next.kind = "cron"; next.expression = request.change.cron.expression; next.timeZone = request.change.cron.time_zone;
+					delete next.everySeconds; delete next.time; delete next.weekdays;
+				}
+				if (request.change?.kind === "at") {
+					next.kind = "at"; next.scheduledAt = typeof request.change.at === "string" ? request.change.at : current.scheduledAt;
+					delete next.everySeconds; delete next.time; delete next.timeZone; delete next.weekdays; delete next.expression;
+				}
+				records[index] = next;
+				emitChanged();
+				return { ok: true, value: { ...next } };
+			},
+			async history(request) {
+				calls.history.push(request);
+				const all = historyById[request.id] ?? [];
+				let start = 0;
+				if (request.before) {
+					const index = all.findIndex((item) => item.messageId === request.before);
+					start = index < 0 ? all.length : index + 1;
+				}
+				const page = all.slice(start, start + request.limit);
+				const more = start + page.length < all.length;
+				return {
+					ok: true,
+					value: {
+						id: request.id,
+						records: page,
+						earlierRecordsUnavailable: false,
+						earlierRecordsPruned: false,
+						retention: { days: 30, records: 100 },
+						...(more && page.length ? { nextBefore: page[page.length - 1].messageId } : {})
+					}
+				};
+			}
+		}
+	};
+	return remote;
+}
+const settle = async (harness) => {
+	await Promise.resolve();
+	await Promise.resolve();
+	harness.rerender();
+};
+
 function makePrimitives({ withClock = true } = {}) {
 	const IconClock = (props) => ({ type: "svg.clock", props, children: [] });
 	return withClock ? { IconClockOutline16: IconClock } : {};
 }
 
-async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspace } = {}) {
+async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspace, remote } = {}) {
 	const localeMock = locale ?? makeLocale();
 	const sessions = sessionsMock ?? makeSessions(listSnapshot([]));
 	const uiWorkspaceMock = uiWorkspace ?? makeUiWorkspace();
@@ -75,7 +165,7 @@ async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspa
 	});
 	assert(registration.id === "@stolyarovmn/dsh-client-ui-schedule-tab",
 		`bundle registration id must be the package name, got ${registration.id}`);
-	const { ctx, recorded } = makeCtx(localeMock, { sessions, uiWorkspace: uiWorkspaceMock });
+	const { ctx, recorded } = makeCtx(localeMock, { sessions, uiWorkspace: uiWorkspaceMock, remote });
 	assert(Array.isArray(exports.inject), "bundle must export the inject array");
 	exports.apply(ctx);
 	const mainReg = recorded.main.find((r) => r.meta.key === "schedule");
@@ -88,7 +178,7 @@ async function env({ withClock = true, locale, sessions: sessionsMock, uiWorkspa
 	});
 	return {
 		harness, tree, recorded, exports, panel, locale: localeMock,
-		sessions, uiWorkspace: uiWorkspaceMock,
+		sessions, uiWorkspace: uiWorkspaceMock, remote,
 		calls: { openSession: uiWorkspaceMock.calls.openSession },
 	};
 }
