@@ -334,6 +334,16 @@ export function makeCtx(locale, { sessions, uiWorkspace, remote } = {}) {
 		main: [],
 		mainSchedule: [],
 	};
+	const events = new Map();
+	const services = new Map([
+		["locale", locale],
+		["sessions", sessions],
+		["uiWorkspace", uiWorkspace],
+		["remote", remote],
+	]);
+	const emit = (name, ...args) => {
+		for (const listener of [...(events.get(name) ?? [])]) listener(...args);
+	};
 	const slots = {
 		// inject runs fn to position its registrations relative to `target`;
 		// the slots.register calls inside fn are the registrations themselves
@@ -370,7 +380,21 @@ export function makeCtx(locale, { sessions, uiWorkspace, remote } = {}) {
 			sessions,
 			uiWorkspace,
 			remote,
-			on: () => () => {},
+			on: (event, listener) => {
+				if (!events.has(event)) events.set(event, new Set());
+				events.get(event).add(listener);
+				return () => events.get(event)?.delete(listener);
+			},
+			get: (name) => services.get(name),
+			provide: (name, value) => {
+				services.set(name, value);
+				if (name === "remote") {
+					services.set("remote", value);
+				} else if (name.startsWith("remote.") && remote && typeof remote === "object") {
+					remote[name.slice("remote.".length)] = value;
+				}
+				emit("internal/service", name);
+			},
 		},
 	};
 }
