@@ -15,7 +15,7 @@ for (const required of [
   'delivery_cursor_not_found',
   'earlierRecordsPruned',
   'retention',
-  'navigator.clipboard.writeText(messageId)',
+  'primitives.writeClipboard(messageId)',
   'data-session-schedule-mark',
 ]) assert.ok(client.includes(required), `missing rc2 contract: ${required}`);
 
@@ -33,6 +33,12 @@ for (const forbidden of [
 // Native detail owns timing edits; this plugin stays an overview/history/delete layer.
 assert.ok(client.includes('const TASK_KIND = "scheduleTask"'));
 assert.ok(!client.includes('schedule.update('), "do not duplicate the native rc2 timing editor");
-assert.ok(client.includes('className: "scc_action scc_actionPrimary"'));
+assert.ok(client.includes('primitives.Modal'), "delete confirmation must use the native rc2 Modal");
+assert.ok(client.includes('primitives.Tooltip'), "row icon actions must use native tooltips");
+assert.ok(client.includes('primitives.Button'), "actions must use native button primitives");
+assert.ok(client.includes('hostCtx.sidebarRight.mounted'), "native task detail open must wait for the target Session sidebar");
+assert.ok(client.includes('hostCtx.uiWorkspace.openSession(record.sessionId)'), "global card open must enter the source Session before opening native detail");
+assert.ok(!client.includes('window.confirm'), "browser confirm must not replace the native modal");
+assert.ok(!client.includes('navigator.clipboard.writeText'), "clipboard writes must use the shared primitive helper");
 
 console.log("rc2 client contract validation passed");
