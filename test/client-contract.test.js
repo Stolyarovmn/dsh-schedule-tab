@@ -80,3 +80,8 @@ assert.ok(client.includes('const ru = {'), "Russian locale must be registered");
 assert.ok(client.includes('ctx.locale.register(NS, { en, zh, ru })'), "Russian locale must be enabled");
 assert.ok(client.includes('"new": "New conversation"'), "create action label must match the actual startSession behavior");
 assert.ok(client.includes('"new.hint"'), "create action must explain how a reminder is created");
+
+assert.ok(client.includes('const statusCounts = react.useMemo(() => ({'), "status filter counts must be computed explicitly");
+assert.ok(client.includes('className: "scc_chipCount"'), "Active/All/Inactive filters must show their counts");
+assert.ok(client.includes('t("count", { visible: visible.length })'), "header count must describe only the currently visible tasks");
+assert.ok(!client.includes('t("count", { visible: visible.length, total: catalogState.records.length })'), "inactive tasks must not appear as a misleading header denominator");
