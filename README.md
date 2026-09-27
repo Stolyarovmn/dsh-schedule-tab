@@ -64,7 +64,7 @@ GitHub Actions also installs the package into a generated DSH `0.1.7-rc.2` Web p
 
 The package is published on npm as `@stolyarovmn/dsh-client-ui-schedule-tab`.
 
-The repository uses the GitHub topic `dsh-plugin` for DeepSeek Harness plugin discovery. DeepSeek Harness does not provide an official central plugin marketplace; third-party catalogs may index public plugins independently.
+The repository uses the GitHub topic `dsh-plugin` for DeepSeek Harness plugin discovery.
 
 ## License
 
