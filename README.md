@@ -1,13 +1,13 @@
 # DSH Automation Tasks Enhancer
 
-> **Compatibility:** this package is for **DeepSeek Harness 0.1.7-rc.2 only**.  
-> Do **not** install it on `0.1.7-rc.1`, `0.1.5-rc.3`, or older DSH builds. For pre-rc2 DSH use `@stolyarovmn/dsh-client-ui-schedule-tab@0.5.1`.
+> **Compatibility:** **`@stolyarovmn/dsh-client-ui-schedule-tab@0.6.0` requires DeepSeek Harness `0.1.7-rc.2` exactly.**  
+> Do **not** install 0.6.x on `0.1.7-rc.1`, `0.1.5-rc.3`, or older DSH builds. If you stay on pre-rc2 DSH, keep using **`@stolyarovmn/dsh-client-ui-schedule-tab@0.5.1`**.
 
-`@stolyarovmn/dsh-client-ui-schedule-control-center` is a Web UI enhancement for the **native Automation tasks panel in DeepSeek Harness 0.1.7-rc.2**.
+`@stolyarovmn/dsh-client-ui-schedule-tab` enhances the **native Automation tasks panel in DeepSeek Harness 0.1.7-rc.2**.
 
-It does **not** add a second Schedule tab. The plugin intentionally reuses the shipped `schedules` sidebar/list cell and `main` keyed cell with a higher slot priority, replacing only their presentation while leaving the native rc2 Schedule service, task detail, created-task cards, header utilities, and Session markers in place.
+Version **0.6.0 is the rc2 rewrite of the same package**, not a new package name. It does **not** add a second Schedule tab. The plugin reuses the shipped `schedules` sidebar/list cell and `main` keyed cell with higher slot priority, replacing only their presentation while leaving the native rc2 Schedule service, task detail, created-task cards, header utilities, and Session markers in place.
 
-It remains a separate package from the legacy `@stolyarovmn/dsh-client-ui-schedule-tab` package. The rc2 implementation reads only the native Host-wide Schedule API and contains no Session-projection compatibility code.
+The 0.6.x code path is intentionally rc2-only: it reads the native Host-wide Schedule API and contains no Session-projection compatibility layer.
 
 ## What it adds
 
@@ -70,31 +70,25 @@ Deleting a task is a hard delete: future deliveries stop and the saved delivery 
 
 ## rc1 / older DSH
 
-Use the separate legacy package:
+The package name stays the same across the transition:
 
 ```text
-@stolyarovmn/dsh-client-ui-schedule-tab@0.5.1
+@stolyarovmn/dsh-client-ui-schedule-tab@0.5.1  -> pre-rc2 DSH
+@stolyarovmn/dsh-client-ui-schedule-tab@0.6.0  -> DSH 0.1.7-rc.2 only
 ```
 
-The legacy plugin is preserved on the `legacy/0.5.x` branch of this repository.
+The pre-rc2 implementation is preserved on the `legacy/0.5.x` branch.
 
-There is deliberately **no migration/fallback implementation in this rc2 plugin**. DSH rc2 itself does not migrate historical Session-log reminders into the Host Schedule store; old reminders must be recreated explicitly if they are still needed.
+There is deliberately **no migration/fallback implementation inside 0.6.x**. DSH rc2 itself does not migrate historical Session-log reminders into the Host Schedule store; old reminders must be recreated explicitly if they are still needed.
 
 ## Install
 
-**Required DSH version: `0.1.7-rc.2`.** The package declares the exact peer dependency `@deepseek-ai/dsh: 0.1.7-rc.2`.
+**Required DSH version: `0.1.7-rc.2`.** Version 0.6.0 declares the exact peer dependency `@deepseek-ai/dsh: 0.1.7-rc.2`.
 
-Do not install the legacy and rc2 packages into the same Web profile. If the legacy package is already present, remove it first:
-
-```bash
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web remove @stolyarovmn/dsh-client-ui-schedule-tab
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-control-center@0.1.0
-```
-
-For the development branch before npm publication:
+If you currently use 0.5.1, upgrade DSH to rc2 first, then upgrade the same plugin package:
 
 ```bash
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add "git+https://github.com/Stolyarovmn/dsh-schedule-tab.git#feature/rc2-native-control-center-clean"
+pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.0
 ```
 
 Then restart `dsh web` completely.
