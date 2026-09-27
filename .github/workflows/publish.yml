@@ -8,6 +8,7 @@ on:
       - lib/**
       - icon.svg
       - cordis.patch.yml
+      - README.md
       - .github/workflows/publish.yml
       - .github/release-notes/**
   release:
@@ -39,13 +40,10 @@ jobs:
         shell: bash
         run: |
           VERSION="$(node -p "require('./package.json').version")"
-          test "${{ github.event.release.tag_name }}" = "v$VERSION"
+          test "${{ github.event.release.tag_name }}" = "control-center-v$VERSION"
 
       - name: Test package
-        run: npm test
-
-      - name: Validate browser bundle
-        run: npm run test:bundle
+        run: npm run test:all
 
       - name: Verify package contents
         run: npm pack --dry-run
@@ -54,11 +52,12 @@ jobs:
         id: published
         shell: bash
         run: |
+          NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
-          CURRENT="$(npm view @stolyarovmn/dsh-client-ui-schedule-tab@"$VERSION" version 2>/dev/null || true)"
+          CURRENT="$(npm view "$NAME@$VERSION" version 2>/dev/null || true)"
           if [ "$CURRENT" = "$VERSION" ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Version $VERSION is already on npm; nothing to publish."
+            echo "$NAME@$VERSION is already on npm; nothing to publish."
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
@@ -76,15 +75,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
-          TAG="v$VERSION"
-          NOTES=".github/release-notes/$TAG.md"
+          TAG="control-center-v$VERSION"
+          NOTES=".github/release-notes/v$VERSION.md"
           test -f "$NOTES"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "GitHub release $TAG already exists; nothing to create."
           else
             gh release create "$TAG" \
               --target "$GITHUB_SHA" \
-              --title "ui-schedule-tab $VERSION" \
+              --title "$NAME $VERSION" \
               --notes-file "$NOTES"
           fi
