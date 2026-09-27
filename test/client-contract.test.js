@@ -26,6 +26,7 @@ for (const forbidden of [
   'LegacySchedule',
   '0.1.5-rc.3',
   '0.1.7-rc.1',
+  'setInterval(',
 ]) assert.ok(!client.includes(forbidden), `legacy compatibility leaked into rc2 client: ${forbidden}`);
 
 assert.ok(client.includes('const TASK_KIND = "scheduleTask"'));
@@ -54,7 +55,8 @@ assert.ok(client.includes('edit.unit.seconds'), "editor must retain seconds/minu
 assert.ok(client.includes('edit.invalidZone'), "editor must validate IANA time zones before update");
 assert.ok(client.includes('schedule_conflict'), "editor must surface compare-and-update conflicts");
 
-assert.ok(client.includes('onClick: (event) => openTask(record, event)'), "whole-card activation must keep Session and task-detail navigation");
+assert.ok(client.includes('className: "scc_rowMain"'), "task primary activation must be separated from row action buttons");
+assert.ok(client.includes('onClick: (event) => openTask(record, event)'), "task primary activation must keep Session and task-detail navigation");
 assert.ok(client.includes('onClick: (event) => openInline(record, "rule", event)'), "edit icon must open the inline Rules pane");
 assert.ok(client.includes('onClick: (event) => openInline(record, "records", event)'), "history icon must open Delivery records");
 assert.ok(client.includes('"edit.rule.weekdays": "Monday to Friday"'), "Mon-Fri convenience rule must remain available");
@@ -65,3 +67,16 @@ assert.ok(!client.includes('recordTimeZone(record)'), "inline detail must use re
 assert.ok(client.includes('const zone = recordZone(record) ?? systemTimeZone()'), "inline editor must seed its time zone through recordZone");
 
 console.log("rc2 client contract validation passed");
+
+assert.ok(client.includes('function adaptiveTickDelay(records, now)'), "client must use adaptive time refresh");
+assert.ok(client.includes('react.useMemo(() => orderRows'), "task sorting must be memoized");
+assert.ok(client.includes('react.useMemo(() => filterRows'), "task filtering must be memoized");
+assert.ok(client.includes('react.useMemo(() => groupsFor'), "task grouping must be memoized");
+assert.ok(client.includes('const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2"'), "delivery-aware seen state must use v2 storage");
+assert.ok(client.includes('const LEGACY_SEEN_STORAGE_KEY = PACKAGE + "/seen-v1"'), "seen-v1 migration must remain supported");
+assert.ok(client.includes('function deliverySeenKey(record)'), "deliveries must have their own seen identity");
+assert.ok(client.includes('unreadDeliveries'), "sidebar unread state must distinguish delivery results");
+assert.ok(client.includes('const ru = {'), "Russian locale must be registered");
+assert.ok(client.includes('ctx.locale.register(NS, { en, zh, ru })'), "Russian locale must be enabled");
+assert.ok(client.includes('"new": "New conversation"'), "create action label must match the actual startSession behavior");
+assert.ok(client.includes('"new.hint"'), "create action must explain how a reminder is created");
