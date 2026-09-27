@@ -1,16 +1,9 @@
-# DSH 0.1.7-rc.2 only.
-#
-# These three rows ship with the Web profile but are disabled by default in rc2.
-# Enable them declaratively, exactly as the upstream Schedule test overlays do.
 - id: time-context
   disabled: false
 - id: schedule
   disabled: false
 - id: ui-schedule
   disabled: false
-
-# Add the separate control-center surface. It reads the native Host Schedule API
-# and delegates task editing to the native ui-schedule detail.
 - insert:
     - id: schedule-control-center
       name: '@stolyarovmn/dsh-client-ui-schedule-tab'
