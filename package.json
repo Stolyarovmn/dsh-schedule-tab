@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "DSH 0.1.7-rc.2 ONLY: enhances the native Automation tasks UI with richer cards, filters, notifications, inline Rules/Delivery records, and Host Schedule management.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
@@ -14,8 +14,10 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "test": "node test/host.test.js && node test/client-contract.test.js",
-    "test:bundle": "node test/bundle.test.js && node --check lib/client.js",
+    "build:client": "node scripts/build-client.mjs",
+    "build:check": "node scripts/build-client.mjs --check",
+    "test": "node test/host.test.js && node test/schedule-core.test.js && node test/catalog-source.test.js && node test/client-contract.test.js",
+    "test:bundle": "node test/bundle.test.js && npm run build:check && node --check lib/client.js",
     "test:all": "npm test && npm run test:bundle"
   },
   "files": [
