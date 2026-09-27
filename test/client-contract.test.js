@@ -59,3 +59,10 @@ assert.ok(client.includes('edit.rule.weekdays'), "editor must retain the native 
 assert.ok(client.includes('edit.unit.seconds'), "editor must retain native seconds/minutes/hours interval choices");
 assert.ok(client.includes('edit.invalidZone'), "editor must validate IANA time zones before native update");
 assert.ok(client.includes('schedule_conflict'), "editor must surface native compare-and-update conflicts without dropping the draft");
+
+assert.ok(client.includes('onClick: (event) => openTask(record, event)'), "whole-card activation must keep native Session + right-sidebar navigation");
+assert.ok(client.includes('onClick: (event) => openInline(record, "rule", event)'), "edit icon must stay on Automation tasks and open the inline Rules pane");
+assert.ok(client.includes('onClick: (event) => openInline(record, "records", event)'), "history icon must stay on Automation tasks and open Delivery records");
+assert.ok(client.includes('"edit.rule.weekdays": "Monday to Friday"'), "native Mon-Fri convenience rule must remain available");
+assert.ok(client.includes('fractionalSecondDigits: 3'), "one-shot and wall-clock editing must preserve rc2 millisecond precision");
+assert.ok(client.includes('void catalog.refresh(catalogState.readRequest)'), "conflicts/ended updates must refresh authoritative catalog state");
