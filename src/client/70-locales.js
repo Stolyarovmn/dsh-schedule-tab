@@ -1,7 +1,7 @@
 		const en = {
 			"tab": "Automation tasks",
 			"header": "Automation tasks",
-			"count": "{visible} / {total} tasks",
+			"count": "{visible} shown",
 			"new": "New conversation",
 			"new.hint": "Start a conversation where you can ask DSH to create an automation task.",
 			"retry": "Retry",
@@ -145,6 +145,7 @@
 			...en,
 			"tab": "自动化任务",
 			"header": "自动化任务",
+			"count": "显示 {visible}",
 			"new": "新建对话",
 			"new.hint": "开始一个新对话，并让 DSH 创建自动化任务。",
 			"retry": "重试",
@@ -245,7 +246,7 @@
 
 		const ru = {
 			...en,
-			"tab": "Задачи автоматизации", "header": "Задачи автоматизации", "count": "{visible} / {total} задач",
+			"tab": "Задачи автоматизации", "header": "Задачи автоматизации", "count": "Показано: {visible}",
 			"new": "Новый диалог", "new.hint": "Откройте новый диалог и попросите DSH создать задачу автоматизации.",
 			"retry": "Повторить", "catalog.stale": "Не удалось обновить задачи. Показан последний успешно загруженный каталог.",
 			"search.placeholder": "Поиск по названию, тексту, ID задачи или диалогу…", "search.aria": "Поиск запланированных задач", "search.clear": "Очистить поиск",
