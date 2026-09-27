@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           VERSION="$(node -p "require('./package.json').version")"
-          test "${{ github.event.release.tag_name }}" = "control-center-v$VERSION"
+          test "${{ github.event.release.tag_name }}" = "v$VERSION"
 
       - name: Test package
         run: npm run test:all
@@ -65,17 +65,9 @@ jobs:
 
       - name: Publish
         if: steps.published.outputs.exists != 'true'
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
         run: |
-          if [ -n "${NPM_TOKEN:-}" ]; then
-            export NODE_AUTH_TOKEN="$NPM_TOKEN"
-            echo "Publishing with the configured npm token (needed for a package's first publish)."
-          else
-            unset NODE_AUTH_TOKEN
-            echo "No npm token configured; using npm Trusted Publishing/OIDC."
-          fi
+          unset NODE_AUTH_TOKEN
           npm publish --access public --provenance
 
       - name: Create GitHub release
@@ -86,7 +78,7 @@ jobs:
         run: |
           NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
-          TAG="control-center-v$VERSION"
+          TAG="v$VERSION"
           NOTES=".github/release-notes/v$VERSION.md"
           test -f "$NOTES"
           if gh release view "$TAG" >/dev/null 2>&1; then
