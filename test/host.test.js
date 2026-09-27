@@ -103,4 +103,55 @@ const noSchedule = await preExecute({
 }, async () => ({ kind: "allow" }));
 assert.equal(noSchedule.kind, "allow");
 
+
+
+const rc2Seen = [];
+const rc2Prompt = { section: () => {} };
+const rc2Tools = { get: () => undefined };
+const rc2Ctx = {
+	loader: {
+		store: Object.create(null),
+		await: async () => { rc2Seen.push("loader:await"); },
+	},
+	effect: async fn => { await fn(); },
+	systemPrompt: rc2Prompt,
+	tools: rc2Tools,
+	on: () => () => {},
+	provide: name => { rc2Seen.push(`provide:${name}`); },
+};
+function configuredEntry(id) {
+	const entry = {
+		disabled: true,
+		fiber: undefined,
+		async update({ disabled }) {
+			entry.disabled = disabled;
+			rc2Seen.push(`${disabled ? "disable" : "enable"}:${id}`);
+			if (!disabled) {
+				entry.fiber = {
+					await: async () => { rc2Seen.push(`ready:${id}`); },
+					dispose: async () => {},
+				};
+			} else {
+				entry.fiber = undefined;
+			}
+		},
+	};
+	return entry;
+}
+rc2Ctx.loader.store["time-context"] = configuredEntry("time-context");
+rc2Ctx.loader.store.schedule = configuredEntry("schedule");
+
+await apply(rc2Ctx);
+
+assert.equal(rc2Seen[0], "provide:scheduleTabBootstrap",
+	"rc2 must release session-controller before enabling Host Schedule");
+assert.ok(rc2Seen.indexOf("enable:schedule") > rc2Seen.indexOf("provide:scheduleTabBootstrap"),
+	"rc2 Schedule activation happens only after the bootstrap service is present");
+assert.ok(rc2Seen.includes("ready:time-context"), "rc2 configured time-context row is awaited");
+assert.ok(rc2Seen.includes("ready:schedule"), "rc2 configured Schedule row is awaited");
+assert.equal(rc2Seen.filter(value => value === "provide:scheduleTabBootstrap").length, 1,
+	"rc2 bootstrap service is published exactly once");
+
+console.log("host rc2 Schedule activation validation passed");
+
 console.log("host reminder routing validation passed");
