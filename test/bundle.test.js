@@ -3,44 +3,33 @@ import { readFileSync } from "node:fs";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf8");
+const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
 
-assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
-assert.equal(pkg.version, "0.5.1");
+assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-control-center");
+assert.equal(pkg.version, "0.1.0");
+assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.7-rc.2");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
-assert.ok(pkg.keywords.includes("dsh-plugin"));
-assert.ok(pkg.keywords.includes("deepseek-harness"));
-assert.equal(pkg.dsh?.catalog?.category, "ui");
-assert.equal(typeof pkg.dsh?.catalog?.summary?.en, "string");
-assert.equal(typeof pkg.dsh?.catalog?.summary?.zh, "string");
-assert.ok(pkg.dsh.catalog.summary.en.length <= 200);
-assert.ok(pkg.dsh.catalog.summary.zh.length <= 200);
-assert.deepEqual(pkg.dsh?.catalog?.capabilities, ["slots", "locale", "sessions", "workspace"]);
-assert.ok(pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-client-ui-workspace"));
-assert.ok(!pkg.dsh?.client?.inject?.includes("@deepseek-ai/dsh-client-ui-layout"));
-assert.ok(pkg.files.includes("cordis.patch.yml"));
-assert.ok(pkg.files.includes("lib/index.js"));
-assert.ok(pkg.files.includes("lib/client.js"));
+for (const dependency of [
+  "@deepseek-ai/dsh-api-remotes",
+  "@deepseek-ai/dsh-api-session-controller",
+  "@deepseek-ai/dsh-api-workspace-controller",
+  "@deepseek-ai/dsh-client-ui-sidebar-right",
+  "@deepseek-ai/dsh-client-ui-workspace",
+]) assert.ok(pkg.dsh.client.inject.includes(dependency), `missing client dependency ${dependency}`);
 
-assert.match(patch, /id:\s*session-controller/);
-assert.match(patch, /inject:\s*\[scheduleTabBootstrap\]/);
-assert.match(patch, /id:\s*schedule-tab/);
-assert.match(patch, /name:\s*['"]@stolyarovmn\/dsh-client-ui-schedule-tab['"]/);
+assert.match(patch, /id:\s*schedule-control-center/);
+assert.match(patch, /@stolyarovmn\/dsh-client-ui-schedule-control-center/);
+assert.doesNotMatch(patch, /session-controller/);
+assert.doesNotMatch(patch, /scheduleTabBootstrap/);
 
-const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
-assert.match(host, /@deepseek-ai\/dsh-schedule/);
-assert.match(host, /@deepseek-ai\/dsh-time-context/);
-assert.match(host, /ctx\.loader\.create/);
-assert.match(host, /entry\.fiber\.await/);
-assert.match(host, /ctx\.provide\(["']scheduleTabBootstrap["']/);
-assert.match(host, /schedule-tab:reminder-tool-routing/);
-assert.match(host, /tools\/pre-execute/);
-assert.match(host, /Background shell timers are not reminders/);
-assert.ok(!host.includes('from "@deepseek-ai/dsh-schedule"'));
-assert.ok(!host.includes('from "@deepseek-ai/dsh-time-context"'));
+for (const id of ["time-context", "schedule", "ui-schedule"]) assert.ok(host.includes(`"${id}"`));
+assert.ok(!host.includes("loader.create"), "rc2 plugin must enable shipped native rows, not create legacy dynamic rows");
+assert.ok(!host.includes("systemPrompt"));
+assert.ok(!host.includes("tools/pre-execute"));
 
 for (const script of ["preinstall", "install", "postinstall", "prepare"]) {
   assert.equal(pkg.scripts?.[script], undefined, `${script} must not execute during installation`);
 }
 
-console.log("bundle manifest validation passed");
+console.log("rc2 bundle manifest validation passed");
