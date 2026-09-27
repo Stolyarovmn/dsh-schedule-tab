@@ -16,15 +16,16 @@ It is intentionally a separate plugin from the legacy `@stolyarovmn/dsh-client-u
 - Correct stored wall-clock rule and IANA zone display for Daily/Weekly/Cron tasks.
 - Retained inactive one-shot tasks from the rc2 catalog.
 - Latest occurrence and durable delivery acknowledgment metadata.
-- Native hard **Delete**, with authoritative catalog readback before the row disappears.
+- Native hard **Delete**, with the shipped DSH `Modal` confirmation and authoritative catalog readback before the row disappears.
 - Paged **Delivery history** from `schedule.history()`.
 - Delivery occurrence and acknowledgment timestamps are shown separately.
 - Recurring delivery occurrences are formatted in the rule's stored IANA zone.
-- Saved prompt snapshots and message ids are shown; message ids can be copied.
+- Saved prompt snapshots and message ids are shown; message ids use the shared DSH clipboard helper and an icon action.
 - Invalid history cursors get a dedicated refresh path.
 - Confirmed history pruning shows the Host retention limits returned by the API.
 - `schedule/changed` and connection reset both invalidate the catalog; late catalog responses cannot replace newer reads.
-- **Open details / edit** delegates to DSH rc2's native `scheduleTask` detail UI instead of reimplementing its timezone, calendar, weekday, and Cron editors.
+- Clicking a task card or its edit icon opens the source Session and then the native rc2 `scheduleTask` detail as soon as that Session's right Sidebar mounts. This is required because the native right Sidebar is Session-scoped and is not mounted on a root panel such as Schedule+.
+- Row actions use native DSH icon buttons + tooltips where the meaning is unambiguous: edit, delivery history, conversation, delete, and copy message id.
 - **New reminder** starts a new Session, matching native rc2 semantics: creation remains model-driven through the Schedule tools.
 
 The plugin does **not** implement a scheduler, task database, pause/resume, Run now, or an execution-success state. DSH remains the single source of truth.
@@ -41,7 +42,7 @@ DSH rc2's native task detail owns several non-trivial semantics that should stay
 - Cron validation and canonicalization behavior;
 - inactive-task read-only behavior.
 
-The control center therefore opens the native task detail for editing instead of carrying a second timing editor that could drift from DSH.
+The control center therefore opens the native task detail for editing instead of carrying a second timing editor that could drift from DSH. Because DSH's right Sidebar is Session-scoped, opening from the global Schedule+ page first switches to the task's source Session, waits for the public `sidebarRight.mounted` source to report that Session, and only then opens `scheduleTask`.
 
 ## Delivery history semantics
 
