@@ -22,7 +22,7 @@ assert.match(patch, /id:\s*time-context[\s\S]*disabled:\s*false/);
 assert.match(patch, /id:\s*schedule[\s\S]*disabled:\s*false/);
 assert.match(patch, /id:\s*ui-schedule[\s\S]*disabled:\s*false/);
 assert.match(patch, /id:\s*schedule-control-center/);
-assert.match(patch, /@stolyarovmn\/dsh-client-ui-schedule-control-center/);
+assert.match(patch, /@stolyarovmn\/dsh-client-ui-schedule-tab/);
 assert.doesNotMatch(patch, /session-controller/);
 assert.doesNotMatch(patch, /scheduleTabBootstrap/);
 
