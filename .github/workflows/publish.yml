@@ -31,6 +31,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          registry-url: https://registry.npmjs.org
 
       - name: Update npm for trusted publishing
         run: npm install --global npm@latest
@@ -64,10 +65,18 @@ jobs:
 
       - name: Publish
         if: steps.published.outputs.exists != 'true'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
         run: |
-          unset NODE_AUTH_TOKEN
-          npm publish --access public
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            export NODE_AUTH_TOKEN="$NPM_TOKEN"
+            echo "Publishing with the configured npm token (needed for a package's first publish)."
+          else
+            unset NODE_AUTH_TOKEN
+            echo "No npm token configured; using npm Trusted Publishing/OIDC."
+          fi
+          npm publish --access public --provenance
 
       - name: Create GitHub release
         if: github.event_name == 'push'
