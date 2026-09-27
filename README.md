@@ -1,5 +1,8 @@
 # DSH Automation Tasks Enhancer
 
+> **Compatibility:** this package is for **DeepSeek Harness 0.1.7-rc.2 only**.  
+> Do **not** install it on `0.1.7-rc.1`, `0.1.5-rc.3`, or older DSH builds. For pre-rc2 DSH use `@stolyarovmn/dsh-client-ui-schedule-tab@0.5.1`.
+
 `@stolyarovmn/dsh-client-ui-schedule-control-center` is a Web UI enhancement for the **native Automation tasks panel in DeepSeek Harness 0.1.7-rc.2**.
 
 It does **not** add a second Schedule tab. The plugin intentionally reuses the shipped `schedules` sidebar/list cell and `main` keyed cell with a higher slot priority, replacing only their presentation while leaving the native rc2 Schedule service, task detail, created-task cards, header utilities, and Session markers in place.
@@ -78,6 +81,8 @@ The legacy plugin is preserved on the `legacy/0.5.x` branch of this repository.
 There is deliberately **no migration/fallback implementation in this rc2 plugin**. DSH rc2 itself does not migrate historical Session-log reminders into the Host Schedule store; old reminders must be recreated explicitly if they are still needed.
 
 ## Install
+
+**Required DSH version: `0.1.7-rc.2`.** The package declares the exact peer dependency `@deepseek-ai/dsh: 0.1.7-rc.2`.
 
 Do not install the legacy and rc2 packages into the same Web profile. If the legacy package is already present, remove it first:
 
