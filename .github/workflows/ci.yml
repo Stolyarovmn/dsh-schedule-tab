@@ -21,12 +21,6 @@ jobs:
 
   dsh-install-smoke:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dsh:
-          - 0.1.5-rc.3
-          - 0.1.7-rc.1
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -35,66 +29,55 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install plugin with DSH ${{ matrix.dsh }}
+      - name: Install plugin with DSH 0.1.7-rc.2
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
         run: |
-          pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --from-default-profile web --dump-config > /dev/null
-          pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} plugin --profile smoke add "file:$GITHUB_WORKSPACE"
-          pnpm dlx @deepseek-ai/dsh@${{ matrix.dsh }} --profile smoke --dump-config > /tmp/dsh-config.txt
-          grep -F "schedule-tab" /tmp/dsh-config.txt
-          grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
-          grep -F "session-controller" /tmp/dsh-config.txt
-          grep -F "scheduleTabBootstrap" /tmp/dsh-config.txt
+          pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 --profile smoke --from-default-profile web --dump-config > /dev/null
+          pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile smoke add "file:$GITHUB_WORKSPACE"
+          pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 --profile smoke --dump-config > /tmp/dsh-config.txt
+          grep -F "schedule-control-center" /tmp/dsh-config.txt
+          grep -F "@stolyarovmn/dsh-client-ui-schedule-control-center" /tmp/dsh-config.txt
+          grep -F "id: time-context" /tmp/dsh-config.txt
+          grep -F "id: schedule" /tmp/dsh-config.txt
+          grep -F "id: ui-schedule" /tmp/dsh-config.txt
+          ! grep -F "scheduleTabBootstrap" /tmp/dsh-config.txt
           (
             cd "$DSH_HOME/profiles/smoke"
             node --input-type=module -e '
-              const plugin = await import("@stolyarovmn/dsh-client-ui-schedule-tab");
+              const plugin = await import("@stolyarovmn/dsh-client-ui-schedule-control-center");
               const seen = [];
-              const entries = new Map();
-              let serial = 0;
+              const makeEntry = (id) => {
+                const entry = {
+                  disabled: true,
+                  fiber: undefined,
+                  async update({ disabled }) {
+                    entry.disabled = disabled;
+                    seen.push((disabled ? "disable:" : "enable:") + id);
+                    entry.fiber = disabled ? undefined : { await: async () => seen.push("ready:" + id) };
+                  },
+                };
+                return entry;
+              };
               const ctx = {
                 loader: {
-                  store: Object.create(null),
-                  create: async ({ name }) => {
-                    const id = "dynamic-" + String(++serial);
-                    const entry = {
-                      fiber: {
-                        await: async () => { seen.push("ready:" + name); },
-                        dispose: async () => { seen.push("dispose:" + name); },
-                      },
-                    };
-                    entries.set(id, entry);
-                    ctx.loader.store[id] = entry;
-                    seen.push("create:" + name);
-                    return id;
+                  store: {
+                    "time-context": makeEntry("time-context"),
+                    schedule: makeEntry("schedule"),
+                    "ui-schedule": makeEntry("ui-schedule"),
                   },
-                  resolve: (id) => entries.get(id),
-                  remove: (id) => {
-                    delete ctx.loader.store[id];
-                    entries.delete(id);
-                  },
+                  await: async () => {},
                 },
                 effect: async (fn) => { await fn(); },
-                systemPrompt: {
-                  section: () => {},
-                },
-                tools: {
-                  get: () => undefined,
-                },
-                on: () => () => {},
-                provide: (name) => { seen.push("provide:" + name); },
               };
               await plugin.apply(ctx);
               const expected = [
-                "create:@deepseek-ai/dsh-time-context",
-                "ready:@deepseek-ai/dsh-time-context",
-                "create:@deepseek-ai/dsh-schedule",
-                "ready:@deepseek-ai/dsh-schedule",
-                "provide:scheduleTabBootstrap",
+                "enable:time-context", "ready:time-context",
+                "enable:schedule", "ready:schedule",
+                "enable:ui-schedule", "ready:ui-schedule",
               ];
               if (JSON.stringify(seen) !== JSON.stringify(expected)) {
-                throw new Error("unexpected bootstrap order: " + JSON.stringify(seen));
+                throw new Error("unexpected rc2 bootstrap: " + JSON.stringify(seen));
               }
             '
           )
