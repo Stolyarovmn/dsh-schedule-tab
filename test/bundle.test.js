@@ -6,10 +6,12 @@ const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf
 const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
 
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
-assert.equal(pkg.version, "0.6.0");
+assert.equal(pkg.version, "0.6.1");
 assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.7-rc.2");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
+assert.equal(pkg.scripts?.["build:client"], "node scripts/build-client.mjs");
+assert.equal(pkg.scripts?.["build:check"], "node scripts/build-client.mjs --check");
 for (const dependency of [
   "@deepseek-ai/dsh-api-remotes",
   "@deepseek-ai/dsh-api-session-controller",
