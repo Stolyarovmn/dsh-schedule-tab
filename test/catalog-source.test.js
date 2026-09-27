@@ -29,14 +29,15 @@ const unsubscribe = source.subscribe(() => {});
 assert.equal(resolvers.length, 1, "subscription must start an authoritative read");
 
 await Promise.resolve();
-source.refresh();
+const newerRead = source.refresh();
 assert.equal(resolvers.length, 2, "later refresh must start a newer read");
 
 resolvers[1]({ ok: true, value: [{ id: "new" }] });
-await Promise.resolve();
+await newerRead;
 assert.equal(source.getSnapshot().records[0].id, "new");
 
 resolvers[0]({ ok: true, value: [{ id: "old" }] });
+await Promise.resolve();
 await Promise.resolve();
 assert.equal(source.getSnapshot().records[0].id, "new", "stale response must not overwrite the newer snapshot");
 
