@@ -1,8 +1,10 @@
-# DSH Schedule Control Center
+# DSH Automation Tasks Enhancer
 
-`@stolyarovmn/dsh-client-ui-schedule-control-center` is a Web UI extension for **DeepSeek Harness 0.1.7-rc.2 only**.
+`@stolyarovmn/dsh-client-ui-schedule-control-center` is a Web UI enhancement for the **native Automation tasks panel in DeepSeek Harness 0.1.7-rc.2**.
 
-It is intentionally a separate plugin from the legacy `@stolyarovmn/dsh-client-ui-schedule-tab` package. The rc2 implementation reads only the native Host-wide Schedule API and contains no Session-projection compatibility code.
+It does **not** add a second Schedule tab. The plugin intentionally reuses the shipped `schedules` sidebar/list cell and `main` keyed cell with a higher slot priority, replacing only their presentation while leaving the native rc2 Schedule service, task detail, created-task cards, header utilities, and Session markers in place.
+
+It remains a separate package from the legacy `@stolyarovmn/dsh-client-ui-schedule-tab` package. The rc2 implementation reads only the native Host-wide Schedule API and contains no Session-projection compatibility code.
 
 ## What it adds
 
@@ -24,8 +26,9 @@ It is intentionally a separate plugin from the legacy `@stolyarovmn/dsh-client-u
 - Invalid history cursors get a dedicated refresh path.
 - Confirmed history pruning shows the Host retention limits returned by the API.
 - `schedule/changed` and connection reset both invalidate the catalog; late catalog responses cannot replace newer reads.
-- Clicking a task card or its edit icon opens the source Session and then the native rc2 `scheduleTask` detail as soon as that Session's right Sidebar mounts. This is required because the native right Sidebar is Session-scoped and is not mounted on a root panel such as Schedule+.
-- Row actions use native DSH icon buttons + tooltips where the meaning is unambiguous: edit, delivery history, conversation, delete, and copy message id.
+- Clicking a task card or its edit icon opens the source Session and then the native rc2 `scheduleTask` detail as soon as that Session's right Sidebar mounts.
+- The redundant Conversation action is removed: the card/edit action already enters the source Session before opening native task detail.
+- Row actions use native DSH icon buttons + tooltips where the meaning is unambiguous: edit, delivery history, delete, and copy message id.
 - **New reminder** starts a new Session, matching native rc2 semantics: creation remains model-driven through the Schedule tools.
 
 The plugin does **not** implement a scheduler, task database, pause/resume, Run now, or an execution-success state. DSH remains the single source of truth.
@@ -42,7 +45,7 @@ DSH rc2's native task detail owns several non-trivial semantics that should stay
 - Cron validation and canonicalization behavior;
 - inactive-task read-only behavior.
 
-The control center therefore opens the native task detail for editing instead of carrying a second timing editor that could drift from DSH. Because DSH's right Sidebar is Session-scoped, opening from the global Schedule+ page first switches to the task's source Session, waits for the public `sidebarRight.mounted` source to report that Session, and only then opens `scheduleTask`.
+The enhanced Automation tasks page therefore opens the native task detail for editing instead of carrying a second timing editor that could drift from DSH. Because DSH's right Sidebar is Session-scoped, opening from the Automation tasks page first switches to the task's source Session, waits for the public `sidebarRight.mounted` source to report that Session, and only then opens `scheduleTask`.
 
 ## Delivery history semantics
 
@@ -108,4 +111,4 @@ npm run test:all
 npm pack --dry-run
 ```
 
-CI also installs the package into a generated DSH `0.1.7-rc.2` Web profile and verifies that the plugin and native Schedule rows compose successfully.
+CI also installs the package into a generated DSH `0.1.7-rc.2` Web profile and verifies that the plugin and native Schedule rows compose successfully. The plugin deliberately shadows the native `schedules` main/panellist presentation through the documented keyed/list slot priority mechanism; it does not create a second navigation entry.
