@@ -31,6 +31,11 @@
 
 			const ordered = react.useMemo(() => orderRows(catalogState.records, now), [catalogState.records, now]);
 			const visible = react.useMemo(() => filterRows(ordered, query, filter, now, sessions), [ordered, query, filter, now, sessions]);
+			const statusCounts = react.useMemo(() => ({
+				active: filterRows(ordered, query, "active", now, sessions).length,
+				all: filterRows(ordered, query, "all", now, sessions).length,
+				inactive: filterRows(ordered, query, "inactive", now, sessions).length
+			}), [ordered, query, now, sessions]);
 			const groups = react.useMemo(() => groupsFor(visible, grouping, now, sessions, t, locale), [visible, grouping, now, sessions, t, locale]);
 			const hasControls = query.trim() !== "" || filter !== "active";
 			const selectedRecord = selectedKey === null ? undefined : catalogState.records.find((record) => identity(record) === selectedKey);
@@ -507,7 +512,7 @@
 				children: [
 					jsx.jsxs("header", { className: "scc_header", children: [
 						jsx.jsx("span", { className: "scc_title", children: t("header") }),
-						jsx.jsx("span", { className: "scc_count", children: t("count", { visible: visible.length, total: catalogState.records.length }) }),
+						jsx.jsx("span", { className: "scc_count", children: t("count", { visible: visible.length }) }),
 						jsx.jsx("span", { className: "scc_spacer" }),
 						jsx.jsx(primitives.Tooltip, {
 							label: t("new.hint"),
@@ -541,7 +546,7 @@
 							}) : null
 						] }),
 						jsx.jsxs("div", { className: "scc_toolbarRow", children: [
-							jsx.jsx("div", { className: "scc_filters", children: ["active", "all", "inactive", "today", "overdue", "recurring"].map((name) => jsx.jsx("button", { type: "button", className: "scc_chip" + (filter === name ? " scc_chipActive" : ""), "aria-pressed": filter === name, onClick: () => setFilter(name), children: t("filter." + name) }, name)) }),
+							jsx.jsx("div", { className: "scc_filters", children: ["active", "all", "inactive", "today", "overdue", "recurring"].map((name) => jsx.jsxs("button", { type: "button", className: "scc_chip" + (filter === name ? " scc_chipActive" : ""), "aria-pressed": filter === name, onClick: () => setFilter(name), children: [t("filter." + name), Object.hasOwn(statusCounts, name) ? jsx.jsx("span", { className: "scc_chipCount", children: statusCounts[name] }) : null] }, name)) }),
 							jsx.jsxs("div", { className: "scc_grouping", children: [
 								jsx.jsx("span", { className: "scc_groupLabel", children: t("group.by") }),
 								...["date", "session"].map((name) => jsx.jsx("button", { type: "button", className: "scc_chip" + (grouping === name ? " scc_chipActive" : ""), "aria-pressed": grouping === name, onClick: () => setGrouping(name), children: t("group." + name) }, name))
