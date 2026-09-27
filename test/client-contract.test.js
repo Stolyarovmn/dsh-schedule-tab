@@ -30,9 +30,9 @@ for (const forbidden of [
   '0.1.7-rc.1',
 ]) assert.ok(!client.includes(forbidden), `legacy compatibility leaked into rc2 client: ${forbidden}`);
 
-// Native detail owns timing edits; this plugin stays an overview/history/delete layer.
+// Card navigation still reaches the native Session-scoped detail, while the enhanced
+// Automation tasks page also restores the native manager's in-place edit capability.
 assert.ok(client.includes('const TASK_KIND = "scheduleTask"'));
-assert.ok(!client.includes('schedule.update('), "do not duplicate the native rc2 timing editor");
 assert.ok(client.includes('primitives.Modal'), "delete confirmation must use the native rc2 Modal");
 assert.ok(client.includes('primitives.Tooltip'), "row icon actions must use native tooltips");
 assert.ok(client.includes('primitives.Button'), "actions must use native button primitives");
