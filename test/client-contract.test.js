@@ -42,3 +42,9 @@ assert.ok(!client.includes('window.confirm'), "browser confirm must not replace 
 assert.ok(!client.includes('navigator.clipboard.writeText'), "clipboard writes must use the shared primitive helper");
 
 console.log("rc2 client contract validation passed");
+
+assert.ok(client.includes('const PANEL_ID = "schedules"'), "plugin must enhance the native Automation tasks panel key");
+assert.ok(client.includes('priority: -100'), "native sidebar/main cells must be intentionally shadowed with higher priority");
+assert.ok(client.includes('order: 10'), "enhanced Automation tasks entry keeps the native sidebar position");
+assert.ok(!client.includes('Schedule+'), "rc2 plugin must not create a second Schedule+ tab");
+assert.ok(!client.includes('action.conversation'), "duplicate Conversation row action must stay removed");
