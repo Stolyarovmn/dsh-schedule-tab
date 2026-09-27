@@ -46,39 +46,8 @@ jobs:
             cd "$DSH_HOME/profiles/smoke"
             node --input-type=module -e '
               const plugin = await import("@stolyarovmn/dsh-client-ui-schedule-control-center");
-              const seen = [];
-              const makeEntry = (id) => {
-                const entry = {
-                  disabled: true,
-                  fiber: undefined,
-                  async update({ disabled }) {
-                    entry.disabled = disabled;
-                    seen.push((disabled ? "disable:" : "enable:") + id);
-                    entry.fiber = disabled ? undefined : { await: async () => seen.push("ready:" + id) };
-                  },
-                };
-                return entry;
-              };
-              const ctx = {
-                loader: {
-                  store: {
-                    "time-context": makeEntry("time-context"),
-                    schedule: makeEntry("schedule"),
-                    "ui-schedule": makeEntry("ui-schedule"),
-                  },
-                  await: async () => {},
-                },
-                effect: async (fn) => { await fn(); },
-              };
-              await plugin.apply(ctx);
-              const expected = [
-                "enable:time-context", "ready:time-context",
-                "enable:schedule", "ready:schedule",
-                "enable:ui-schedule", "ready:ui-schedule",
-              ];
-              if (JSON.stringify(seen) !== JSON.stringify(expected)) {
-                throw new Error("unexpected rc2 bootstrap: " + JSON.stringify(seen));
-              }
+              if (plugin.inject.length !== 0) throw new Error("rc2 host entry must be side-effect free");
+              await plugin.apply({});
             '
           )
       - name: Boot DSH Web with plugin
@@ -87,12 +56,16 @@ jobs:
         shell: bash
         run: |
           set +e
-          timeout 15s pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 --profile smoke --no-open > /tmp/dsh-web.log 2>&1
+          timeout 15s pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 --profile smoke --port 0 --no-open > /tmp/dsh-web.log 2>&1
           STATUS=$?
           set -e
           cat /tmp/dsh-web.log
           if grep -Eiq "Failed to load plugins|did not activate|entry did not activate|web boot: .*failed" /tmp/dsh-web.log; then
             echo "DSH Web reported a plugin activation failure."
+            exit 1
+          fi
+          if ! grep -Eq "dsh web: http://127\.0\.0\.1:" /tmp/dsh-web.log; then
+            echo "DSH Web did not reach the ready state."
             exit 1
           fi
           if [ "$STATUS" -ne 0 ] && [ "$STATUS" -ne 124 ]; then
