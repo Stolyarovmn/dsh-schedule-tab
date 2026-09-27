@@ -66,3 +66,6 @@ assert.ok(client.includes('onClick: (event) => openInline(record, "records", eve
 assert.ok(client.includes('"edit.rule.weekdays": "Monday to Friday"'), "native Mon-Fri convenience rule must remain available");
 assert.ok(client.includes('fractionalSecondDigits: 3'), "one-shot and wall-clock editing must preserve rc2 millisecond precision");
 assert.ok(client.includes('void catalog.refresh(catalogState.readRequest)'), "conflicts/ended updates must refresh authoritative catalog state");
+
+assert.ok(!client.includes('recordTimeZone(record)'), "inline detail must use the plugin's recordZone helper; an undefined helper crashes the enhanced panel and exposes the native fallback");
+assert.ok(client.includes('const zone = recordZone(record) ?? systemTimeZone()'), "inline editor must seed its time zone through the defined recordZone helper");
