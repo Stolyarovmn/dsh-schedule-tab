@@ -13,4 +13,4 @@
 # and delegates task editing to the native ui-schedule detail.
 - insert:
     - id: schedule-control-center
-      name: '@stolyarovmn/dsh-client-ui-schedule-control-center'
+      name: '@stolyarovmn/dsh-client-ui-schedule-tab'

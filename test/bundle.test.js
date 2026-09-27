@@ -5,8 +5,8 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf8");
 const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
 
-assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-control-center");
-assert.equal(pkg.version, "0.1.0");
+assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
+assert.equal(pkg.version, "0.6.0");
 assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.7-rc.2");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
@@ -22,7 +22,7 @@ assert.match(patch, /id:\s*time-context[\s\S]*disabled:\s*false/);
 assert.match(patch, /id:\s*schedule[\s\S]*disabled:\s*false/);
 assert.match(patch, /id:\s*ui-schedule[\s\S]*disabled:\s*false/);
 assert.match(patch, /id:\s*schedule-control-center/);
-assert.match(patch, /@stolyarovmn\/dsh-client-ui-schedule-control-center/);
+assert.match(patch, /@stolyarovmn\/dsh-client-ui-schedule-tab/);
 assert.doesNotMatch(patch, /session-controller/);
 assert.doesNotMatch(patch, /scheduleTabBootstrap/);
 
