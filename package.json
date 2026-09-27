@@ -1,6 +1,6 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-control-center",
-  "description": "DSH 0.1.7-rc.2 Schedule control center: global Host task catalog, filters, notifications, deletion, delivery history, and native task detail navigation.",
+  "description": "DSH 0.1.7-rc.2 ONLY: enhances the native Automation tasks UI with richer cards, filters, notifications, inline Rules/Delivery records, and Host Schedule management.",
   "version": "0.1.0",
   "author": {
     "name": "Stolyarovmn",
@@ -33,7 +33,10 @@
     "schedule",
     "automation",
     "reminders",
-    "web-gui"
+    "web-gui",
+    "rc2",
+    "dsh-0.1.7-rc.2",
+    "automation-tasks"
   ],
   "repository": {
     "type": "git",
@@ -60,7 +63,7 @@
     "catalog": {
       "category": "ui",
       "summary": {
-        "en": "Control center for DSH rc2 Host Schedule tasks with notifications, history, deletion, and native task details.",
+        "en": "DSH 0.1.7-rc.2 ONLY: enhanced native Automation tasks UI with richer cards, notifications, filters, history, and task management.",
         "zh": "DSH rc2 Host Schedule 任务控制中心：通知、投递历史、删除和原生任务详情。"
       },
       "capabilities": [
