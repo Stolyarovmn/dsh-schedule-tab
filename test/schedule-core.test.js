@@ -20,8 +20,10 @@ const context = {
 };
 context.globalThis = context;
 
+const notificationPrelude = `const PACKAGE = "@stolyarovmn/dsh-client-ui-schedule-tab"; const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2"; const LEGACY_SEEN_STORAGE_KEY = PACKAGE + "/seen-v1"; const MAX_SEEN_IDS = 4000;`;
+
 vm.runInNewContext(
-  code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markSeen, identity };",
+  notificationPrelude + "\n" + code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markSeen, identity };",
   context,
 );
 
