@@ -1,106 +1,57 @@
 import assert from "node:assert/strict";
-import { apply, REMINDER_GUIDANCE, shellReminderTimer } from "../lib/index.js";
+import { apply, inject } from "../lib/index.js";
 
-assert.equal(shellReminderTimer({
-	name: "pwsh",
-	arguments: { run_in_background: true, command: "Start-Sleep -Seconds 300; Write-Output 'reminder-due'" },
-}), true);
-assert.equal(shellReminderTimer({
-	name: "bash",
-	arguments: { run_in_background: true, command: "sleep 300; echo reminder-due" },
-}), true);
-assert.equal(shellReminderTimer({
-	name: "pwsh",
-	arguments: { run_in_background: false, command: "Start-Sleep -Seconds 1; Write-Output done" },
-}), false);
-assert.equal(shellReminderTimer({
-	name: "pwsh",
-	arguments: { run_in_background: true, command: "Get-Process" },
-}), false);
+assert.deepEqual(inject, ["loader"]);
 
-const seen = [];
-const entries = new Map();
-let serial = 0;
-let promptSection;
-let preExecute;
+function entry(id, disabled = true) {
+  const seen = [];
+  const value = {
+    disabled,
+    fiber: disabled ? undefined : { await: async () => { seen.push(`ready:${id}`); } },
+    async update({ disabled: next }) {
+      value.disabled = next;
+      seen.push(`${next ? "disable" : "enable"}:${id}`);
+      value.fiber = next ? undefined : { await: async () => { seen.push(`ready:${id}`); } };
+    },
+    seen,
+  };
+  return value;
+}
 
+const time = entry("time-context", true);
+const schedule = entry("schedule", true);
+const ui = entry("ui-schedule", false);
+const effects = [];
+const loaderWaits = [];
 const ctx = {
-	loader: {
-		store: Object.create(null),
-		create: async ({ name }) => {
-			const id = `dynamic-${++serial}`;
-			const entry = {
-				fiber: {
-					await: async () => { seen.push(`ready:${name}`); },
-					dispose: async () => {},
-				},
-			};
-			entries.set(id, entry);
-			ctx.loader.store[id] = entry;
-			seen.push(`create:${name}`);
-			return id;
-		},
-		resolve: id => entries.get(id),
-		remove: id => {
-			delete ctx.loader.store[id];
-			entries.delete(id);
-		},
-	},
-	effect: async fn => { await fn(); },
-	systemPrompt: {
-		section: section => { promptSection = section; },
-	},
-	tools: {
-		get: (name, scope) => name === "schedule_create" && scope === "agent" ? { name } : undefined,
-	},
-	on: (event, listener) => {
-		if (event === "tools/pre-execute") preExecute = listener;
-		return () => {};
-	},
-	provide: name => { seen.push(`provide:${name}`); },
+  loader: {
+    store: { "time-context": time, schedule, "ui-schedule": ui },
+    await: async () => { loaderWaits.push("await"); },
+  },
+  effect: async (fn, label) => {
+    effects.push(label);
+    const dispose = await fn();
+    ctx.dispose = dispose;
+  },
 };
 
 await apply(ctx);
+assert.equal(effects[0], "schedule-control-center: enable native rc2 Schedule stack");
+assert.deepEqual(time.seen, ["enable:time-context", "ready:time-context"]);
+assert.deepEqual(schedule.seen, ["enable:schedule", "ready:schedule"]);
+assert.deepEqual(ui.seen, ["ready:ui-schedule"], "already enabled native ui-schedule must not be toggled");
+assert.equal(loaderWaits.length, 3);
 
-assert.deepEqual(seen, [
-	"create:@deepseek-ai/dsh-time-context",
-	"ready:@deepseek-ai/dsh-time-context",
-	"create:@deepseek-ai/dsh-schedule",
-	"ready:@deepseek-ai/dsh-schedule",
-	"provide:scheduleTabBootstrap",
-]);
-assert.equal(promptSection.text({ scope: "agent" }), REMINDER_GUIDANCE);
-assert.equal(promptSection.text({ scope: "other" }), "");
+await ctx.dispose();
+assert.equal(time.disabled, true);
+assert.equal(schedule.disabled, true);
+assert.equal(ui.disabled, false, "plugin unload must not disable a row it did not enable");
+assert.equal(loaderWaits.length, 4);
 
-const denied = await preExecute({
-	name: "pwsh",
-	agent: "agent",
-	arguments: {
-		run_in_background: true,
-		command: "Start-Sleep -Seconds 60; Write-Output 'calls-1-due'",
-	},
-}, async () => ({ kind: "allow" }));
-assert.equal(denied.kind, "deny");
-assert.match(denied.reason, /schedule_create/);
+const missingCtx = {
+  loader: { store: { "time-context": entry("time-context", false) }, await: async () => {} },
+  effect: async (fn) => { await fn(); },
+};
+await assert.rejects(() => apply(missingCtx), /row 'schedule' is missing/);
 
-const allowed = await preExecute({
-	name: "pwsh",
-	agent: "agent",
-	arguments: {
-		run_in_background: true,
-		command: "Get-Process",
-	},
-}, async () => ({ kind: "allow" }));
-assert.equal(allowed.kind, "allow");
-
-const noSchedule = await preExecute({
-	name: "pwsh",
-	agent: "other",
-	arguments: {
-		run_in_background: true,
-		command: "Start-Sleep -Seconds 60; Write-Output 'calls-1-due'",
-	},
-}, async () => ({ kind: "allow" }));
-assert.equal(noSchedule.kind, "allow");
-
-console.log("host reminder routing validation passed");
+console.log("rc2 host bootstrap validation passed");
