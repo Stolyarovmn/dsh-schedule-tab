@@ -48,3 +48,14 @@ assert.ok(client.includes('priority: -100'), "native sidebar/main cells must be 
 assert.ok(client.includes('order: 10'), "enhanced Automation tasks entry keeps the native sidebar position");
 assert.ok(!client.includes('Schedule+'), "rc2 plugin must not create a second Schedule+ tab");
 assert.ok(!client.includes('action.conversation'), "duplicate Conversation row action must stay removed");
+
+assert.ok(client.includes('async update(request)'), "catalog must expose native schedule.update for inline Rules editing");
+assert.ok(client.includes('schedule.update(request)'), "inline editor must save through native rc2 Schedule update");
+assert.ok(client.includes('expected: stripCatalogRecord(editBase)'), "edits must use rc2 compare-and-update expected records");
+assert.ok(client.includes('openInline(record, "rule", event)'), "edit icon must open Rules in-place instead of navigating to the conversation");
+assert.ok(client.includes('openInline(record, "records", event)'), "history icon must open Delivery records in the same task detail");
+assert.ok(client.includes('className: "scc_inlineDetail"'), "enhanced Automation tasks page must retain an inline side detail");
+assert.ok(client.includes('edit.rule.weekdays'), "editor must retain the native Monday-to-Friday rule choice");
+assert.ok(client.includes('edit.unit.seconds'), "editor must retain native seconds/minutes/hours interval choices");
+assert.ok(client.includes('edit.invalidZone'), "editor must validate IANA time zones before native update");
+assert.ok(client.includes('schedule_conflict'), "editor must surface native compare-and-update conflicts without dropping the draft");
