@@ -81,3 +81,22 @@ jobs:
               }
             '
           )
+      - name: Boot DSH Web with plugin
+        env:
+          DSH_HOME: ${{ runner.temp }}/dsh-home
+        shell: bash
+        run: |
+          set +e
+          timeout 15s pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 web --profile smoke > /tmp/dsh-web.log 2>&1
+          STATUS=$?
+          set -e
+          cat /tmp/dsh-web.log
+          if grep -Eiq "Failed to load plugins|did not activate|entry did not activate|web boot: .*failed" /tmp/dsh-web.log; then
+            echo "DSH Web reported a plugin activation failure."
+            exit 1
+          fi
+          if [ "$STATUS" -ne 0 ] && [ "$STATUS" -ne 124 ]; then
+            echo "DSH Web exited unexpectedly with status $STATUS."
+            exit "$STATUS"
+          fi
+
