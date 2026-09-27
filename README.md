@@ -26,26 +26,36 @@ It remains a separate package from the legacy `@stolyarovmn/dsh-client-ui-schedu
 - Invalid history cursors get a dedicated refresh path.
 - Confirmed history pruning shows the Host retention limits returned by the API.
 - `schedule/changed` and connection reset both invalidate the catalog; late catalog responses cannot replace newer reads.
-- Clicking a task card or its edit icon opens the source Session and then the native rc2 `scheduleTask` detail as soon as that Session's right Sidebar mounts.
-- The redundant Conversation action is removed: the card/edit action already enters the source Session before opening native task detail.
+- Clicking a task card keeps the native navigation behavior: it opens the source Session and then the native rc2 `scheduleTask` right-Sidebar detail.
+- The **edit icon is deliberately different**: it keeps you inside Automation tasks and opens a right-hand Rules pane in the same page. The history icon opens the same pane on Delivery records.
+- The redundant Conversation action is removed. The card already performs the conversation/native-detail navigation; the edit icon is reserved for in-place editing.
 - Row actions use native DSH icon buttons + tooltips where the meaning is unambiguous: edit, delivery history, delete, and copy message id.
 - **New reminder** starts a new Session, matching native rc2 semantics: creation remains model-driven through the Schedule tools.
 
 The plugin does **not** implement a scheduler, task database, pause/resume, Run now, or an execution-success state. DSH remains the single source of truth.
 
-## Why editing is delegated to native rc2 UI
+## Editing and native rc2 parity
 
-DSH rc2's native task detail owns several non-trivial semantics that should stay in one place:
+The shipped rc2 Automation tasks page normally opens an inline TaskDetail. Because this plugin intentionally replaces that page presentation, it restores the same management surface in its own right-hand pane instead of dropping it:
 
-- compare-and-update conflict handling with the complete expected record;
-- unsaved-draft merging when the authoritative task changes concurrently;
-- date + time + explicit timezone editing for one-shots;
-- searchable IANA timezone selection;
-- weekday editing;
-- Cron validation and canonicalization behavior;
-- inactive-task read-only behavior.
+- title and instruction editing;
+- Once / Every / Daily / Monday-to-Friday / Weekly / Cron rules;
+- hour / minute / second fixed-interval units with the Host's 60-second floor;
+- one-shot date, time, and explicit IANA time zone;
+- Daily/Weekly wall-clock time and IANA zone;
+- weekday selection;
+- five-field Cron expressions;
+- inactive-task read-only behavior;
+- compare-and-update through native `schedule.update()` with the complete observed record;
+- conflict / ended / not-found handling without silently overwriting another update;
+- dirty-field merge when an authoritative catalog refresh arrives during editing;
+- Save / Cancel and unsaved-change state;
+- Rules / Delivery records tabs and keyboard tab navigation;
+- original-Session link, native Modal deletion, and native Toast feedback.
 
-The enhanced Automation tasks page therefore opens the native task detail for editing instead of carrying a second timing editor that could drift from DSH. Because DSH's right Sidebar is Session-scoped, opening from the Automation tasks page first switches to the task's source Session, waits for the public `sidebarRight.mounted` source to report that Session, and only then opens `scheduleTask`.
+The native right-Sidebar `scheduleTask` detail is **also kept**. Clicking the whole card deliberately follows that original DSH path; the edit icon is the in-place alternative requested for the task manager.
+
+The underlying scheduling capability is preserved, but the exact native editor widgets are not runtime-imported: DSH does not expose TaskDetail/DatePicker/ClockPicker/TaskMenu as extension slots, and its slot rules explicitly discourage importing another feature package's runtime UI. The in-place editor therefore uses DSH primitives and the public Schedule API. In particular, the native visual calendar/clock picker, recent-time-zone menu, and Cron form are represented by equivalent date/time/IANA-zone/Cron controls rather than copied private components.
 
 ## Delivery history semantics
 
