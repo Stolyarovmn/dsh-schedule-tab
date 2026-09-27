@@ -65,7 +65,10 @@ There is deliberately **no migration/fallback implementation in this rc2 plugin*
 
 ## Install
 
+Do not install the legacy and rc2 packages into the same Web profile. If the legacy package is already present, remove it first:
+
 ```bash
+pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web remove @stolyarovmn/dsh-client-ui-schedule-tab
 pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-control-center@0.1.0
 ```
 
@@ -79,13 +82,13 @@ Then restart `dsh web` completely.
 
 ## Native rc2 stack
 
-The package enables the shipped rc2 rows when they are disabled:
+The bundle patch enables the shipped rc2 rows declaratively before boot:
 
 - `time-context`
 - `schedule`
 - `ui-schedule`
 
-It never creates legacy dynamic Schedule instances and never changes `session-controller` dependencies. On unload it disables only rows that this plugin itself enabled.
+It never creates legacy dynamic Schedule instances, never mutates Loader state at runtime, and never changes `session-controller` dependencies.
 
 ## Compatibility
 
