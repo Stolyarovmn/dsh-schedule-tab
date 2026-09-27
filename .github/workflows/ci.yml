@@ -37,7 +37,7 @@ jobs:
           pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile smoke add "file:$GITHUB_WORKSPACE"
           pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 --profile smoke --dump-config > /tmp/dsh-config.txt
           grep -F "schedule-control-center" /tmp/dsh-config.txt
-          grep -F "@stolyarovmn/dsh-client-ui-schedule-control-center" /tmp/dsh-config.txt
+          grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
           grep -F "id: time-context" /tmp/dsh-config.txt
           grep -F "id: schedule" /tmp/dsh-config.txt
           grep -F "id: ui-schedule" /tmp/dsh-config.txt
@@ -45,7 +45,7 @@ jobs:
           (
             cd "$DSH_HOME/profiles/smoke"
             node --input-type=module -e '
-              const plugin = await import("@stolyarovmn/dsh-client-ui-schedule-control-center");
+              const plugin = await import("@stolyarovmn/dsh-client-ui-schedule-tab");
               if (plugin.inject.length !== 0) throw new Error("rc2 host entry must be side-effect free");
               await plugin.apply({});
             '
