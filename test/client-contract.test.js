@@ -85,3 +85,9 @@ assert.ok(client.includes('const statusCounts = react.useMemo(() => ({'), "statu
 assert.ok(client.includes('className: "scc_chipCount"'), "Active/All/Inactive filters must show their counts");
 assert.ok(client.includes('t("count", { visible: visible.length })'), "header count must describe only the currently visible tasks");
 assert.ok(!client.includes('t("count", { visible: visible.length, total: catalogState.records.length })'), "inactive tasks must not appear as a misleading header denominator");
+
+assert.ok(client.includes('function syncSessionOverdueStyles(records, now)'), "Session schedule mark styling must be overdue-only");
+assert.ok(client.includes('if (record.status === "active" && isOverdue(record, now)) overdueSessions.add(record.sessionId);'), "only active overdue tasks may color the native Session clock");
+assert.ok(!client.includes('function syncSessionMarkStyles(records, now)'), "legacy unread-driven Session clock styling must stay removed");
+assert.ok(!client.includes('const unread = delivery ? !seen.has(delivery) : record.status === "active" && !seen.has(taskSeenKey(record));'), "delivery unread state must not control the native Session clock");
+assert.ok(client.includes('const warn = summary.overdue > 0;'), "Automation tasks overdue warning must not disappear merely because it was viewed");
