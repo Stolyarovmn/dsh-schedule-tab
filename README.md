@@ -18,8 +18,9 @@ Version `0.6.x` requires `@deepseek-ai/dsh@0.1.7-rc.2` exactly. Version `0.5.1` 
 - Search by task title, instruction, task id, Session id, or Session title.
 - Grouping by date or source conversation.
 - Every, Daily, Weekly, and Cron rule display with IANA time zones.
-- Delivery-aware unseen indicators: recurring tasks become unread again when a new delivery arrives, while legacy `seen-v1` state is migrated without replaying old results.
-- Active and overdue indicators in the Automation tasks navigation.
+- Delivery-aware unseen indicators in **Automation tasks**: recurring tasks become unread again when a new delivery arrives, while legacy `seen-v1` state is migrated without replaying old results.
+- Overdue warning in the Automation tasks navigation remains visible until the task is no longer overdue, independently of unread state.
+- Native DSH Session-row status remains authoritative. The plugin does not use delivery/unread state to recolor the Session clock; it only adds a warning color to the existing native schedule mark when an active task is overdue.
 - Delivery history with occurrence and acknowledgment timestamps.
 - In-place task editing for Once, Every, Daily, Monday-to-Friday, Weekly, and Cron rules.
 - Native task deletion with confirmation.
