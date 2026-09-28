@@ -108,24 +108,17 @@
 			const quote = String.fromCharCode(34);
 			return String(value).split(slash).join(slash + slash).split(quote).join(slash + quote);
 		}
-		function syncSessionMarkStyles(records, now) {
+		function syncSessionOverdueStyles(records, now) {
 			if (typeof document === "undefined") return;
-			const seen = readSeen(records);
-			const states = new Map();
+			const overdueSessions = new Set();
 			for (const record of records) {
-				const delivery = deliverySeenKey(record);
-				const unread = delivery ? !seen.has(delivery) : record.status === "active" && !seen.has(taskSeenKey(record));
-				if (!unread) continue;
-				const state = states.get(record.sessionId) ?? { overdue: false };
-				state.overdue ||= record.status === "active" && isOverdue(record, now);
-				states.set(record.sessionId, state);
+				if (record.status === "active" && isOverdue(record, now)) overdueSessions.add(record.sessionId);
 			}
 			const id = PACKAGE + "/session-marks.css";
 			let style = document.querySelector('style[data-plugin-css="' + id + '"]');
 			if (!style) { style = document.createElement("style"); style.dataset.plugin = PACKAGE; style.dataset.pluginCss = id; document.head.appendChild(style); }
-			style.textContent = [...states.entries()].map(([sessionId, state]) => {
-				const color = state.overdue ? "var(--dsw-alias-state-warn-primary)" : "var(--dsw-alias-state-business-primary)";
-				return '[data-row-key="session:' + cssEscape(sessionId) + '"] [data-session-schedule-mark]{color:' + color + ' !important}';
-			}).join("");
+			style.textContent = [...overdueSessions].map((sessionId) =>
+				'[data-row-key="session:' + cssEscape(sessionId) + '"] [data-session-schedule-mark]{color:var(--dsw-alias-state-warn-primary) !important}'
+			).join("");
 		}
 
