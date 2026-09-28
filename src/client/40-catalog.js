@@ -100,7 +100,7 @@
 				return () => window.clearTimeout(timer);
 			}, [state.records, now]);
 			const summary = notificationSummary(state.records, now);
-			react.useEffect(() => { syncSessionMarkStyles(state.records, now); }, [signature, seenRev, state.status, now]);
+			react.useEffect(() => { syncSessionOverdueStyles(state.records, now); }, [state.records, state.status, now]);
 			const compact = (size ?? 16) > 16;
 			const hasUnread = summary.unread > 0;
 			const warn = summary.unreadOverdue > 0;
