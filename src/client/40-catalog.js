@@ -86,12 +86,12 @@
 
 		function ScheduleGlyph({ size, active, t }) {
 			const state = useObservable(catalog);
-			const [seenRev, setSeenRev] = react.useState(0);
+			const seenRev = useObservable(seenRevisionSource);
 			const [now, setNow] = react.useState(() => Date.now());
 			const signature = notificationSignature(state.records);
 			react.useEffect(() => {
 				if (!active || state.status !== "ready") return;
-				if (markSeen(state.records)) setSeenRev((value) => value + 1);
+				markTasksSeen(state.records);
 			}, [active, state.status, signature]);
 			react.useEffect(() => {
 				const delay = adaptiveTickDelay(state.records, now);
