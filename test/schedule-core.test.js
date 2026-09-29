@@ -59,17 +59,20 @@ const recurring = {
   },
 };
 
-assert.equal(api.notificationSummary([recurring], now).unreadDeliveries, 1);
-api.markTasksSeen([recurring]);
-assert.equal(api.notificationSummary([recurring], now).unreadDeliveries, 1, "opening Automation tasks must not clear a new delivery");
-api.markRecordSeen(recurring);
-assert.equal(api.notificationSummary([recurring], now).unread, 0);
+assert.equal(api.notificationSummary([recurring], now).unreadDeliveries, 0, "first install must baseline historical deliveries");
 
 const nextDelivery = { ...recurring, lastDelivery: { ...recurring.lastDelivery, messageId: "m2" } };
-assert.equal(api.notificationSummary([nextDelivery], now).unreadDeliveries, 1, "new recurring delivery must become unread again");
+assert.equal(api.notificationSummary([nextDelivery], now).unreadDeliveries, 1, "new recurring delivery must become unread");
+api.markTasksSeen([nextDelivery]);
+assert.equal(api.notificationSummary([nextDelivery], now).unreadDeliveries, 1, "opening Automation tasks must not clear a new delivery");
 assert.equal(api.taskAttentionState(nextDelivery, now), "new");
+api.markRecordSeen(nextDelivery);
+assert.equal(api.notificationSummary([nextDelivery], now).unread, 0);
 
-const overdue = { ...nextDelivery, scheduledAt: "2026-09-27T11:55:00Z" };
+const thirdDelivery = { ...nextDelivery, lastDelivery: { ...nextDelivery.lastDelivery, messageId: "m3" } };
+assert.equal(api.notificationSummary([thirdDelivery], now).unreadDeliveries, 1, "later recurring delivery must become unread again");
+
+const overdue = { ...thirdDelivery, scheduledAt: "2026-09-27T11:55:00Z" };
 assert.equal(api.taskAttentionState(overdue, now), "warning", "overdue warning must take precedence over the new-delivery dot");
 
 storage.clear();
@@ -77,8 +80,10 @@ storage.set("@stolyarovmn/dsh-client-ui-schedule-tab/seen-v1", JSON.stringify([a
 assert.equal(api.notificationSummary([recurring], now).unread, 0, "seen-v1 migration must not replay the current old delivery");
 assert.ok(storage.has("@stolyarovmn/dsh-client-ui-schedule-tab/seen-v2"));
 
-const completed = { ...recurring, id: "once", kind: "at", status: "inactive", lastDelivery: { ...recurring.lastDelivery, messageId: "m3" } };
+const pendingOneShot = { ...recurring, id: "once", kind: "at", status: "active", lastDelivery: null };
+const completed = { ...pendingOneShot, status: "inactive", lastDelivery: { ...recurring.lastDelivery, messageId: "m4" } };
 storage.clear();
+assert.equal(api.notificationSummary([pendingOneShot], now).unread, 0, "pre-delivery one-shot establishes the baseline");
 assert.equal(api.notificationSummary([completed], now).unreadDeliveries, 1, "completed one-shot delivery must still be surfaced as new");
 
 console.log("schedule core, DST and notification validation passed");
