@@ -23,7 +23,7 @@ context.globalThis = context;
 const notificationPrelude = `const PACKAGE = "@stolyarovmn/dsh-client-ui-schedule-tab"; const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2"; const LEGACY_SEEN_STORAGE_KEY = PACKAGE + "/seen-v1"; const MAX_SEEN_IDS = 4000;`;
 
 vm.runInNewContext(
-  notificationPrelude + "\n" + code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markSeen, identity };",
+  notificationPrelude + "\n" + code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markTasksSeen, markRecordSeen, taskAttentionState, identity };",
   context,
 );
 
@@ -60,11 +60,17 @@ const recurring = {
 };
 
 assert.equal(api.notificationSummary([recurring], now).unreadDeliveries, 1);
-api.markSeen([recurring]);
+api.markTasksSeen([recurring]);
+assert.equal(api.notificationSummary([recurring], now).unreadDeliveries, 1, "opening Automation tasks must not clear a new delivery");
+api.markRecordSeen(recurring);
 assert.equal(api.notificationSummary([recurring], now).unread, 0);
 
 const nextDelivery = { ...recurring, lastDelivery: { ...recurring.lastDelivery, messageId: "m2" } };
 assert.equal(api.notificationSummary([nextDelivery], now).unreadDeliveries, 1, "new recurring delivery must become unread again");
+assert.equal(api.taskAttentionState(nextDelivery, now), "new");
+
+const overdue = { ...nextDelivery, scheduledAt: "2026-09-27T11:55:00Z" };
+assert.equal(api.taskAttentionState(overdue, now), "warning", "overdue warning must take precedence over the new-delivery dot");
 
 storage.clear();
 storage.set("@stolyarovmn/dsh-client-ui-schedule-tab/seen-v1", JSON.stringify([api.identity(recurring)]));
