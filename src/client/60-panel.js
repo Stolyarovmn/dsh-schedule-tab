@@ -2,6 +2,7 @@
 
 		function SchedulePanel({ t }) {
 			const catalogState = useObservable(catalog);
+			useObservable(seenRevisionSource);
 			const { sessions, workspaces } = useSessionSnapshots();
 			const locale = (typeof document !== "undefined" && document.documentElement?.lang) || undefined;
 			const zones = react.useMemo(() => timeZoneChoices(), []);
@@ -91,10 +92,12 @@
 					showToast("warning", t("detail.unavailable"));
 					return;
 				}
+				markRecordSeen(record);
 				openNativeTask(record);
 			};
 			const openInline = (record, tab, event) => {
 				event?.stopPropagation?.();
+				markRecordSeen(record);
 				setSelectedKey(identity(record));
 				setDetailTab(tab);
 				setEditError(null);
@@ -108,6 +111,7 @@
 			};
 			const openLinkedSession = (record) => {
 				if (sessionLinkState(record.sessionId, sessions, workspaces) !== "available") return;
+				markRecordSeen(record);
 				hostCtx.uiWorkspace.openSession(record.sessionId);
 			};
 
@@ -564,6 +568,7 @@
 						jsx.jsx("ul", { className: "scc_groupList", children: group.records.map((record) => {
 							const key = identity(record);
 							const overdue = isOverdue(record, now);
+							const attention = taskAttentionState(record, now);
 							const deleting = catalogState.deleting.includes(record.id);
 							const source = sessionTitle(record.sessionId, sessions);
 							const nextOrLast = record.status === "active"
@@ -582,7 +587,14 @@
 											openTask(record, event);
 										},
 										children: [
-											jsx.jsx("div", { className: "scc_rowTitle", children: taskTitle(record) }),
+											jsx.jsxs("div", { className: "scc_rowTitleLine", children: [
+												jsx.jsx("div", { className: "scc_rowTitle", children: taskTitle(record) }),
+												attention ? jsx.jsx("span", {
+													className: "scc_attentionDot" + (attention === "warning" ? " scc_attentionDotWarn" : ""),
+													title: t(attention === "warning" ? "attention.overdue" : "attention.newDelivery"),
+													"aria-label": t(attention === "warning" ? "attention.overdue" : "attention.newDelivery")
+												}) : null
+											] }),
 											record.prompt && record.prompt !== record.title ? jsx.jsx("div", { className: "scc_prompt", children: record.prompt }) : null,
 											jsx.jsxs("div", { className: "scc_badges", children: [
 												jsx.jsx("span", { className: "scc_badge " + (overdue ? "scc_badgeWarn" : record.status === "inactive" ? "scc_badgeInactive" : ""), children: t(overdue ? "status.overdue" : "status." + record.status) }),
