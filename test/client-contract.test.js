@@ -91,3 +91,15 @@ assert.ok(client.includes('if (record.status === "active" && isOverdue(record, n
 assert.ok(!client.includes('function syncSessionMarkStyles(records, now)'), "legacy unread-driven Session clock styling must stay removed");
 assert.ok(!client.includes('const unread = delivery ? !seen.has(delivery) : record.status === "active" && !seen.has(taskSeenKey(record));'), "delivery unread state must not control the native Session clock");
 assert.ok(client.includes('const warn = summary.overdue > 0;'), "Automation tasks overdue warning must not disappear merely because it was viewed");
+
+assert.ok(client.includes('name: "shell.overlay"'), "new delivery popup must use the native shell.overlay surface");
+assert.ok(client.includes('id: "schedule-control-center.delivery-toast"'), "delivery popup slot id must stay stable");
+assert.ok(client.includes('function startDeliveryMonitor(source, report)'), "delivery popup must be driven by catalog delivery changes");
+assert.ok(client.includes('function DeliveryToast({ useToast, dismiss, openRecord, t })'), "delivery popup must use the native Toast primitive");
+assert.ok(client.includes('primitives.Toast'), "delivery popup must use the native DSH Toast component");
+assert.ok(client.includes('className: "scc_attentionDot"'), "task cards must expose a compact attention indicator");
+assert.ok(client.includes('function taskAttentionState(record, now)'), "card attention state must be derived from durable schedule facts");
+assert.ok(client.includes('markTasksSeen(state.records)'), "opening Automation tasks may acknowledge task discovery");
+assert.ok(client.includes('markRecordSeen(record)'), "a delivery must stay unread until its specific task or conversation is opened");
+assert.ok(!client.includes('markSeen(state.records)'), "opening Automation tasks must not clear every delivery");
+assert.ok(client.includes('"delivery.toast": "Scheduled task delivered: {title}"'), "popup copy must describe delivery, not model success");
