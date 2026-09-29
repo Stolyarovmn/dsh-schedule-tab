@@ -2,7 +2,22 @@
 		function apply(ctx) {
 			hostCtx = ctx;
 			catalog = createCatalogSource(ctx);
+			const deliveryToast = createDeliveryToastSource();
 			ctx.effect(() => ctx.locale.register(NS, { en, zh, ru }), "schedule-control-center: dictionaries");
+			ctx.effect(() => startDeliveryMonitor(catalog, (record) => deliveryToast.report(record)), "schedule-control-center: delivery monitor");
+			ctx.slots.inject("shell.overlay", () => ctx.slots.register({
+				name: "shell.overlay",
+				id: "schedule-control-center.delivery-toast",
+				locale: NS,
+				inject: () => ({
+					hooks: deliveryToast.hooks,
+					dismiss: deliveryToast.dismiss,
+					openRecord: (record) => {
+						markRecordSeen(record);
+						ctx.uiWorkspace.openSession(record.sessionId);
+					}
+				})
+			}, DeliveryToast));
 			ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
 				name: "sidebar.panellist",
 				id: PANEL_ID,
