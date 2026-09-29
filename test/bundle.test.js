@@ -6,7 +6,7 @@ const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf
 const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
 
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
-assert.equal(pkg.version, "0.6.1");
+assert.equal(pkg.version, "0.6.2");
 assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.7-rc.2");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
@@ -16,6 +16,7 @@ for (const dependency of [
   "@deepseek-ai/dsh-api-remotes",
   "@deepseek-ai/dsh-api-session-controller",
   "@deepseek-ai/dsh-api-workspace-controller",
+  "@deepseek-ai/dsh-client-ui-layout",
   "@deepseek-ai/dsh-client-ui-sidebar-right",
   "@deepseek-ai/dsh-client-ui-workspace",
 ]) assert.ok(pkg.dsh.client.inject.includes(dependency), `missing client dependency ${dependency}`);
