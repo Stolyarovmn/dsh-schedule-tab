@@ -1,3 +1,16 @@
+		let seenRevision = 0;
+		const seenRevisionListeners = new Set();
+		const seenRevisionSource = {
+			getSnapshot: () => seenRevision,
+			subscribe(listener) {
+				seenRevisionListeners.add(listener);
+				return () => { seenRevisionListeners.delete(listener); };
+			}
+		};
+		function bumpSeenRevision() {
+			seenRevision += 1;
+			for (const listener of [...seenRevisionListeners]) listener();
+		}
 		function taskSeenKey(record) { return "task:" + identity(record); }
 		function deliveryMarker(record) {
 			const delivery = record.lastDelivery;
@@ -27,18 +40,39 @@
 				return migrated;
 			} catch { return new Set(); }
 		}
-		function markSeen(records) {
+		function commitSeen(seen) {
+			writeSeen(seen);
+			bumpSeenRevision();
+		}
+		function markTasksSeen(records) {
 			const seen = readSeen(records); let changed = false;
 			for (const record of records) {
-				if (record.status === "active") {
-					const task = taskSeenKey(record);
-					if (!seen.has(task)) { seen.add(task); changed = true; }
-				}
-				const delivery = deliverySeenKey(record);
-				if (delivery && !seen.has(delivery)) { seen.add(delivery); changed = true; }
+				if (record.status !== "active") continue;
+				const task = taskSeenKey(record);
+				if (!seen.has(task)) { seen.add(task); changed = true; }
 			}
-			if (changed) writeSeen(seen);
+			if (changed) commitSeen(seen);
 			return changed;
+		}
+		function markRecordSeen(record) {
+			const seen = readSeen([record]); let changed = false;
+			if (record.status === "active") {
+				const task = taskSeenKey(record);
+				if (!seen.has(task)) { seen.add(task); changed = true; }
+			}
+			const delivery = deliverySeenKey(record);
+			if (delivery && !seen.has(delivery)) { seen.add(delivery); changed = true; }
+			if (changed) commitSeen(seen);
+			return changed;
+		}
+		function isDeliveryUnread(record) {
+			const delivery = deliverySeenKey(record);
+			return delivery !== null && !readSeen([record]).has(delivery);
+		}
+		function taskAttentionState(record, now) {
+			if (record.status === "active" && isOverdue(record, now)) return "warning";
+			if (isDeliveryUnread(record)) return "new";
+			return null;
 		}
 		function notificationSummary(records, now) {
 			const seen = readSeen(records);
