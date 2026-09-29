@@ -33,8 +33,20 @@
 			};
 		}
 
+		function readDeliveryCursor() {
+			try {
+				const raw = window.localStorage?.getItem?.(DELIVERY_CURSOR_STORAGE_KEY);
+				if (raw === null || raw === undefined) return null;
+				const parsed = JSON.parse(raw);
+				if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+				return new Map(Object.entries(parsed).filter(([, marker]) => marker === null || typeof marker === "string"));
+			} catch { return null; }
+		}
+		function writeDeliveryCursor(cursor) {
+			try { window.localStorage?.setItem?.(DELIVERY_CURSOR_STORAGE_KEY, JSON.stringify(Object.fromEntries(cursor))); } catch {}
+		}
 		function startDeliveryMonitor(source, report) {
-			let baseline = null;
+			let baseline = readDeliveryCursor();
 			const inspect = () => {
 				const state = source.getSnapshot();
 				if (state.status !== "ready") return;
@@ -45,6 +57,7 @@
 				}
 				if (baseline === null) {
 					baseline = next;
+					writeDeliveryCursor(next);
 					return;
 				}
 				for (const record of state.records) {
@@ -54,6 +67,7 @@
 					if (!baseline.has(key) || baseline.get(key) !== marker) report(record);
 				}
 				baseline = next;
+				writeDeliveryCursor(next);
 			};
 			const unsubscribe = source.subscribe(inspect);
 			inspect();
