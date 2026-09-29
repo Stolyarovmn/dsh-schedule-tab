@@ -18,8 +18,9 @@ Version `0.6.x` requires `@deepseek-ai/dsh@0.1.7-rc.2` exactly. Version `0.5.1` 
 - Search by task title, instruction, task id, Session id, or Session title.
 - Grouping by date or source conversation.
 - Every, Daily, Weekly, and Cron rule display with IANA time zones.
-- Delivery-aware unseen indicators in **Automation tasks**: recurring tasks become unread again when a new delivery arrives, while legacy `seen-v1` state is migrated without replaying old results.
+- Delivery-aware unseen indicators in **Automation tasks**: each card shows a compact attention dot for a new saved delivery, recurring tasks become unread again when another delivery arrives, and legacy `seen-v1` state is migrated without replaying old records.
 - Overdue warning in the Automation tasks navigation remains visible until the task is no longer overdue, independently of unread state.
+- New deliveries raise one native DSH `shell.overlay` toast with an **Open conversation** action. Existing historical deliveries are baselined on startup and do not replay as popups.
 - Native DSH Session-row status remains authoritative. The plugin does not use delivery/unread state to recolor the Session clock; it only adds a warning color to the existing native schedule mark when an active task is overdue.
 - Delivery history with occurrence and acknowledgment timestamps.
 - In-place task editing for Once, Every, Daily, Monday-to-Friday, Weekly, and Cron rules.
@@ -27,7 +28,7 @@ Version `0.6.x` requires `@deepseek-ai/dsh@0.1.7-rc.2` exactly. Version `0.5.1` 
 - Navigation from a task to its source Session and native task detail.
 - Authoritative refresh on Schedule changes and connection resets.
 
-The plugin uses the native DSH Schedule service as its source of truth. It does not implement its own scheduler or task database.
+The plugin uses the native DSH Schedule service as its source of truth. It does not implement its own scheduler or task database. Schedule delivery receipts prove durable inbox delivery only; they do **not** prove that the model later completed successfully, so the plugin does not invent green/red execution-result states.
 
 ## Install
 
