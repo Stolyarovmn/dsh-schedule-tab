@@ -36,6 +36,36 @@
 			};
 			return true;
 		}
+		function installEnhancedScheduleMain(ctx) {
+			return ctx.slots.inject("main", () => {
+				let nativeEntry = null;
+				let disposePanel = null;
+				const reconcile = () => {
+					const next = findNativeScheduleMain(ctx);
+					if (next === nativeEntry && disposePanel !== null) return;
+					if (disposePanel !== null) {
+						disposePanel();
+						disposePanel = null;
+					}
+					nativeEntry = next ?? null;
+					nativeScheduleMain = null;
+					if (!next || !captureNativeScheduleMain(ctx, next)) return;
+					disposePanel = ctx.slots.register({
+						name: "main",
+						key: PANEL_ID,
+						priority: -100,
+						locale: NS
+					}, SchedulePanel);
+				};
+				const unsubscribe = ctx.slots.subscribe("main", reconcile);
+				reconcile();
+				return () => {
+					unsubscribe();
+					disposePanel?.();
+					nativeScheduleMain = null;
+				};
+			});
+		}
 
 		function nativeDetailElement(page) {
 			if (!page) return null;
