@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "DSH 0.1.7-rc.2 ONLY: enhances the native Automation tasks UI with richer cards, filters, notifications, inline Rules/Delivery records, and Host Schedule management.",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
