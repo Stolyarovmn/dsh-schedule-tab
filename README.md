@@ -37,7 +37,7 @@ The plugin uses the native DSH Schedule service as its source of truth. It does 
 For DSH `0.1.7-rc.2`:
 
 ```bash
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.13
+pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.14
 ```
 
 Restart DSH Web after installation.
