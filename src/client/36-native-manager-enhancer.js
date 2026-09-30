@@ -51,7 +51,8 @@
 					badge.className = "scc_chipCount";
 					buttons[index].appendChild(badge);
 				}
-				badge.textContent = String(counts[index]);
+				const nextText = String(counts[index]);
+				if (badge.textContent !== nextText) badge.textContent = nextText;
 			}
 		}
 		function startNativeManagerEnhancer(source, t) {
@@ -68,10 +69,14 @@
 				}
 				syncNativeFilterCounts(state.records);
 			};
+			let timer = null;
 			const scheduleSync = () => {
 				if (queued) return;
 				queued = true;
-				queueMicrotask(sync);
+				timer = window.setTimeout(() => {
+					timer = null;
+					sync();
+				}, 0);
 			};
 			const unsubscribeCatalog = source.subscribe(scheduleSync);
 			const unsubscribeSeen = seenRevisionSource.subscribe(scheduleSync);
@@ -82,6 +87,7 @@
 				unsubscribeCatalog();
 				unsubscribeSeen();
 				observer.disconnect();
+				if (timer !== null) window.clearTimeout(timer);
 			};
 		}
 
