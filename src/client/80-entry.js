@@ -28,34 +28,7 @@
 				locale: NS,
 				label: () => ctx.locale.bind(NS)("tab")
 			}, ScheduleGlyph));
-			ctx.slots.inject("main", () => {
-				let nativeEntry = null;
-				let disposePanel = null;
-				const reconcile = () => {
-					const next = findNativeScheduleMain(ctx);
-					if (next === nativeEntry && disposePanel !== null) return;
-					if (disposePanel !== null) {
-						disposePanel();
-						disposePanel = null;
-					}
-					nativeEntry = next ?? null;
-					nativeScheduleMain = null;
-					if (!next || !captureNativeScheduleMain(ctx, next)) return;
-					disposePanel = ctx.slots.register({
-						name: "main",
-						key: PANEL_ID,
-						priority: -100,
-						locale: NS
-					}, SchedulePanel);
-				};
-				const unsubscribe = ctx.slots.subscribe("main", reconcile);
-				reconcile();
-				return () => {
-					unsubscribe();
-					disposePanel?.();
-					nativeScheduleMain = null;
-				};
-			});
+			installEnhancedScheduleMain(ctx);
 		}
 		exports.apply = apply;
 		exports.inject = inject;
