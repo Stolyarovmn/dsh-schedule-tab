@@ -36,7 +36,7 @@ The plugin uses the native DSH Schedule service as its source of truth. It does 
 For DSH `0.1.7-rc.2`:
 
 ```bash
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.5
+pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.6
 ```
 
 Restart DSH Web after installation.
@@ -76,3 +76,5 @@ The repository uses the GitHub topic `dsh-plugin` for DeepSeek Harness plugin di
 ## License
 
 MIT.
+
+> **rc2 architecture:** this package does not replace DSH's native `main:schedules` page. `@deepseek-ai/dsh-client-ui-schedule` owns `TaskManagerPage`, including Rules, Delivery records, date/time controls, validation, saving, and deletion. This plugin only enhances that native page with attention/count presentation and adds delivery notifications plus the sidebar summary.
