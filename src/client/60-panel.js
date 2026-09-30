@@ -91,6 +91,7 @@
 			const showToast = (kind, text) => setToast({ kind, text, seq: ++toastSeq.current });
 			const openTask = (record, event, tab = "rule") => {
 				event?.stopPropagation?.();
+				markRecordSeen(record);
 				setNativeSelectedKey(identity(record));
 				setNativeDetailTab(tab);
 			};
