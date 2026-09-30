@@ -4,6 +4,7 @@ import vm from "node:vm";
 
 const code = [
   "../src/client/20-schedule-core.js",
+  "../src/client/25-notification-preferences.js",
   "../src/client/30-notifications.js",
   "../src/client/50-editor-core.js",
 ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8")).join("\n");
@@ -23,7 +24,7 @@ context.globalThis = context;
 const notificationPrelude = `const PACKAGE = "@stolyarovmn/dsh-client-ui-schedule-tab"; const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2"; const LEGACY_SEEN_STORAGE_KEY = PACKAGE + "/seen-v1"; const MAX_SEEN_IDS = 4000;`;
 
 vm.runInNewContext(
-  notificationPrelude + "\n" + code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markTasksSeen, markRecordSeen, markDeliveryNotified, isDeliveryNotified, ensureDeliveryAttentionBaseline, taskAttentionState, identity };",
+  notificationPrelude + "\n" + code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markTasksSeen, markDeliveriesSeen, markRecordSeen, markDeliveryNotified, isDeliveryNotified, ensureDeliveryAttentionBaseline, taskAttentionState, identity };",
   context,
 );
 
@@ -77,6 +78,31 @@ assert.equal(api.notificationSummary([nextDelivery], now).unread, 0);
 
 const thirdDelivery = { ...nextDelivery, lastDelivery: { ...nextDelivery.lastDelivery, messageId: "m3" } };
 assert.equal(api.notificationSummary([thirdDelivery], now).unreadDeliveries, 1, "later recurring delivery must become unread again");
+assert.equal(
+  api.notificationSummary([thirdDelivery], now, { popup: true, newTasks: true, newDeliveries: false }).unreadDeliveries,
+  0,
+  "disabled delivery attention must hide unread delivery counts",
+);
+assert.equal(
+  api.taskAttentionState(thirdDelivery, now, { popup: true, newTasks: true, newDeliveries: false }),
+  null,
+  "disabled delivery attention must hide the blue delivery dot",
+);
+api.markDeliveriesSeen([thirdDelivery]);
+assert.equal(api.notificationSummary([thirdDelivery], now).unreadDeliveries, 0, "suppressed deliveries must not return as backlog");
+
+const freshTask = { ...recurring, id: "fresh", lastDelivery: null };
+storage.set("@stolyarovmn/dsh-client-ui-schedule-tab/seen-v2", JSON.stringify([]));
+assert.equal(
+  api.notificationSummary([freshTask], now, { popup: true, newTasks: true, newDeliveries: true }).unreadTasks,
+  1,
+  "new active task category must be counted when enabled",
+);
+assert.equal(
+  api.notificationSummary([freshTask], now, { popup: true, newTasks: false, newDeliveries: true }).unreadTasks,
+  0,
+  "new active task category must disappear when disabled",
+);
 
 const overdue = { ...thirdDelivery, scheduledAt: "2026-09-27T11:55:00Z" };
 assert.equal(api.taskAttentionState(overdue, now), "warning", "overdue warning must take precedence over the new-delivery dot");
