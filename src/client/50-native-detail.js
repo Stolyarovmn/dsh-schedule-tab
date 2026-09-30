@@ -4,8 +4,15 @@
 			return (selector = (value) => value) => selector(useObservable(source));
 		}
 
-		function captureNativeScheduleMain(ctx) {
-			const entry = ctx.slots.entries("main").find((candidate) => candidate.options?.key === PANEL_ID);
+		function findNativeScheduleMain(ctx) {
+			return ctx.slots.entries("main").find((candidate) =>
+				candidate.options?.key === PANEL_ID
+				&& candidate.options?.locale === "schedule.manager"
+				&& candidate.component !== SchedulePanel
+			);
+		}
+
+		function captureNativeScheduleMain(ctx, entry) {
 			if (!entry || typeof entry.component !== "function" || typeof entry.inject !== "function") {
 				nativeScheduleMain = null;
 				return false;
@@ -17,6 +24,7 @@
 				return false;
 			}
 			nativeScheduleMain = {
+				entry,
 				Component: entry.component,
 				props: {
 					...injected,
