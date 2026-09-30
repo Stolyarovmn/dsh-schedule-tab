@@ -21,6 +21,30 @@
 			const marker = deliveryMarker(record);
 			return marker === null ? null : "delivery:" + identity(record) + ":" + marker;
 		}
+		const DELIVERY_NOTIFIED_STORAGE_KEY = PACKAGE + "/delivery-notified-v1";
+		function readNotified() {
+			try {
+				const raw = window.localStorage?.getItem?.(DELIVERY_NOTIFIED_STORAGE_KEY);
+				const parsed = raw == null ? [] : JSON.parse(raw);
+				return new Set(Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string").slice(-MAX_SEEN_IDS) : []);
+			} catch { return new Set(); }
+		}
+		function writeNotified(notified) {
+			try { window.localStorage?.setItem?.(DELIVERY_NOTIFIED_STORAGE_KEY, JSON.stringify([...notified].slice(-MAX_SEEN_IDS))); } catch {}
+		}
+		function isDeliveryNotified(record) {
+			const delivery = deliverySeenKey(record);
+			return delivery !== null && readNotified().has(delivery);
+		}
+		function markDeliveryNotified(record) {
+			const delivery = deliverySeenKey(record);
+			if (delivery === null) return false;
+			const notified = readNotified();
+			if (notified.has(delivery)) return false;
+			notified.add(delivery);
+			writeNotified(notified);
+			return true;
+		}
 		function writeSeen(seen) {
 			try { window.localStorage?.setItem?.(SEEN_STORAGE_KEY, JSON.stringify([...seen].slice(-MAX_SEEN_IDS))); } catch {}
 		}
@@ -77,6 +101,7 @@
 			const delivery = deliverySeenKey(record);
 			if (delivery && !seen.has(delivery)) { seen.add(delivery); changed = true; }
 			if (changed) commitSeen(seen);
+			markDeliveryNotified(record);
 			return changed;
 		}
 		function isDeliveryUnread(record) {
