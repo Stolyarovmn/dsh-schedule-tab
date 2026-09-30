@@ -177,6 +177,26 @@
 			return records.map((record) => [identity(record), record.status, record.scheduledAt, deliveryMarker(record) ?? ""].join("@")).sort().join("|");
 		}
 
+		function startNotificationPreferenceSuppression(source) {
+			const inspect = () => {
+				const state = source.getSnapshot();
+				if (state.status !== "ready") return;
+				const preferences = notificationPreferencesSource.getSnapshot();
+				if (!preferences.newTasks) markTasksSeen(state.records);
+				if (!preferences.newDeliveries) markDeliveriesSeen(state.records);
+				if (!preferences.popup) {
+					for (const record of state.records) markDeliveryNotified(record);
+				}
+			};
+			const offCatalog = source.subscribe(inspect);
+			const offPreferences = notificationPreferencesSource.subscribe(inspect);
+			inspect();
+			return () => {
+				offCatalog();
+				offPreferences();
+			};
+		}
+
 		function cssEscape(value) {
 			const slash = String.fromCharCode(92);
 			const quote = String.fromCharCode(34);
