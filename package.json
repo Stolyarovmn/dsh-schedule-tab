@@ -16,7 +16,7 @@
   "scripts": {
     "build:client": "node scripts/build-client.mjs",
     "build:check": "node scripts/build-client.mjs --check",
-    "test": "node test/host.test.js && node test/schedule-core.test.js && node test/delivery-notification.test.js && node test/catalog-source.test.js && node test/client-contract.test.js",
+    "test": "node test/host.test.js && node test/schedule-core.test.js && node test/delivery-notification.test.js && node test/native-manager-enhancer.test.js && node test/catalog-source.test.js && node test/client-contract.test.js",
     "test:bundle": "node test/bundle.test.js && npm run build:check && node --check lib/client.js",
     "test:all": "npm test && npm run test:bundle"
   },
