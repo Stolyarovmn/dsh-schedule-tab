@@ -59,6 +59,20 @@ assert.ok(client.includes('className: "scc_attentionDot"'), "task cards must ret
 assert.ok(client.includes('function syncSessionOverdueStyles(records, now)'), "Session clock customization must remain overdue-only");
 assert.ok(client.includes('primitives.Toast'), "delivery popup must use native DSH Toast");
 
+assert.ok(client.includes('const NOTIFICATION_PREFERENCES_STORAGE_KEY = PACKAGE + "/notification-preferences-v1"'), "notification preferences must have durable browser storage");
+assert.ok(client.includes('const notificationPreferencesSource = {'), "notification preferences must be observable across plugin surfaces");
+assert.ok(client.includes('popup: true'), "popup notifications must default to enabled");
+assert.ok(client.includes('newTasks: true'), "new-task attention must default to enabled");
+assert.ok(client.includes('newDeliveries: true'), "new-delivery attention must default to enabled");
+assert.ok(client.includes('["popup", "newTasks", "newDeliveries"].map(renderNotificationSetting)'), "settings modal must expose all three notification categories");
+assert.ok(client.includes('primitives.Switch'), "notification settings must use native DSH switches");
+assert.ok(client.includes('SettingsIcon'), "Automation tasks header must expose notification settings");
+assert.ok(client.includes('taskAttentionState(record, now, preferences)'), "delivery attention dot must respect notification preferences");
+assert.ok(client.includes('notificationSummary(state.records, now, preferences)'), "sidebar unread summary must respect notification preferences");
+assert.ok(client.includes('function startNotificationPreferenceSuppression(source)'), "disabled categories must be consumed without building backlog");
+assert.ok(client.includes('usePreferences'), "delivery popup must observe popup preference");
+assert.ok(client.includes('clear: deliveryToast.clear'), "disabling popups must clear an already queued toast");
+
 assert.ok(client.includes('primitives.Modal'), "delete confirmation must still use native DSH Modal");
 assert.ok(client.includes('primitives.Tooltip'), "row actions must still use native DSH tooltips");
 assert.ok(client.includes('primitives.Button'), "row actions must still use native DSH buttons");
@@ -68,4 +82,4 @@ assert.ok(client.includes('const ru = {'), "Russian locale must remain registere
 assert.ok(client.includes('ctx.locale.register(NS, { en, zh, ru })'), "Russian locale must remain enabled");
 assert.ok(client.includes('"new": "New conversation"'), "new-task action label must match startSession behavior");
 
-console.log("0.6.11 enhanced-list/native-detail contract validation passed");
+console.log("0.6.13 enhanced-list/native-detail/notification-settings contract validation passed");
