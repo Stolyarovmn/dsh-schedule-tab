@@ -23,6 +23,7 @@
 					}
 				},
 				report(record) {
+					if (!markDeliveryNotified(record)) return;
 					queue.push(record);
 					showNext();
 				},
@@ -33,49 +34,18 @@
 			};
 		}
 
-		function readDeliveryCursor() {
-			try {
-				const raw = window.localStorage?.getItem?.(DELIVERY_CURSOR_STORAGE_KEY);
-				if (raw === null || raw === undefined) return null;
-				const parsed = JSON.parse(raw);
-				if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-				return new Map(Object.entries(parsed).filter(([, marker]) => marker === null || typeof marker === "string"));
-			} catch { return null; }
-		}
-		function writeDeliveryCursor(cursor) {
-			try { window.localStorage?.setItem?.(DELIVERY_CURSOR_STORAGE_KEY, JSON.stringify(Object.fromEntries(cursor))); } catch {}
-		}
-		function startDeliveryMonitor(source, report) {
-			let baseline = readDeliveryCursor();
-			const inspect = () => {
-				const state = source.getSnapshot();
-				if (state.status !== "ready") return;
-				const next = new Map();
-				for (const record of state.records) {
-					const marker = deliveryMarker(record);
-					next.set(identity(record), marker);
-				}
-				if (baseline === null) {
-					baseline = next;
-					writeDeliveryCursor(next);
-					return;
-				}
-				for (const record of state.records) {
-					const key = identity(record);
-					const marker = next.get(key);
-					if (marker === null || marker === undefined) continue;
-					if (!baseline.has(key) || baseline.get(key) !== marker) report(record);
-				}
-				baseline = next;
-				writeDeliveryCursor(next);
-			};
-			const unsubscribe = source.subscribe(inspect);
-			inspect();
-			return unsubscribe;
-		}
-
-		function DeliveryToast({ useToast, dismiss, openRecord, t }) {
+		function DeliveryToast({ useToast, useCatalog, useSeenRevision, report, dismiss, openRecord, t }) {
 			const toast = useToast((current) => current);
+			const catalogState = useCatalog((current) => current);
+			useSeenRevision((current) => current);
+			const signature = notificationSignature(catalogState.records);
+			react.useEffect(() => {
+				if (catalogState.status !== "ready") return;
+				for (const record of catalogState.records) {
+					if (!isDeliveryUnread(record) || isDeliveryNotified(record)) continue;
+					report(record);
+				}
+			}, [catalogState.status, signature, report]);
 			if (toast === null) return null;
 			const record = toast.record;
 			return jsx.jsx(primitives.Toast, {
