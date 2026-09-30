@@ -20,6 +20,7 @@
 		const CopyIcon = primitives.IconCopyOutlineRegular;
 		const PlusIcon = primitives.IconPlusOutlineRegular;
 		const SearchIcon = primitives.IconSearchOutlineRegular;
+		const SettingsIcon = primitives.IconSettingsOutlineRegular ?? primitives.IconSettingsOutline16 ?? null;
 		const WarningIcon = primitives.IconWarningOutlineRegular;
 		const CloseIcon = primitives.IconCloseOutlineRegular;
 		const ChevronRightIcon = primitives.IconChevronRightOutlineRegular;
@@ -45,6 +46,12 @@
 			".scc_iconButtonDanger{color:var(--dsw-alias-state-danger-label,var(--dsw-alias-state-warn-label))!important}",
 			".scc_iconButtonDanger:hover{background:var(--dsw-alias-state-danger-tertiary,var(--dsw-alias-state-warn-tertiary))!important}",
 			".scc_confirmTask{margin:0;font-size:14px;font-weight:600;color:var(--dsw-alias-label-primary);overflow-wrap:anywhere}",
+			".scc_settingsList{display:flex;flex-direction:column;gap:0;min-width:min(520px,78vw)}",
+			".scc_settingRow{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:0.5px solid var(--dsw-alias-border-l1)}",
+			".scc_settingRow:last-child{border-bottom:0}",
+			".scc_settingCopy{min-width:0;display:flex;flex-direction:column;gap:3px}",
+			".scc_settingTitle{font-size:14px;font-weight:500;line-height:20px;color:var(--dsw-alias-label-primary)}",
+			".scc_settingDescription{font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary);max-width:390px}",
 			".scc_chip:hover,.scc_action:hover{background:var(--dsw-alias-interactive-bg-hover,transparent)}",
 			".scc_chip:focus-visible,.scc_action:focus-visible{border-color:var(--dsw-alias-focus-primary,var(--dsw-alias-interactive-primary))}",
 			".scc_chipActive{border-color:var(--dsw-alias-interactive-primary);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-selected,var(--dsw-alias-interactive-bg-hover,transparent))}",
