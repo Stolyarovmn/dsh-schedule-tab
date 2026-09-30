@@ -30,6 +30,10 @@
 				dismiss() {
 					publish(null);
 					queueMicrotask(showNext);
+				},
+				clear() {
+					queue = [];
+					publish(null);
 				}
 			};
 		}
@@ -72,18 +76,27 @@
 			};
 		}
 
-		function DeliveryToast({ useToast, useCatalog, report, dismiss, openRecord, t }) {
+		function DeliveryToast({ useToast, useCatalog, usePreferences, report, dismiss, clear, openRecord, t }) {
 			const toast = useToast((current) => current);
 			const catalogState = useCatalog((current) => current);
+			const preferences = usePreferences((current) => current);
 			const signature = notificationSignature(catalogState.records);
 			react.useEffect(() => {
 				if (catalogState.status !== "ready") return;
+				if (!preferences.popup) {
+					for (const record of catalogState.records) {
+						if (deliveryMarker(record) === null || isDeliveryNotified(record)) continue;
+						markDeliveryNotified(record);
+					}
+					clear();
+					return;
+				}
 				for (const record of catalogState.records) {
 					if (deliveryMarker(record) === null || isDeliveryNotified(record)) continue;
 					report(record);
 				}
-			}, [catalogState.status, signature, report]);
-			if (toast === null) return null;
+			}, [catalogState.status, signature, preferences.popup, report, clear]);
+			if (!preferences.popup || toast === null) return null;
 			const record = toast.record;
 			return jsx.jsx(primitives.Toast, {
 				key: "schedule-delivery-" + String(toast.seq),
