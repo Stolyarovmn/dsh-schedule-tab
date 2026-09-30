@@ -45,6 +45,33 @@
 			writeNotified(notified);
 			return true;
 		}
+		function ensureDeliveryAttentionBaseline(records) {
+			// Force seen-v2 initialization before any future delivery can become "new".
+			readSeen(records);
+			try {
+				const raw = window.localStorage?.getItem?.(DELIVERY_NOTIFIED_STORAGE_KEY);
+				if (raw !== null && raw !== undefined) return;
+			} catch { return; }
+			const baseline = new Set();
+			for (const record of records) {
+				const delivery = deliverySeenKey(record);
+				if (delivery) baseline.add(delivery);
+			}
+			writeNotified(baseline);
+		}
+		function startDeliveryAttentionBaseline(source) {
+			let settled = false;
+			const inspect = () => {
+				if (settled) return;
+				const state = source.getSnapshot();
+				if (state.status !== "ready") return;
+				ensureDeliveryAttentionBaseline(state.records);
+				settled = true;
+			};
+			const unsubscribe = source.subscribe(inspect);
+			inspect();
+			return unsubscribe;
+		}
 		function writeSeen(seen) {
 			try { window.localStorage?.setItem?.(SEEN_STORAGE_KEY, JSON.stringify([...seen].slice(-MAX_SEEN_IDS))); } catch {}
 		}
