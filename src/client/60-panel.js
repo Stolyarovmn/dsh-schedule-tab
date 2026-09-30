@@ -12,6 +12,8 @@
 			const [now, setNow] = react.useState(() => Date.now());
 			const [selectedKey, setSelectedKey] = react.useState(null);
 			const [detailTab, setDetailTab] = react.useState("rule");
+			const [nativeSelectedKey, setNativeSelectedKey] = react.useState(null);
+			const [nativeDetailTab, setNativeDetailTab] = react.useState("rule");
 			const [edit, setEdit] = react.useState(null);
 			const [editBase, setEditBase] = react.useState(null);
 			const [editDirty, setEditDirty] = react.useState({});
@@ -40,6 +42,7 @@
 			const groups = react.useMemo(() => groupsFor(visible, grouping, now, sessions, t, locale), [visible, grouping, now, sessions, t, locale]);
 			const hasControls = query.trim() !== "" || filter !== "active";
 			const selectedRecord = selectedKey === null ? undefined : catalogState.records.find((record) => identity(record) === selectedKey);
+			const nativeSelectedRecord = nativeSelectedKey === null ? undefined : catalogState.records.find((record) => identity(record) === nativeSelectedKey);
 			const selectedSnapshot = selectedRecord ? JSON.stringify(selectedRecord) : "";
 			const dirtySignature = JSON.stringify(editDirty);
 
@@ -88,18 +91,12 @@
 			const showToast = (kind, text) => setToast({ kind, text, seq: ++toastSeq.current });
 			const openTask = (record, event, tab = "rule") => {
 				event?.stopPropagation?.();
-				if (sessionLinkState(record.sessionId, sessions, workspaces) !== "available") {
-					showToast("warning", t("detail.unavailable"));
-					return;
-				}
-				openNativeTask(record, tab);
+				setNativeSelectedKey(identity(record));
+				setNativeDetailTab(tab);
 			};
-			const openNativeDetails = (record, event) => {
-				openTask(record, event, "rule");
-			};
-			const openNativeHistory = (record, event) => {
-				openTask(record, event, "records");
-			};
+			const openNativeDetails = (record, event) => openTask(record, event, "rule");
+			const openNativeHistory = (record, event) => openTask(record, event, "records");
+			const closeNativeDetail = () => setNativeSelectedKey(null);
 			const closeInline = () => {
 				setSelectedKey(null);
 				setEdit(null);
@@ -171,6 +168,7 @@
 				setConfirmDeleteRecord(null);
 				const outcome = await catalog.remove(record);
 				if (selectedKey === identity(record) && (outcome === "deleted" || outcome === "gone")) closeInline();
+				if (nativeSelectedKey === identity(record) && (outcome === "deleted" || outcome === "gone")) closeNativeDetail();
 				if (outcome === "deleted") showToast("success", t("toast.deleted"));
 				else if (outcome === "gone") showToast("success", t("toast.gone"));
 				else if (outcome !== "pending") showToast("warning", t("toast.deleteFailed"));
@@ -510,7 +508,7 @@
 			};
 
 			return jsx.jsxs("div", {
-				className: "scc_root" + (selectedRecord ? " scc_hasInlineDetail" : ""),
+				className: "scc_root" + (nativeSelectedRecord ? " scc_hasInlineDetail" : ""),
 				children: [
 					jsx.jsxs("header", { className: "scc_header", children: [
 						jsx.jsx("span", { className: "scc_title", children: t("header") }),
@@ -573,7 +571,7 @@
 								? t("next", { value: formatInstant(record.scheduledAt, locale, undefined) })
 								: record.lastDelivery ? t("lastOccurrence", { value: formatInstant(record.lastDelivery.scheduledAt, locale, recordZone(record)) }) : t("inactive.noDelivery");
 							return jsx.jsxs("li", {
-								className: "scc_row" + (overdue ? " scc_rowOverdue" : "") + (record.status === "inactive" ? " scc_rowInactive" : "") + (selectedKey === key ? " scc_selectedRow" : ""),
+								className: "scc_row" + (overdue ? " scc_rowOverdue" : "") + (record.status === "inactive" ? " scc_rowInactive" : "") + (nativeSelectedKey === key ? " scc_selectedRow" : ""),
 								"data-task-id": record.id,
 								children: [
 									jsx.jsxs("div", {
@@ -611,8 +609,8 @@
 									}),
 									jsx.jsxs("div", { className: "scc_actions", children: [
 										jsx.jsx(primitives.Tooltip, { label: t("action.details"), side: "top", portal: true, children: jsx.jsx(primitives.Button, {
-											size: "sm", className: "scc_iconButton" + (selectedKey === key && detailTab === "rule" ? " scc_iconButtonActive" : ""),
-											"aria-label": t("action.details"), "aria-pressed": selectedKey === key && detailTab === "rule",
+											size: "sm", className: "scc_iconButton" + (nativeSelectedKey === key && nativeDetailTab === "rule" ? " scc_iconButtonActive" : ""),
+											"aria-label": t("action.details"), "aria-pressed": nativeSelectedKey === key && nativeDetailTab === "rule",
 											onClick: (event) => openNativeDetails(record, event), children: EditIcon ? jsx.jsx(EditIcon, { size: 16 }) : null
 										}) }),
 										jsx.jsx(primitives.Tooltip, { label: t("action.history"), side: "top", portal: true, children: jsx.jsx(primitives.Button, {
@@ -630,7 +628,11 @@
 							}, key);
 						}) })
 					] }, group.key)) }) }),
-					selectedRecord ? renderInlineDetail(selectedRecord) : null,
+					nativeSelectedRecord ? jsx.jsx(NativeTaskDetailBridge, {
+						record: nativeSelectedRecord,
+						tab: nativeDetailTab,
+						onClose: closeNativeDetail
+					}) : null,
 					jsx.jsx(primitives.Modal, {
 						open: confirmDeleteRecord !== null,
 						title: t("delete.title"),
