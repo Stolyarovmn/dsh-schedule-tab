@@ -36,7 +36,7 @@ The plugin uses the native DSH Schedule service as its source of truth. It does 
 For DSH `0.1.7-rc.2`:
 
 ```bash
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.7
+pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.8
 ```
 
 Restart DSH Web after installation.
@@ -79,4 +79,7 @@ MIT.
 
 > **rc2 architecture:** this package does not replace DSH's native `main:schedules` page. `@deepseek-ai/dsh-client-ui-schedule` owns `TaskManagerPage`, including Rules, Delivery records, date/time controls, validation, saving, and deletion. This plugin only enhances that native page with attention/count presentation and adds delivery notifications plus the sidebar summary.
 
-- Native TaskManager DOM enhancement is coalesced and idempotent: unchanged counter text is not rewritten, preventing MutationObserver feedback loops when the Scheduler panel mounts.
+
+
+> **rc2 architecture:** the enhanced Automation tasks list remains owned by this plugin (cards, search, Today/Overdue/Recurring filters, Date/Dialog grouping, attention indicators and sidebar summary). The right-side task detail is DSH's shipped `TaskManagerPage/TaskDetail`: Rules, Delivery records, date/time pickers, validation, saving and deletion use the native `@deepseek-ai/dsh-client-ui-schedule` implementation. The plugin captures that native registration before shadowing `main:schedules` and mounts only its detail side inside the enhanced page.
+
