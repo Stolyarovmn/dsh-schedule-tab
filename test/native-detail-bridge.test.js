@@ -17,11 +17,12 @@ assert.ok(bridge.includes('nativeDetailElement(page)'), "bridge must detect nati
 assert.ok(panel.includes('jsx.jsx(NativeTaskDetailBridge'), "enhanced scheduler must mount native detail inside its own right column");
 assert.ok(panel.includes('openDetail(record, "rule", event)'), "card/edit activation must open native Rules");
 assert.ok(panel.includes('openDetail(record, "records", event)'), "history activation must open native Delivery records");
-assert.ok(entry.includes('ctx.slots.subscribe("main", reconcile)'), "main registration must react to native schedule entry arrival regardless of activation order");
-assert.ok(entry.includes('const next = findNativeScheduleMain(ctx);'), "reconcile must discover the native schedule entry lazily");
-assert.ok(entry.includes('if (!next || !captureNativeScheduleMain(ctx, next)) return;'), "enhanced main must wait until native schedule capture succeeds");
+assert.ok(bridge.includes('ctx.slots.subscribe("main", reconcile)'), "main registration must react to native schedule entry arrival regardless of activation order");
+assert.ok(bridge.includes('const next = findNativeScheduleMain(ctx);'), "reconcile must discover the native schedule entry lazily");
+assert.ok(bridge.includes('if (!next || !captureNativeScheduleMain(ctx, next)) return;'), "enhanced main must wait until native schedule capture succeeds");
 assert.ok(!entry.includes('throw new Error("native DSH schedule manager is unavailable")'), "missing native schedule during early activation must never fail web boot");
-assert.ok(entry.includes('ctx.slots.inject("main"'), "enhanced scheduler must own the main schedules cell");
+assert.ok(bridge.includes('ctx.slots.inject("main"'), "enhanced scheduler installer must own the main schedules cell");
+assert.ok(entry.includes('installEnhancedScheduleMain(ctx);'), "plugin apply must delegate main setup to the activation-safe installer");
 assert.ok(!panel.includes("seedEditor("), "custom editor state must be gone from the panel");
 assert.ok(!panel.includes("loadHistory("), "custom delivery-history implementation must be gone from the panel");
 assert.ok(!panel.includes("hostCtx.sidebarRight"), "scheduler detail must not route through a Session right sidebar");
