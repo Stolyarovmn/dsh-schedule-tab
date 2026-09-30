@@ -86,18 +86,19 @@
 			}, [selectedKey, detailTab, selectedRecord?.lastDelivery?.messageId, histories[selectedKey]?.records?.[0]?.messageId]);
 
 			const showToast = (kind, text) => setToast({ kind, text, seq: ++toastSeq.current });
-			const openTask = (record, event) => {
+			const openTask = (record, event, tab = "rule") => {
 				event?.stopPropagation?.();
 				if (sessionLinkState(record.sessionId, sessions, workspaces) !== "available") {
 					showToast("warning", t("detail.unavailable"));
 					return;
 				}
-				markRecordSeen(record);
-				openNativeTask(record);
+				openNativeTask(record, tab);
 			};
 			const openNativeDetails = (record, event) => {
-				event?.stopPropagation?.();
-				openTask(record, event);
+				openTask(record, event, "rule");
+			};
+			const openNativeHistory = (record, event) => {
+				openTask(record, event, "records");
 			};
 			const closeInline = () => {
 				setSelectedKey(null);
@@ -613,6 +614,11 @@
 											size: "sm", className: "scc_iconButton" + (selectedKey === key && detailTab === "rule" ? " scc_iconButtonActive" : ""),
 											"aria-label": t("action.details"), "aria-pressed": selectedKey === key && detailTab === "rule",
 											onClick: (event) => openNativeDetails(record, event), children: EditIcon ? jsx.jsx(EditIcon, { size: 16 }) : null
+										}) }),
+										jsx.jsx(primitives.Tooltip, { label: t("action.history"), side: "top", portal: true, children: jsx.jsx(primitives.Button, {
+											size: "sm", className: "scc_iconButton",
+											"aria-label": t("action.history"),
+											onClick: (event) => openNativeHistory(record, event), children: HistoryIcon ? jsx.jsx(HistoryIcon, { size: 16 }) : null
 										}) }),
 										jsx.jsx(primitives.Tooltip, { label: deleting ? t("delete.pending") : t("action.delete"), side: "top", portal: true, children: jsx.jsx(primitives.Button, {
 											size: "sm", className: "scc_iconButton scc_iconButtonDanger", disabled: deleting || catalogState.status === "loading",
