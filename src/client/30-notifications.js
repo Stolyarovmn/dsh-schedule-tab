@@ -167,16 +167,45 @@
 		}
 
 		let cancelPendingTaskOpen = null;
-		function openNativeTask(record) {
+		function selectNativeTaskDetailTab(tab) {
+			if (tab !== "records" || typeof document === "undefined") return;
+			let stableSelected = 0;
+			let attempts = 0;
+			const timer = window.setInterval(() => {
+				attempts += 1;
+				const candidates = [...document.querySelectorAll('[data-detail-tab="records"]')];
+				const button = candidates.find((node) => node.closest('[data-sidebar-right-session]')) ?? candidates[0];
+				if (!button) {
+					if (attempts >= 40) window.clearInterval(timer);
+					return;
+				}
+				if (button.getAttribute("aria-selected") === "true") {
+					stableSelected += 1;
+					if (stableSelected >= 2 || attempts >= 40) window.clearInterval(timer);
+					return;
+				}
+				stableSelected = 0;
+				button.click();
+				if (attempts >= 40) window.clearInterval(timer);
+			}, 50);
+		}
+		function openNativeTask(record, tab = "rule") {
 			cancelPendingTaskOpen?.();
 			cancelPendingTaskOpen = null;
-			const mounted = hostCtx.sidebarRight.mounted;
-			const open = () => hostCtx.sidebarRight.openTab(TASK_KIND, { params: { sessionId: record.sessionId, id: record.id } });
-			if (mounted.getSnapshot() === record.sessionId) {
-				hostCtx.uiWorkspace.openSession(record.sessionId);
-				queueMicrotask(open);
+			const open = () => {
+				hostCtx.sidebarRight.openTab(TASK_KIND, { params: { sessionId: record.sessionId, id: record.id } });
+				selectNativeTaskDetailTab(tab);
+			};
+			// A scheduleTask page can show a task whose source Session differs from the
+			// Session that owns the currently mounted right Sidebar. Prefer that public
+			// navigation path so Automation tasks stays visible in the main panel.
+			if (hostCtx.sidebarRight.mounted.getSnapshot() !== undefined && hostCtx.sidebarRight.mounted.getSnapshot() !== null) {
+				open();
 				return true;
 			}
+			// Without any mounted right-Sidebar Session there is nowhere to host the
+			// native page. Fall back to revealing the task's source Session, then open it.
+			const mounted = hostCtx.sidebarRight.mounted;
 			let finished = false;
 			let unsubscribe = () => {};
 			const timer = window.setTimeout(() => {
