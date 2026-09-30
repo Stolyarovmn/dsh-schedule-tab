@@ -95,11 +95,9 @@
 				markRecordSeen(record);
 				openNativeTask(record);
 			};
-			const openInline = (record, tab, event) => {
+			const openNativeDetails = (record, event) => {
 				event?.stopPropagation?.();
-				setSelectedKey(identity(record));
-				setDetailTab(tab);
-				setEditError(null);
+				openTask(record, event);
 			};
 			const closeInline = () => {
 				setSelectedKey(null);
@@ -614,12 +612,7 @@
 										jsx.jsx(primitives.Tooltip, { label: t("action.details"), side: "top", portal: true, children: jsx.jsx(primitives.Button, {
 											size: "sm", className: "scc_iconButton" + (selectedKey === key && detailTab === "rule" ? " scc_iconButtonActive" : ""),
 											"aria-label": t("action.details"), "aria-pressed": selectedKey === key && detailTab === "rule",
-											onClick: (event) => openInline(record, "rule", event), children: EditIcon ? jsx.jsx(EditIcon, { size: 16 }) : null
-										}) }),
-										jsx.jsx(primitives.Tooltip, { label: t("action.history"), side: "top", portal: true, children: jsx.jsx(primitives.Button, {
-											size: "sm", className: "scc_iconButton" + (selectedKey === key && detailTab === "records" ? " scc_iconButtonActive" : ""),
-											"aria-label": t("action.history"), "aria-pressed": selectedKey === key && detailTab === "records",
-											onClick: (event) => openInline(record, "records", event), children: HistoryIcon ? jsx.jsx(HistoryIcon, { size: 16 }) : null
+											onClick: (event) => openNativeDetails(record, event), children: EditIcon ? jsx.jsx(EditIcon, { size: 16 }) : null
 										}) }),
 										jsx.jsx(primitives.Tooltip, { label: deleting ? t("delete.pending") : t("action.delete"), side: "top", portal: true, children: jsx.jsx(primitives.Button, {
 											size: "sm", className: "scc_iconButton scc_iconButtonDanger", disabled: deleting || catalogState.status === "loading",
