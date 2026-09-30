@@ -1,4 +1,4 @@
-		const inject = ["slots", "locale", "remote", "remote.schedule", "sessions", "workspaces", "uiWorkspace", "sidebarRight"];
+		const inject = ["slots", "locale", "remote", "remote.schedule", "sessions", "workspaces", "uiWorkspace"];
 		function apply(ctx) {
 			hostCtx = ctx;
 			catalog = createCatalogSource(ctx);
