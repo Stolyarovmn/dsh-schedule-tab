@@ -5,7 +5,7 @@ const bridge = readFileSync(new URL("../src/client/50-native-detail.js", import.
 const panel = readFileSync(new URL("../src/client/60-panel.js", import.meta.url), "utf8");
 const entry = readFileSync(new URL("../src/client/80-entry.js", import.meta.url), "utf8");
 
-assert.ok(bridge.includes('ctx.slots.entries("main").find((candidate) => candidate.options?.key === PANEL_ID)'), "bridge must capture DSH native schedules registration before shadowing it");
+assert.ok(bridge.includes('candidate.options?.locale === "schedule.manager"'), "bridge must identify the shipped DSH schedule registration, not its own shadow");
 assert.ok(bridge.includes('Component: entry.component'), "bridge must reuse the actual DSH TaskManagerPage component");
 assert.ok(bridge.includes('const injected = entry.inject();'), "bridge must reuse DSH native task actions and catalog");
 assert.ok(bridge.includes('useCatalog: createSelectorHook(nativeCatalog)'), "native TaskManagerPage must receive a live catalog hook");
@@ -17,7 +17,10 @@ assert.ok(bridge.includes('nativeDetailElement(page)'), "bridge must detect nati
 assert.ok(panel.includes('jsx.jsx(NativeTaskDetailBridge'), "enhanced scheduler must mount native detail inside its own right column");
 assert.ok(panel.includes('openDetail(record, "rule", event)'), "card/edit activation must open native Rules");
 assert.ok(panel.includes('openDetail(record, "records", event)'), "history activation must open native Delivery records");
-assert.ok(entry.includes('captureNativeScheduleMain(ctx)'), "native schedules entry must be captured before the enhanced main cell is registered");
+assert.ok(entry.includes('ctx.slots.subscribe("main", reconcile)'), "main registration must react to native schedule entry arrival regardless of activation order");
+assert.ok(entry.includes('const next = findNativeScheduleMain(ctx);'), "reconcile must discover the native schedule entry lazily");
+assert.ok(entry.includes('if (!next || !captureNativeScheduleMain(ctx, next)) return;'), "enhanced main must wait until native schedule capture succeeds");
+assert.ok(!entry.includes('throw new Error("native DSH schedule manager is unavailable")'), "missing native schedule during early activation must never fail web boot");
 assert.ok(entry.includes('ctx.slots.inject("main"'), "enhanced scheduler must own the main schedules cell");
 assert.ok(!panel.includes("seedEditor("), "custom editor state must be gone from the panel");
 assert.ok(!panel.includes("loadHistory("), "custom delivery-history implementation must be gone from the panel");
