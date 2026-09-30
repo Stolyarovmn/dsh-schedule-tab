@@ -4,13 +4,14 @@
 			catalog = createCatalogSource(ctx);
 			const deliveryToast = createDeliveryToastSource();
 			ctx.effect(() => ctx.locale.register(NS, { en, zh, ru }), "schedule-control-center: dictionaries");
-			ctx.effect(() => startDeliveryMonitor(catalog, (record) => deliveryToast.report(record)), "schedule-control-center: delivery monitor");
+			ctx.effect(() => startDeliveryRefreshFallback(catalog), "schedule-control-center: delivery refresh fallback");
 			ctx.slots.inject("shell.overlay", () => ctx.slots.register({
 				name: "shell.overlay",
 				id: "schedule-control-center.delivery-toast",
 				locale: NS,
 				inject: () => ({
-					hooks: deliveryToast.hooks,
+					hooks: { ...deliveryToast.hooks, catalog, seenRevision: seenRevisionSource },
+					report: deliveryToast.report,
 					dismiss: deliveryToast.dismiss,
 					openRecord: (record) => {
 						markRecordSeen(record);
