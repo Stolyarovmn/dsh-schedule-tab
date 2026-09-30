@@ -49,7 +49,7 @@ assert.ok(client.includes('data-detail-tab="'), "bridge must route Edit/History 
 assert.ok(client.includes('nativeSelectedRecord ? jsx.jsx(NativeTaskDetailBridge'), "enhanced Scheduler must mount native detail in its existing right column");
 assert.ok(client.includes('setNativeSelectedKey(identity(record))'), "card activation must stay on Automation tasks instead of navigating to chat");
 assert.ok(client.includes('setNativeDetailTab(tab)'), "Edit and History must select native detail tabs");
-assert.ok(client.includes('className: "scc_nativeDetailHost"'), "native detail must be hosted inside the enhanced right column");
+assert.ok(client.includes('className: "scc_inlineDetail scc_nativeDetailHost"'), "native detail must be hosted inside the enhanced right column");
 
 assert.ok(client.includes('const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2"'), "delivery-aware seen state must remain");
 assert.ok(client.includes('function deliverySeenKey(record)'), "deliveries must retain durable seen identity");
