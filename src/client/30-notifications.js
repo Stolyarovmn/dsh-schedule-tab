@@ -119,6 +119,17 @@
 			if (changed) commitSeen(seen);
 			return changed;
 		}
+		function markDeliveriesSeen(records) {
+			const seen = readSeen(records); let changed = false;
+			for (const record of records) {
+				const delivery = deliverySeenKey(record);
+				if (!delivery || seen.has(delivery)) continue;
+				seen.add(delivery);
+				changed = true;
+			}
+			if (changed) commitSeen(seen);
+			return changed;
+		}
 		function markRecordSeen(record) {
 			const seen = readSeen([record]); let changed = false;
 			if (record.status === "active") {
@@ -135,12 +146,12 @@
 			const delivery = deliverySeenKey(record);
 			return delivery !== null && !readSeen([record]).has(delivery);
 		}
-		function taskAttentionState(record, now) {
+		function taskAttentionState(record, now, preferences = DEFAULT_NOTIFICATION_PREFERENCES) {
 			if (record.status === "active" && isOverdue(record, now)) return "warning";
-			if (isDeliveryUnread(record)) return "new";
+			if (preferences.newDeliveries && isDeliveryUnread(record)) return "new";
 			return null;
 		}
-		function notificationSummary(records, now) {
+		function notificationSummary(records, now, preferences = DEFAULT_NOTIFICATION_PREFERENCES) {
 			const seen = readSeen(records);
 			let total = 0, unread = 0, unreadTasks = 0, unreadDeliveries = 0, unreadOverdue = 0, overdue = 0, recurring = 0;
 			for (const record of records) {
@@ -152,11 +163,11 @@
 					if (isRecurring(record)) recurring += 1;
 				}
 				const delivery = deliverySeenKey(record);
-				if (delivery && !seen.has(delivery)) {
+				if (preferences.newDeliveries && delivery && !seen.has(delivery)) {
 					unread += 1; unreadDeliveries += 1; if (over) unreadOverdue += 1;
 					continue;
 				}
-				if (active && !seen.has(taskSeenKey(record))) {
+				if (preferences.newTasks && active && !seen.has(taskSeenKey(record))) {
 					unread += 1; unreadTasks += 1; if (over) unreadOverdue += 1;
 				}
 			}
