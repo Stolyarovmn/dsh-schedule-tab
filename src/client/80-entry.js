@@ -6,6 +6,7 @@
 			ctx.effect(() => ctx.locale.register(NS, { en, zh, ru }), "schedule-control-center: dictionaries");
 			ctx.effect(() => startNotificationPreferencesStorageSync(), "schedule-control-center: notification preferences storage");
 			ctx.effect(() => startDeliveryAttentionBaseline(catalog), "schedule-control-center: delivery baseline");
+			ctx.effect(() => startNotificationPreferenceSuppression(catalog), "schedule-control-center: notification preference suppression");
 			ctx.effect(() => startDeliveryRefreshFallback(catalog), "schedule-control-center: delivery refresh fallback");
 			ctx.slots.inject("shell.overlay", () => ctx.slots.register({
 				name: "shell.overlay",
