@@ -4,6 +4,7 @@
 			catalog = createCatalogSource(ctx);
 			const deliveryToast = createDeliveryToastSource();
 			ctx.effect(() => ctx.locale.register(NS, { en, zh, ru }), "schedule-control-center: dictionaries");
+			ctx.effect(() => startNotificationPreferencesStorageSync(), "schedule-control-center: notification preferences storage");
 			ctx.effect(() => startDeliveryAttentionBaseline(catalog), "schedule-control-center: delivery baseline");
 			ctx.effect(() => startDeliveryRefreshFallback(catalog), "schedule-control-center: delivery refresh fallback");
 			ctx.slots.inject("shell.overlay", () => ctx.slots.register({
@@ -11,9 +12,10 @@
 				id: "schedule-control-center.delivery-toast",
 				locale: NS,
 				inject: () => ({
-					hooks: { ...deliveryToast.hooks, catalog },
+					hooks: { ...deliveryToast.hooks, catalog, preferences: notificationPreferencesSource },
 					report: deliveryToast.report,
 					dismiss: deliveryToast.dismiss,
+					clear: deliveryToast.clear,
 					openRecord: (record) => {
 						markRecordSeen(record);
 						ctx.uiWorkspace.openSession(record.sessionId);
