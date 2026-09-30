@@ -106,7 +106,7 @@ assert.ok(!client.includes('startDeliveryMonitor('), "obsolete detached delivery
 assert.ok(!client.includes('DELIVERY_CURSOR_STORAGE_KEY'), "delivery cursor baseline must not suppress unread delivery popups");
 assert.ok(!client.includes('markRecordSeen(record);\n\t\t\t\tsetSelectedKey(identity(record));'), "opening Rules or Delivery records must not clear the delivery indicator");
 
-assert.ok(client.includes('function openNativeDetails(record, event)'), "schedule-card detail action must route to native DSH detail");
+assert.ok(client.includes('const openNativeDetails = (record, event) => {'), "schedule-card detail action must route to native DSH detail");
 assert.ok(client.includes('onClick: (event) => openNativeDetails(record, event)'), "detail icon must open the native scheduleTask tab");
 assert.ok(!client.includes('onClick: (event) => openInline(record'), "custom inline editor must have no user entrypoint");
 assert.ok(!client.includes('onClick: (event) => openInline(record, "records"'), "custom history pane must have no user entrypoint");
