@@ -119,3 +119,10 @@ assert.ok(client.includes('function selectNativeTaskDetailTab(tab)'), "history a
 assert.ok(client.includes('[data-detail-tab="records"]'), "history action must target DSH's native Delivery records tab marker");
 assert.ok(client.includes('const openNativeHistory = (record, event) => {'), "history row action must exist");
 assert.ok(client.includes('onClick: (event) => openNativeHistory(record, event)'), "history button must route to native Delivery records");
+
+assert.ok(!client.includes('ctx.slots.inject("main"'), "rc2 enhancer must not replace DSH's native main:schedules TaskManagerPage");
+assert.ok(client.includes('startNativeManagerEnhancer(catalog, ctx.locale.bind(NS))'), "native schedule page must receive attention/count enhancement");
+assert.ok(client.includes('function startNativeManagerEnhancer(source, t)'), "native manager enhancer must be present");
+assert.ok(client.includes('[data-testid="task-manager-page"]'), "enhancer must target DSH's native TaskManagerPage");
+assert.ok(client.includes('dataSccNativeAttention'), "native schedule rows must receive the delivery attention dot");
+assert.ok(client.includes('dataSccFilterCount'), "native All/Active/Inactive controls must receive counts");
