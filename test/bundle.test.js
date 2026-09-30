@@ -6,7 +6,7 @@ const patch = readFileSync(new URL("../cordis.patch.yml", import.meta.url), "utf
 const host = readFileSync(new URL("../lib/index.js", import.meta.url), "utf8");
 
 assert.equal(pkg.name, "@stolyarovmn/dsh-client-ui-schedule-tab");
-assert.equal(pkg.version, "0.6.3");
+assert.equal(pkg.version, "0.6.4");
 assert.equal(pkg.peerDependencies["@deepseek-ai/dsh"], "0.1.7-rc.2");
 assert.equal(pkg.dsh?.bundle?.patch, "./cordis.patch.yml");
 assert.equal(pkg.dsh?.client?.platform, "web");
