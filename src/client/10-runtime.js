@@ -9,7 +9,6 @@
 		const HISTORY_PAGE = 20;
 		const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2";
 		const LEGACY_SEEN_STORAGE_KEY = PACKAGE + "/seen-v1";
-		const DELIVERY_CURSOR_STORAGE_KEY = PACKAGE + "/delivery-cursor-v1";
 		const MAX_SEEN_IDS = 4000;
 		const ClockIcon = primitives.IconAlarmClockOutlineRegular
 			?? primitives.IconClockOutlineRegular
