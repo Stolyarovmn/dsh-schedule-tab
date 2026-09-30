@@ -23,7 +23,7 @@ context.globalThis = context;
 const notificationPrelude = `const PACKAGE = "@stolyarovmn/dsh-client-ui-schedule-tab"; const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2"; const LEGACY_SEEN_STORAGE_KEY = PACKAGE + "/seen-v1"; const MAX_SEEN_IDS = 4000;`;
 
 vm.runInNewContext(
-  notificationPrelude + "\n" + code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markTasksSeen, markRecordSeen, taskAttentionState, identity };",
+  notificationPrelude + "\n" + code + "\nglobalThis.__test = { adaptiveTickDelay, wallClock, validTimeZone, editorError, notificationSummary, markTasksSeen, markRecordSeen, markDeliveryNotified, isDeliveryNotified, ensureDeliveryAttentionBaseline, taskAttentionState, identity };",
   context,
 );
 
@@ -59,13 +59,19 @@ const recurring = {
   },
 };
 
+api.ensureDeliveryAttentionBaseline([recurring]);
 assert.equal(api.notificationSummary([recurring], now).unreadDeliveries, 0, "first install must baseline historical deliveries");
+assert.equal(api.isDeliveryNotified(recurring), true, "historical delivery must also be notification-baselined");
 
 const nextDelivery = { ...recurring, lastDelivery: { ...recurring.lastDelivery, messageId: "m2" } };
 assert.equal(api.notificationSummary([nextDelivery], now).unreadDeliveries, 1, "new recurring delivery must become unread");
+assert.equal(api.isDeliveryNotified(nextDelivery), false, "new delivery must be eligible for one popup");
 api.markTasksSeen([nextDelivery]);
 assert.equal(api.notificationSummary([nextDelivery], now).unreadDeliveries, 1, "opening Automation tasks must not clear a new delivery");
 assert.equal(api.taskAttentionState(nextDelivery, now), "new");
+api.markDeliveryNotified(nextDelivery);
+assert.equal(api.isDeliveryNotified(nextDelivery), true, "popup acknowledgement must be independent from seen state");
+assert.equal(api.notificationSummary([nextDelivery], now).unreadDeliveries, 1, "showing the popup must not clear the card indicator");
 api.markRecordSeen(nextDelivery);
 assert.equal(api.notificationSummary([nextDelivery], now).unread, 0);
 
