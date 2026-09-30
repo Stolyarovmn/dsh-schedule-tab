@@ -47,9 +47,6 @@ assert.ok(!client.includes('action.conversation'), "duplicate Conversation row a
 assert.ok(client.includes('async update(request)'), "catalog must expose native schedule.update for inline Rules editing");
 assert.ok(client.includes('schedule.update(request)'), "inline editor must save through native rc2 Schedule update");
 assert.ok(client.includes('expected: stripCatalogRecord(editBase)'), "edits must use rc2 compare-and-update expected records");
-assert.ok(client.includes('openInline(record, "rule", event)'), "edit icon must open Rules in-place");
-assert.ok(client.includes('openInline(record, "records", event)'), "history icon must open Delivery records in-place");
-assert.ok(client.includes('className: "scc_inlineDetail"'), "Automation tasks page must retain inline detail");
 assert.ok(client.includes('edit.rule.weekdays'), "editor must retain the Monday-to-Friday rule choice");
 assert.ok(client.includes('edit.unit.seconds'), "editor must retain seconds/minutes/hours interval choices");
 assert.ok(client.includes('edit.invalidZone'), "editor must validate IANA time zones before update");
@@ -57,8 +54,6 @@ assert.ok(client.includes('schedule_conflict'), "editor must surface compare-and
 
 assert.ok(client.includes('className: "scc_rowMain"'), "task primary activation must be separated from row action buttons");
 assert.ok(client.includes('onClick: (event) => openTask(record, event)'), "task primary activation must keep Session and task-detail navigation");
-assert.ok(client.includes('onClick: (event) => openInline(record, "rule", event)'), "edit icon must open the inline Rules pane");
-assert.ok(client.includes('onClick: (event) => openInline(record, "records", event)'), "history icon must open Delivery records");
 assert.ok(client.includes('"edit.rule.weekdays": "Monday to Friday"'), "Mon-Fri convenience rule must remain available");
 assert.ok(client.includes('fractionalSecondDigits: 3'), "time editing must preserve millisecond precision");
 assert.ok(client.includes('void catalog.refresh(catalogState.readRequest)'), "conflicts and ended updates must refresh catalog state");
@@ -94,9 +89,9 @@ assert.ok(client.includes('const warn = summary.overdue > 0;'), "Automation task
 
 assert.ok(client.includes('name: "shell.overlay"'), "new delivery popup must use the native shell.overlay surface");
 assert.ok(client.includes('id: "schedule-control-center.delivery-toast"'), "delivery popup slot id must stay stable");
-assert.ok(client.includes('function DeliveryToast({ useToast, useCatalog, useSeenRevision, report, dismiss, openRecord, t })'), "delivery popup must derive directly from the mounted overlay catalog state");
+assert.ok(client.includes('function DeliveryToast({ useToast, useCatalog, report, dismiss, openRecord, t })'), "delivery popup must derive directly from the mounted overlay catalog state");
 assert.ok(client.includes('function startDeliveryRefreshFallback(source)'), "delivery detection must have an adaptive authoritative catalog refresh fallback");
-assert.ok(client.includes('hooks: { ...deliveryToast.hooks, catalog, seenRevision: seenRevisionSource }'), "overlay must receive catalog and seen-state hooks directly");
+assert.ok(client.includes('hooks: { ...deliveryToast.hooks, catalog }'), "overlay must receive the authoritative catalog hook directly");
 assert.ok(client.includes('primitives.Toast'), "delivery popup must use the native DSH Toast component");
 assert.ok(client.includes('className: "scc_attentionDot"'), "task cards must expose a compact attention indicator");
 assert.ok(client.includes('function taskAttentionState(record, now)'), "card attention state must be derived from durable schedule facts");
@@ -106,7 +101,14 @@ assert.ok(!client.includes('markSeen(state.records)'), "opening Automation tasks
 assert.ok(client.includes('"delivery.toast": "Scheduled task delivered: {title}"'), "popup copy must describe delivery, not model success");
 
 assert.ok(client.includes('function markDeliveryNotified(record)'), "popup notification state must be separate from delivery seen state");
-assert.ok(client.includes('if (!isDeliveryUnread(record) || isDeliveryNotified(record)) continue;'), "popup must only report unread, not-yet-notified deliveries");
+assert.ok(client.includes('if (deliveryMarker(record) === null || isDeliveryNotified(record)) continue;'), "popup must report each delivery exactly once regardless of detail-view state");
 assert.ok(!client.includes('startDeliveryMonitor('), "obsolete detached delivery monitor must stay removed");
 assert.ok(!client.includes('DELIVERY_CURSOR_STORAGE_KEY'), "delivery cursor baseline must not suppress unread delivery popups");
 assert.ok(!client.includes('markRecordSeen(record);\n\t\t\t\tsetSelectedKey(identity(record));'), "opening Rules or Delivery records must not clear the delivery indicator");
+
+assert.ok(client.includes('function openNativeDetails(record, event)'), "schedule-card detail action must route to native DSH detail");
+assert.ok(client.includes('onClick: (event) => openNativeDetails(record, event)'), "detail icon must open the native scheduleTask tab");
+assert.ok(!client.includes('onClick: (event) => openInline(record'), "custom inline editor must have no user entrypoint");
+assert.ok(!client.includes('onClick: (event) => openInline(record, "records"'), "custom history pane must have no user entrypoint");
+assert.ok(client.includes('function ensureDeliveryAttentionBaseline(records)'), "delivery attention must baseline before future events");
+assert.ok(client.includes('startDeliveryAttentionBaseline(catalog)'), "delivery baseline must start with the client plugin");
