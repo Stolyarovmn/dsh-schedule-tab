@@ -24,7 +24,7 @@ for (const forbidden of [
   '0.1.7-rc.1',
   'hostCtx.sidebarRight',
   'openTab(TASK_KIND',
-  'hostCtx.uiWorkspace.openSession(record.sessionId)',
+  'openNativeTask(record',
 ]) assert.ok(!client.includes(forbidden), `obsolete navigation/compatibility leaked into rc2 client: ${forbidden}`);
 
 assert.ok(client.includes('const PANEL_ID = "schedules"'), "plugin must retain the native Automation tasks panel key");
