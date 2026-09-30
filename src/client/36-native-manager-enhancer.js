@@ -51,7 +51,8 @@
 					badge.className = "scc_chipCount";
 					buttons[index].appendChild(badge);
 				}
-				badge.textContent = String(counts[index]);
+				const nextText = String(counts[index]);
+				if (badge.textContent !== nextText) badge.textContent = nextText;
 			}
 		}
 		function startNativeManagerEnhancer(source, t) {
