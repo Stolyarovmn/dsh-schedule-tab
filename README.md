@@ -21,12 +21,12 @@ Version `0.6.x` requires `@deepseek-ai/dsh@0.1.7-rc.2` exactly. Version `0.5.1` 
 - Delivery-aware unseen indicators in **Automation tasks**: each card shows a compact attention dot for a new saved delivery; opening Rules or Delivery records does not clear it, recurring tasks become unread again when another delivery arrives, and legacy `seen-v1` state is migrated without replaying old records.
 - Overdue warning in the Automation tasks navigation remains visible until the task is no longer overdue, independently of unread state.
 - New deliveries raise one native DSH `shell.overlay` toast with an **Open conversation** action.
-- Native task editing is not reimplemented: the enhanced cards open DSH's own `scheduleTask` right-Sidebar page, so Rules, Delivery records, date/time pickers, validation, and saving are the shipped DSH UI. When a right Sidebar is already mounted, the page opens there without switching the main panel to the source conversation. A separate History action opens the same native page and selects its `Delivery records` tab. Popup notification state is separate from seen state: the toast is shown once, while the card indicator remains until the source conversation is opened. The mounted overlay derives delivery changes directly from the authoritative catalog, with an adaptive catalog-refresh fallback near scheduled times.
+- The enhanced cards remain on the plugin's Automation tasks page. Edit and History mount DSH's shipped `TaskManagerPage` inside the existing right column and expose its native `TaskDetail`, so Rules, Delivery records, date/time pickers, validation and saving are native DSH UI without switching the main panel to the source conversation. Popup notification state is separate from seen state: the toast is shown once, while the card indicator remains until the source conversation is opened. The mounted overlay derives delivery changes directly from the authoritative catalog, with an adaptive catalog-refresh fallback near scheduled times.
 - Native DSH Session-row status remains authoritative. The plugin does not use delivery/unread state to recolor the Session clock; it only adds a warning color to the existing native schedule mark when an active task is overdue.
 - Delivery history with occurrence and acknowledgment timestamps.
-- In-place task editing for Once, Every, Daily, Monday-to-Friday, Weekly, and Cron rules.
+- Native DSH task editing for Once, Every, Daily, Monday-to-Friday, Weekly, and Cron rules, hosted inside the enhanced Scheduler page.
 - Native task deletion with confirmation.
-- Navigation from a task to its source Session and native task detail.
+- Optional navigation from native task detail to its source Session.
 - Authoritative refresh on Schedule changes and connection resets.
 
 The plugin uses the native DSH Schedule service as its source of truth. It does not implement its own scheduler or task database. Schedule delivery receipts prove durable inbox delivery only; they do **not** prove that the model later completed successfully, so the plugin does not invent green/red execution-result states.
@@ -36,7 +36,7 @@ The plugin uses the native DSH Schedule service as its source of truth. It does 
 For DSH `0.1.7-rc.2`:
 
 ```bash
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.5
+pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.11
 ```
 
 Restart DSH Web after installation.
