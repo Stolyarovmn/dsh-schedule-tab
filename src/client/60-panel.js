@@ -97,7 +97,6 @@
 			};
 			const openInline = (record, tab, event) => {
 				event?.stopPropagation?.();
-				markRecordSeen(record);
 				setSelectedKey(identity(record));
 				setDetailTab(tab);
 				setEditError(null);
