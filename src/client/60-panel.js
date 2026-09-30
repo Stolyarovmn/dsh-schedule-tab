@@ -3,6 +3,7 @@
 		function SchedulePanel({ t }) {
 			const catalogState = useObservable(catalog);
 			useObservable(seenRevisionSource);
+			const preferences = useObservable(notificationPreferencesSource);
 			const { sessions, workspaces } = useSessionSnapshots();
 			const locale = (typeof document !== "undefined" && document.documentElement?.lang) || undefined;
 			const zones = react.useMemo(() => timeZoneChoices(), []);
@@ -21,6 +22,7 @@
 			const [editError, setEditError] = react.useState(null);
 			const [histories, setHistories] = react.useState({});
 			const [confirmDeleteRecord, setConfirmDeleteRecord] = react.useState(null);
+			const [settingsOpen, setSettingsOpen] = react.useState(false);
 			const [toast, setToast] = react.useState(null);
 			const [copiedMessageId, setCopiedMessageId] = react.useState(null);
 			const toastSeq = react.useRef(0);
@@ -89,6 +91,28 @@
 			}, [selectedKey, detailTab, selectedRecord?.lastDelivery?.messageId, histories[selectedKey]?.records?.[0]?.messageId]);
 
 			const showToast = (kind, text) => setToast({ kind, text, seq: ++toastSeq.current });
+			const updateNotificationPreference = (key, enabled) => {
+				if (!enabled && key === "newTasks") markTasksSeen(catalogState.records);
+				if (!enabled && key === "newDeliveries") markDeliveriesSeen(catalogState.records);
+				if (!enabled && key === "popup") {
+					for (const record of catalogState.records) markDeliveryNotified(record);
+				}
+				setNotificationPreference(key, enabled);
+			};
+			const renderNotificationSetting = (key) => jsx.jsxs("div", {
+				className: "scc_settingRow",
+				children: [
+					jsx.jsxs("div", { className: "scc_settingCopy", children: [
+						jsx.jsx("div", { className: "scc_settingTitle", children: t("settings." + key + ".title") }),
+						jsx.jsx("div", { className: "scc_settingDescription", children: t("settings." + key + ".description") })
+					] }),
+					jsx.jsx(primitives.Switch, {
+						checked: preferences[key] === true,
+						label: t("settings." + key + ".title"),
+						onChange: (enabled) => updateNotificationPreference(key, enabled)
+					})
+				]
+			}, key);
 			const openTask = (record, event, tab = "rule") => {
 				event?.stopPropagation?.();
 				markRecordSeen(record);
@@ -516,6 +540,17 @@
 						jsx.jsx("span", { className: "scc_count", children: t("count", { visible: visible.length }) }),
 						jsx.jsx("span", { className: "scc_spacer" }),
 						jsx.jsx(primitives.Tooltip, {
+							label: t("settings.open"),
+							side: "bottom", portal: true,
+							children: jsx.jsx(primitives.Button, {
+								size: "sm",
+								className: "scc_iconButton",
+								"aria-label": t("settings.open"),
+								onClick: () => setSettingsOpen(true),
+								children: SettingsIcon ? jsx.jsx(SettingsIcon, { size: 16 }) : null
+							})
+						}),
+						jsx.jsx(primitives.Tooltip, {
 							label: t("new.hint"),
 							side: "bottom", portal: true,
 							children: jsx.jsx(primitives.Button, {
@@ -565,7 +600,7 @@
 						jsx.jsx("ul", { className: "scc_groupList", children: group.records.map((record) => {
 							const key = identity(record);
 							const overdue = isOverdue(record, now);
-							const attention = taskAttentionState(record, now);
+							const attention = taskAttentionState(record, now, preferences);
 							const deleting = catalogState.deleting.includes(record.id);
 							const source = sessionTitle(record.sessionId, sessions);
 							const nextOrLast = record.status === "active"
@@ -634,6 +669,17 @@
 						tab: nativeDetailTab,
 						onClose: closeNativeDetail
 					}) : null,
+					jsx.jsx(primitives.Modal, {
+						open: settingsOpen,
+						title: t("settings.title"),
+						description: t("settings.description"),
+						closeLabel: t("settings.close"),
+						onClose: () => setSettingsOpen(false),
+						children: jsx.jsx("div", {
+							className: "scc_settingsList",
+							children: ["popup", "newTasks", "newDeliveries"].map(renderNotificationSetting)
+						})
+					}),
 					jsx.jsx(primitives.Modal, {
 						open: confirmDeleteRecord !== null,
 						title: t("delete.title"),
