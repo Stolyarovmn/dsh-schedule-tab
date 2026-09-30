@@ -28,12 +28,7 @@
 				locale: NS,
 				label: () => ctx.locale.bind(NS)("tab")
 			}, ScheduleGlyph));
-			ctx.slots.inject("main", () => ctx.slots.register({
-				name: "main",
-				key: PANEL_ID,
-				priority: -100,
-				locale: NS
-			}, SchedulePanel));
+			ctx.effect(() => startNativeManagerEnhancer(catalog, ctx.locale.bind(NS)), "schedule-control-center: native manager enhancer");
 		}
 		exports.apply = apply;
 		exports.inject = inject;
