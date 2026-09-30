@@ -18,9 +18,9 @@ Version `0.6.x` requires `@deepseek-ai/dsh@0.1.7-rc.2` exactly. Version `0.5.1` 
 - Search by task title, instruction, task id, Session id, or Session title.
 - Grouping by date or source conversation.
 - Every, Daily, Weekly, and Cron rule display with IANA time zones.
-- Delivery-aware unseen indicators in **Automation tasks**: each card shows a compact attention dot for a new saved delivery, recurring tasks become unread again when another delivery arrives, and legacy `seen-v1` state is migrated without replaying old records.
+- Delivery-aware unseen indicators in **Automation tasks**: each card shows a compact attention dot for a new saved delivery; opening Rules or Delivery records does not clear it, recurring tasks become unread again when another delivery arrives, and legacy `seen-v1` state is migrated without replaying old records.
 - Overdue warning in the Automation tasks navigation remains visible until the task is no longer overdue, independently of unread state.
-- New deliveries raise one native DSH `shell.overlay` toast with an **Open conversation** action. A persisted delivery cursor prevents duplicates and also surfaces a delivery that happened while DSH Web was restarting; the very first install still baselines historical deliveries instead of replaying them.
+- New deliveries raise one native DSH `shell.overlay` toast with an **Open conversation** action. Popup notification state is separate from seen state: the toast is shown once, while the card indicator remains until the source conversation is opened. The mounted overlay derives delivery changes directly from the authoritative catalog, with an adaptive catalog-refresh fallback near scheduled times.
 - Native DSH Session-row status remains authoritative. The plugin does not use delivery/unread state to recolor the Session clock; it only adds a warning color to the existing native schedule mark when an active task is overdue.
 - Delivery history with occurrence and acknowledgment timestamps.
 - In-place task editing for Once, Every, Daily, Monday-to-Friday, Weekly, and Cron rules.
@@ -35,7 +35,7 @@ The plugin uses the native DSH Schedule service as its source of truth. It does 
 For DSH `0.1.7-rc.2`:
 
 ```bash
-pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.2
+pnpm dlx @deepseek-ai/dsh@0.1.7-rc.2 plugin --profile web add @stolyarovmn/dsh-client-ui-schedule-tab@0.6.3
 ```
 
 Restart DSH Web after installation.
