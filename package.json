@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
-  "description": "DSH 0.1.7-rc.2 ONLY: enhances the native Automation tasks UI with richer cards, filters, notifications, inline Rules/Delivery records, and Host Schedule management.",
-  "version": "0.6.5",
+  "description": "DSH 0.1.7-rc.2 ONLY: enhances the native Automation tasks UI with delivery notifications, attention indicators, counts, and overdue state.",
+  "version": "0.6.6",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
@@ -58,6 +58,7 @@
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-layout",
         "@deepseek-ai/dsh-client-ui-primitives",
+        "@deepseek-ai/dsh-client-ui-schedule",
         "@deepseek-ai/dsh-client-ui-sidebar",
         "@deepseek-ai/dsh-client-ui-sidebar-right",
         "@deepseek-ai/dsh-client-ui-workspace"
@@ -66,7 +67,7 @@
     "catalog": {
       "category": "ui",
       "summary": {
-        "en": "DSH 0.1.7-rc.2 ONLY: enhanced native Automation tasks UI with richer cards, notifications, filters, history, and task management.",
+        "en": "DSH 0.1.7-rc.2 ONLY: enhances the native Automation tasks page with delivery notifications, attention indicators, counts, and overdue state.",
         "zh": "DSH rc2 Host Schedule 任务控制中心：通知、投递历史、删除和原生任务详情。"
       },
       "capabilities": [
