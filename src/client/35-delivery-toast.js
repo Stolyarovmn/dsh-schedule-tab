@@ -72,15 +72,14 @@
 			};
 		}
 
-		function DeliveryToast({ useToast, useCatalog, useSeenRevision, report, dismiss, openRecord, t }) {
+		function DeliveryToast({ useToast, useCatalog, report, dismiss, openRecord, t }) {
 			const toast = useToast((current) => current);
 			const catalogState = useCatalog((current) => current);
-			useSeenRevision((current) => current);
 			const signature = notificationSignature(catalogState.records);
 			react.useEffect(() => {
 				if (catalogState.status !== "ready") return;
 				for (const record of catalogState.records) {
-					if (!isDeliveryUnread(record) || isDeliveryNotified(record)) continue;
+					if (deliveryMarker(record) === null || isDeliveryNotified(record)) continue;
 					report(record);
 				}
 			}, [catalogState.status, signature, report]);
