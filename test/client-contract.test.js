@@ -34,8 +34,11 @@ assert.ok(client.includes('const PANEL_ID = "schedules"'), "enhanced panel must 
 assert.ok(client.includes('priority: -100'), "enhanced sidebar/main cells must intentionally shadow the native cells");
 assert.ok(client.includes('order: 10'), "enhanced sidebar entry must retain the native position");
 assert.ok(client.includes('ctx.slots.inject("main"'), "enhanced Scheduler UI must own the main schedules surface");
-assert.ok(client.includes('captureNativeScheduleMain(ctx)'), "native DSH schedules registration must be captured before shadowing");
-assert.ok(client.includes('ctx.slots.entries("main").find((candidate) => candidate.options?.key === PANEL_ID)'), "bridge must obtain the shipped DSH TaskManagerPage registration");
+assert.ok(client.includes('ctx.slots.subscribe("main", reconcile)'), "enhanced main must tolerate unconstrained plugin activation order");
+assert.ok(client.includes('const next = findNativeScheduleMain(ctx);'), "native DSH schedule entry must be discovered lazily");
+assert.ok(client.includes('candidate.options?.locale === "schedule.manager"'), "native entry discovery must exclude the plugin's own shadow");
+assert.ok(!client.includes('throw new Error("native DSH schedule manager is unavailable")'), "early activation must not abort web boot");
+assert.ok(client.includes('ctx.slots.entries("main").find((candidate) =>'), "bridge must inspect live main registrations for the shipped TaskManagerPage");
 assert.ok(client.includes('Component: entry.component'), "bridge must reuse DSH's actual TaskManagerPage component");
 assert.ok(client.includes('const injected = entry.inject();'), "bridge must reuse DSH's native task actions and catalog");
 assert.ok(client.includes('function NativeTaskDetailBridge({ record, tab, onClose })'), "native detail bridge must own the right-side detail host");
