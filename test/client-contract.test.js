@@ -112,3 +112,10 @@ assert.ok(!client.includes('onClick: (event) => openInline(record'), "custom inl
 assert.ok(!client.includes('onClick: (event) => openInline(record, "records"'), "custom history pane must have no user entrypoint");
 assert.ok(client.includes('function ensureDeliveryAttentionBaseline(records)'), "delivery attention must baseline before future events");
 assert.ok(client.includes('startDeliveryAttentionBaseline(catalog)'), "delivery baseline must start with the client plugin");
+
+assert.ok(client.includes('if (hostCtx.sidebarRight.mounted.getSnapshot() !== undefined && hostCtx.sidebarRight.mounted.getSnapshot() !== null)'), "native task detail must prefer the already-mounted right Sidebar");
+assert.ok(client.includes('hostCtx.sidebarRight.openTab(TASK_KIND, { params: { sessionId: record.sessionId, id: record.id } });'), "native task detail must navigate scheduleTask directly");
+assert.ok(client.includes('function selectNativeTaskDetailTab(tab)'), "history action must be able to select the native Delivery records tab");
+assert.ok(client.includes('[data-detail-tab="records"]'), "history action must target DSH's native Delivery records tab marker");
+assert.ok(client.includes('const openNativeHistory = (record, event) => {'), "history row action must exist");
+assert.ok(client.includes('onClick: (event) => openNativeHistory(record, event)'), "history button must route to native Delivery records");
