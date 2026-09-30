@@ -87,6 +87,7 @@
 		function ScheduleGlyph({ size, active, t }) {
 			const state = useObservable(catalog);
 			const seenRev = useObservable(seenRevisionSource);
+			const preferences = useObservable(notificationPreferencesSource);
 			const [now, setNow] = react.useState(() => Date.now());
 			const signature = notificationSignature(state.records);
 			react.useEffect(() => {
@@ -99,7 +100,7 @@
 				const timer = window.setTimeout(() => setNow(Date.now()), delay);
 				return () => window.clearTimeout(timer);
 			}, [state.records, now]);
-			const summary = notificationSummary(state.records, now);
+			const summary = notificationSummary(state.records, now, preferences);
 			react.useEffect(() => { syncSessionOverdueStyles(state.records, now); }, [state.records, state.status, now]);
 			const compact = (size ?? 16) > 16;
 			const hasUnread = summary.unread > 0;
