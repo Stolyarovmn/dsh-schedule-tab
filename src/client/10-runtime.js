@@ -5,7 +5,6 @@
 		const PACKAGE = "@stolyarovmn/dsh-client-ui-schedule-tab";
 		const PANEL_ID = "schedules";
 		const NS = "schedule-control-center";
-		const TASK_KIND = "scheduleTask";
 		const HISTORY_PAGE = 20;
 		const SEEN_STORAGE_KEY = PACKAGE + "/seen-v2";
 		const LEGACY_SEEN_STORAGE_KEY = PACKAGE + "/seen-v1";
