@@ -66,6 +66,9 @@ assert.ok(client.includes('newTasks: true'), "new-task attention must default to
 assert.ok(client.includes('newDeliveries: true'), "new-delivery attention must default to enabled");
 assert.ok(client.includes('["popup", "newTasks", "newDeliveries"].map(renderNotificationSetting)'), "settings modal must expose all three notification categories");
 assert.ok(client.includes('primitives.Switch'), "notification settings must use native DSH switches");
+assert.ok(client.includes('.scc_settingsList{display:flex;flex-direction:column;gap:0;width:100%;min-width:0}'), "notification settings list must fit the native Modal instead of forcing a wider minimum");
+assert.ok(client.includes('.scc_settingCopy{min-width:0;flex:1 1 auto;'), "notification setting copy must shrink before the switch is clipped");
+assert.ok(client.includes(".scc_settingRow [role='switch']{flex:none}"), "notification switches must remain visible at the right edge of the native Modal");
 assert.ok(client.includes('SettingsIcon'), "Automation tasks header must expose notification settings");
 assert.ok(client.includes('taskAttentionState(record, now, preferences)'), "delivery attention dot must respect notification preferences");
 assert.ok(client.includes('notificationSummary(state.records, now, preferences)'), "sidebar unread summary must respect notification preferences");
