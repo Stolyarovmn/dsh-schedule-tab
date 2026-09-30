@@ -124,5 +124,5 @@ assert.ok(!client.includes('ctx.slots.inject("main"'), "rc2 enhancer must not re
 assert.ok(client.includes('startNativeManagerEnhancer(catalog, ctx.locale.bind(NS))'), "native schedule page must receive attention/count enhancement");
 assert.ok(client.includes('function startNativeManagerEnhancer(source, t)'), "native manager enhancer must be present");
 assert.ok(client.includes('[data-testid="task-manager-page"]'), "enhancer must target DSH's native TaskManagerPage");
-assert.ok(client.includes('dataSccNativeAttention'), "native schedule rows must receive the delivery attention dot");
-assert.ok(client.includes('dataSccFilterCount'), "native All/Active/Inactive controls must receive counts");
+assert.ok(client.includes('dot.dataset.sccNativeAttention = "true"'), "native schedule rows must receive the delivery attention dot");
+assert.ok(client.includes('badge.dataset.sccFilterCount = "true"'), "native All/Active/Inactive controls must receive counts");
