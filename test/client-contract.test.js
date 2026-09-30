@@ -94,8 +94,9 @@ assert.ok(client.includes('const warn = summary.overdue > 0;'), "Automation task
 
 assert.ok(client.includes('name: "shell.overlay"'), "new delivery popup must use the native shell.overlay surface");
 assert.ok(client.includes('id: "schedule-control-center.delivery-toast"'), "delivery popup slot id must stay stable");
-assert.ok(client.includes('function startDeliveryMonitor(source, report)'), "delivery popup must be driven by catalog delivery changes");
-assert.ok(client.includes('function DeliveryToast({ useToast, dismiss, openRecord, t })'), "delivery popup must use the native Toast primitive");
+assert.ok(client.includes('function DeliveryToast({ useToast, useCatalog, useSeenRevision, report, dismiss, openRecord, t })'), "delivery popup must derive directly from the mounted overlay catalog state");
+assert.ok(client.includes('function startDeliveryRefreshFallback(source)'), "delivery detection must have an adaptive authoritative catalog refresh fallback");
+assert.ok(client.includes('hooks: { ...deliveryToast.hooks, catalog, seenRevision: seenRevisionSource }'), "overlay must receive catalog and seen-state hooks directly");
 assert.ok(client.includes('primitives.Toast'), "delivery popup must use the native DSH Toast component");
 assert.ok(client.includes('className: "scc_attentionDot"'), "task cards must expose a compact attention indicator");
 assert.ok(client.includes('function taskAttentionState(record, now)'), "card attention state must be derived from durable schedule facts");
@@ -103,3 +104,9 @@ assert.ok(client.includes('markTasksSeen(state.records)'), "opening Automation t
 assert.ok(client.includes('markRecordSeen(record)'), "a delivery must stay unread until its specific task or conversation is opened");
 assert.ok(!client.includes('markSeen(state.records)'), "opening Automation tasks must not clear every delivery");
 assert.ok(client.includes('"delivery.toast": "Scheduled task delivered: {title}"'), "popup copy must describe delivery, not model success");
+
+assert.ok(client.includes('function markDeliveryNotified(record)'), "popup notification state must be separate from delivery seen state");
+assert.ok(client.includes('if (!isDeliveryUnread(record) || isDeliveryNotified(record)) continue;'), "popup must only report unread, not-yet-notified deliveries");
+assert.ok(!client.includes('startDeliveryMonitor('), "obsolete detached delivery monitor must stay removed");
+assert.ok(!client.includes('DELIVERY_CURSOR_STORAGE_KEY'), "delivery cursor baseline must not suppress unread delivery popups");
+assert.ok(!client.includes('markRecordSeen(record);\n\t\t\t\tsetSelectedKey(identity(record));'), "opening Rules or Delivery records must not clear the delivery indicator");
