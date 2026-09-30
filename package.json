@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
-  "description": "DSH 0.1.7-rc.2 ONLY: enhanced Automation tasks UI backed by DSH's native task detail editor and delivery notifications.",
-  "version": "0.6.8",
+  "description": "DSH 0.1.7-rc.2 ONLY: enhanced Automation tasks UI with activation-order-safe native DSH task detail and delivery notifications.",
+  "version": "0.6.9",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
