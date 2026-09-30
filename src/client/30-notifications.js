@@ -171,23 +171,24 @@
 			if (tab !== "records" || typeof document === "undefined") return;
 			let stableSelected = 0;
 			let attempts = 0;
-			const timer = window.setInterval(() => {
+			const poll = () => {
 				attempts += 1;
 				const candidates = [...document.querySelectorAll('[data-detail-tab="records"]')];
 				const button = candidates.find((node) => node.closest('[data-sidebar-right-session]')) ?? candidates[0];
 				if (!button) {
-					if (attempts >= 40) window.clearInterval(timer);
+					if (attempts < 40) window.setTimeout(poll, 50);
 					return;
 				}
 				if (button.getAttribute("aria-selected") === "true") {
 					stableSelected += 1;
-					if (stableSelected >= 2 || attempts >= 40) window.clearInterval(timer);
+					if (stableSelected < 2 && attempts < 40) window.setTimeout(poll, 50);
 					return;
 				}
 				stableSelected = 0;
 				button.click();
-				if (attempts >= 40) window.clearInterval(timer);
-			}, 50);
+				if (attempts < 40) window.setTimeout(poll, 50);
+			};
+			poll();
 		}
 		function openNativeTask(record, tab = "rule") {
 			cancelPendingTaskOpen?.();
