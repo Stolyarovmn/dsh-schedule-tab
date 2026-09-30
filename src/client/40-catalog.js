@@ -91,9 +91,10 @@
 			const [now, setNow] = react.useState(() => Date.now());
 			const signature = notificationSignature(state.records);
 			react.useEffect(() => {
-				if (!active || state.status !== "ready") return;
-				markTasksSeen(state.records);
-			}, [active, state.status, signature]);
+				if (state.status !== "ready") return;
+				if (active || !preferences.newTasks) markTasksSeen(state.records);
+				if (!preferences.newDeliveries) markDeliveriesSeen(state.records);
+			}, [active, state.status, signature, preferences.newTasks, preferences.newDeliveries]);
 			react.useEffect(() => {
 				const delay = adaptiveTickDelay(state.records, now);
 				if (delay === null) return;
