@@ -1,9 +1,0 @@
-- id: time-context
-  disabled: false
-- id: schedule
-  disabled: false
-- id: ui-schedule
-  disabled: false
-- insert:
-    - id: schedule-control-center
-      name: '@stolyarovmn/dsh-client-ui-schedule-tab'
