@@ -4,13 +4,13 @@ This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally car
 
 The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
 
-## Scope of `0.7.0-dev.2`
+## Scope of `0.7.0-dev.3`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
 - new-task and new-delivery seen state;
 - one-time popup notification for a newly recorded delivery;
-- a visible numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`);
+- a compact blue numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`), using the Harness state accent rather than the light/dark foreground token;
 - overdue warning on that same icon (`!` when there is no unread count);
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
 - browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot;
