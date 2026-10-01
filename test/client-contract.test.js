@@ -42,7 +42,7 @@ assert.ok(client.includes('react.useMemo(() => groupsFor'), "task grouping must 
 assert.ok(client.includes('function useNativeScheduleEntry()'), "native DSH schedule registration must be observed live");
 assert.ok(client.includes('entry.options?.key === PANEL_ID'), "native detail bridge must identify the schedules main entry");
 assert.ok(client.includes('entry.locale === "schedule.manager"'), "native detail bridge must identify the shipped schedule manager by its stored locale");
-assert.ok(client.includes('function NativeTaskDetailBridge({ record, tab, onClose })'), "native task detail bridge must exist");
+assert.ok(client.includes('function NativeTaskDetailBridge({ record, tab, onClose, t })'), "native task detail bridge must exist");
 assert.ok(client.includes('button[aria-describedby]'), "bridge must select the requested task inside native TaskManagerPage");
 assert.ok(client.includes('data-testid="task-manager-page"'), "bridge must mount the shipped DSH TaskManagerPage");
 assert.ok(client.includes('data-detail-tab="'), "bridge must route Edit/History to native Rules/Delivery records");
@@ -84,5 +84,7 @@ assert.ok(!client.includes('window.confirm'), "browser confirm must not replace 
 assert.ok(client.includes('const ru = {'), "Russian locale must remain registered");
 assert.ok(client.includes('ctx.locale.register(NS, { en, zh, ru })'), "Russian locale must remain enabled");
 assert.ok(client.includes('"new": "New conversation"'), "new-task action label must match startSession behavior");
+assert.ok(client.includes('t("detail.loading")'), "native detail loading copy must use the plugin locale instead of hardcoded visible text");
+assert.ok(!client.includes("Native DSH task detail is loading…"), "hardcoded English loading copy must not leak into localized UI");
 
-console.log("0.6.13 enhanced-list/native-detail/notification-settings contract validation passed");
+console.log("0.6.15 enhanced-list/native-detail/visual contract validation passed");
