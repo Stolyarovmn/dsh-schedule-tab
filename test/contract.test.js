@@ -5,7 +5,7 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 const client = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
 const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 
-assert.equal(pkg.version, '0.7.0-dev.2')
+assert.equal(pkg.version, '0.7.0-dev.3')
 assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2')
 assert.equal(pkg.private, true, 'development branch must not publish accidentally')
 assert.ok(client.includes("ctx.inject(['remote.schedule']"), 'Schedule integration must stay optional')
@@ -17,6 +17,8 @@ assert.ok(client.includes('hooks: { toast: toastSource, catalog }'), 'overlay mu
 assert.ok(client.includes("className: 'sat_panelBadge'"), 'sidebar attention must expose a visible unread badge')
 assert.ok(client.includes("role: 'switch'"), 'plugin notification settings must use accessible switch semantics')
 assert.ok(client.includes("state.unread > 9 ? '9+'"), 'unread badge must remain compact for double-digit counts')
+assert.ok(client.includes('background:var(--dsw-alias-state-business-primary)'), 'unread badge must use the Harness state accent, not brand foreground')
+assert.ok(!client.includes('background:var(--dsw-alias-brand-primary);color:var(--dsw-alias-label-primary-foreground);font-size:8px'), 'badge must not reuse brand-primary as an accent')
 assert.ok(!client.includes("slots.inject('main'"), '0.2.x plugin must not replace the native Automation Tasks page')
 assert.ok(!client.includes('@deepseek-ai/dsh-client-ui-primitives'), 'plain-JS plugin must not runtime-import Harness Client internals')
 assert.ok(!client.includes('document.querySelector'), 'plugin must not inspect host DOM')
