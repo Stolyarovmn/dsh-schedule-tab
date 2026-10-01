@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "DSH 0.1.7-rc.2 ONLY: enhanced Automation tasks UI with native DSH task detail, delivery notifications, filters, grouping and attention state.",
-  "version": "0.6.14",
+  "version": "0.6.15",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
@@ -16,7 +16,7 @@
   "scripts": {
     "build:client": "node scripts/build-client.mjs",
     "build:check": "node scripts/build-client.mjs --check",
-    "test": "node test/host.test.js && node test/schedule-core.test.js && node test/delivery-notification.test.js && node test/notification-preferences.test.js && node test/catalog-source.test.js && node test/client-contract.test.js",
+    "test": "node test/host.test.js && node test/schedule-core.test.js && node test/delivery-notification.test.js && node test/notification-preferences.test.js && node test/catalog-source.test.js && node test/client-contract.test.js && node test/visual-contract.test.js",
     "test:bundle": "node test/bundle.test.js && npm run build:check && node --check lib/client.js",
     "test:all": "npm test && npm run test:bundle"
   },

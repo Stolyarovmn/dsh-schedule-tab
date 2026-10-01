@@ -4,6 +4,20 @@ All notable changes to `@stolyarovmn/dsh-client-ui-schedule-tab` are documented 
 
 The plugin follows semantic versioning where practical. The `0.6.x` line targets DeepSeek Harness `0.1.7-rc.2` exactly; `0.5.1` is the last pre-rc2-compatible release.
 
+## [0.6.15] - 2026-10-01
+
+### Changed
+
+- Aligned first-level Automation tasks typography and spacing with the native DSH `0.1.7-rc.2` Schedule page.
+- Aligned filter chips with the native quiet 28px pill-tab treatment.
+- Replaced arbitrary ordinary-control/card radii with the DSH semantic radius scale while preserving intentional pills and status dots.
+- Replaced literal dark color fallbacks with DSH theme tokens and moved keyboard focus rings to the shared DSH focus-ring tokens.
+- Localized the native-detail loading placeholder and polished Russian notification-setting copy.
+
+### Scope
+
+- Visual-compliance pass only. The known `0.6.x` native-detail bridge and other rc2 architectural compatibility workarounds are intentionally unchanged.
+
 ## [0.6.14] - 2026-10-01
 
 ### Added

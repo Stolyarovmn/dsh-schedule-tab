@@ -667,7 +667,8 @@
 					nativeSelectedRecord ? jsx.jsx(NativeTaskDetailBridge, {
 						record: nativeSelectedRecord,
 						tab: nativeDetailTab,
-						onClose: closeNativeDetail
+						onClose: closeNativeDetail,
+						t
 					}) : null,
 					jsx.jsx(primitives.Modal, {
 						open: settingsOpen,

@@ -37,7 +37,7 @@
 			return [...page.children].find((node) => node.tagName === "ASIDE") ?? null;
 		}
 
-		function NativeTaskDetailBridge({ record, tab, onClose }) {
+		function NativeTaskDetailBridge({ record, tab, onClose, t }) {
 			const entry = useNativeScheduleEntry();
 			const hostRef = react.useRef(null);
 			const closeRef = react.useRef(onClose);
@@ -103,7 +103,7 @@
 			if (!entry || !props) {
 				return jsx.jsx("aside", {
 					className: "scc_inlineDetail scc_nativeDetailHost",
-					children: jsx.jsx("div", { className: "scc_emptyHint", children: "Native DSH task detail is loading…" })
+					children: jsx.jsx("div", { className: "scc_emptyHint", children: t("detail.loading") })
 				});
 			}
 
