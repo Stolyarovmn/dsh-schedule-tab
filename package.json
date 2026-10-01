@@ -1,0 +1,67 @@
+{
+  "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
+  "description": "Attention and delivery-notification enhancer for the native DeepSeek Harness Automation Tasks UI.",
+  "version": "0.7.0-dev.1",
+  "private": true,
+  "author": {
+    "name": "Stolyarovmn",
+    "url": "https://github.com/Stolyarovmn"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "scripts": {
+    "test": "node test/contract.test.js",
+    "check": "node --check lib/index.js && node --check lib/client.js && npm test"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "README.md",
+    "MIGRATION_0.2.md",
+    "LICENSE",
+    "icon.svg"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "schedule",
+    "automation",
+    "notifications",
+    "attention"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Stolyarovmn/dsh-schedule-tab.git"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-workspace"
+      ]
+    }
+  },
+  "license": "MIT",
+  "icon": "./icon.svg",
+  "peerDependencies": {
+    "@deepseek-ai/dsh": "0.2.0-rc.2"
+  }
+}
