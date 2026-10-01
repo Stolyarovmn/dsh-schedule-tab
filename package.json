@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "Attention and delivery-notification enhancer for the native DeepSeek Harness Automation Tasks UI.",
-  "version": "0.7.0-dev.1",
+  "version": "0.7.0-dev.2",
   "private": true,
   "author": {
     "name": "Stolyarovmn",
@@ -54,6 +54,7 @@
         "@deepseek-ai/dsh-client-connection",
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-plugin-manager",
         "@deepseek-ai/dsh-client-ui-sidebar",
         "@deepseek-ai/dsh-client-ui-workspace"
       ]
