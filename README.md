@@ -1,23 +1,41 @@
-# DSH Automation Tasks Enhancer
+# DSH Automation Tasks Attention — 0.2.x development line
 
-This repository is being reorganized for the DeepSeek Harness 0.2.x line.
+This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
 
-The `main` branch is intentionally implementation-neutral while the plugin's role on top of the much richer native Automation Tasks UI is being redesigned. **Do not install the plugin from `main`.**
+The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
 
-## Branches
+## Scope of `0.7.0-dev.1`
 
-| Branch | Purpose |
-| --- | --- |
-| `legacy/dsh-0.1.5.x` | Final legacy line for DSH >=0.1.5-rc.3 and <0.1.7-rc.2 (plugin 0.5.1). |
-| `legacy/dsh-0.1.7.x` | Final legacy line for DSH 0.1.7-rc.2 (plugin 0.6.15). |
-| `dsh-0.2.0-rc.2` | Active redesign branch targeting DSH 0.2.0-rc.2 only. No backward-compatibility layer is planned. |
+The first `0.2.x` implementation keeps only differentiated attention behavior:
 
-Historical releases and tags remain available for exact published versions.
+- new-task and new-delivery seen state;
+- one-time popup notification for a newly recorded delivery;
+- attention state on the existing Automation tasks sidebar entry;
+- overdue warning on that same entry;
+- compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
+- English, Chinese and Russian visible strings.
 
-## Current direction
+Opening the native Automation tasks page currently acknowledges all task/delivery attention visible in the authoritative catalog. Per-task acknowledgement from the native task detail is deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
 
-DSH 0.2.0-rc.2 already provides the core Automation Tasks experience: task management, editing, delivery records, deletion, task detail, Session navigation and native Schedule surfaces.
+## Required native capability
 
-The next plugin version should therefore focus only on differentiated value that remains useful on top of native Harness, such as attention/unread state, delivery notifications, richer triage filters/grouping, and other extensions that can be implemented through current public Harness extension points.
+The plugin does **not** enable or re-declare the DSH Schedule rows. Enable **Automation tasks** in Plugins → Official first. That selects `@deepseek-ai/dsh-experimental-schedule-bundle`, which owns `time-context`, `schedule`, and `ui-schedule` in DSH `0.2.0-rc.2`.
 
-The 0.2.x implementation must follow the version-matched official `cordis-plugin-development` guidance and native Harness UI conventions.
+When Schedule is absent, this plugin stays inert through optional `remote.schedule` injection rather than failing the profile.
+
+## Development install
+
+Install the branch by commit SHA while testing. Do not publish this development version.
+
+```powershell
+$DSH_VERSION = "0.2.0-rc.2"
+pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile registry-test add "github:Stolyarovmn/dsh-schedule-tab#<COMMIT_SHA>"
+pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" registry-test
+```
+
+## Legacy lines
+
+- `legacy/dsh-0.1.5.x` — plugin `0.5.1`.
+- `legacy/dsh-0.1.7.x` — plugin `0.6.15`.
+
+See [`MIGRATION_0.2.md`](MIGRATION_0.2.md) for the feature-by-feature decision record.
