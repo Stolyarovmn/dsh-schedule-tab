@@ -68,6 +68,10 @@ The browser client source lives in `src/client/` and is assembled deterministica
 
 GitHub Actions also installs the package into a generated DSH `0.1.7-rc.2` Web profile, validates the composed configuration, imports the host entry, and boots DSH Web.
 
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md) for release history and upgrade notes.
+
 ## Distribution
 
 The package is published on npm as `@stolyarovmn/dsh-client-ui-schedule-tab`.
