@@ -4,18 +4,20 @@ This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally car
 
 The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
 
-## Scope of `0.7.0-dev.1`
+## Scope of `0.7.0-dev.2`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
 - new-task and new-delivery seen state;
 - one-time popup notification for a newly recorded delivery;
-- attention state on the existing Automation tasks sidebar entry;
-- overdue warning on that same entry;
+- a visible numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`);
+- overdue warning on that same icon (`!` when there is no unread count);
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
+- browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot;
+- cross-tab synchronization of those preferences;
 - English, Chinese and Russian visible strings.
 
-Opening the native Automation tasks page currently acknowledges all task/delivery attention visible in the authoritative catalog. Per-task acknowledgement from the native task detail is deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
+Opening the native Automation tasks page acknowledges the current task/delivery attention visible in the authoritative catalog, matching the earlier plugin's “clear after view” behavior. Per-task acknowledgement from the native task detail is still deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
 
 ## Required native capability
 
