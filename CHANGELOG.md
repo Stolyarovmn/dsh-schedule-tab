@@ -4,7 +4,7 @@ All notable changes to `@stolyarovmn/dsh-client-ui-schedule-tab` are documented 
 
 The plugin follows semantic versioning where practical. The `0.6.x` line targets DeepSeek Harness `0.1.7-rc.2` exactly; `0.5.1` is the last pre-rc2-compatible release.
 
-## [0.6.15] - Unreleased
+## [0.6.15] - 2026-10-01
 
 ### Changed
 
