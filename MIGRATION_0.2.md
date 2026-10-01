@@ -33,8 +33,10 @@ These remain differentiated and can be implemented without replacing native Sche
 - compatibility with existing `notification-preferences-v1` values;
 - consuming disabled notification categories without replaying a backlog later;
 - `shell.overlay` popup for a new delivery with Open conversation;
-- attention on the existing `schedules` sidebar entry;
+- visible numeric unread badge on the existing `schedules` sidebar glyph, constrained to that glyph's public slot;
 - overdue state independent from unread state;
+- browser-local notification settings on the bundle detail page through the public `plugins.detail.section` slot;
+- cross-tab preference synchronization;
 - explicit rule that a Schedule delivery receipt is inbox delivery, not model execution success/failure;
 - English, Chinese and Russian localization.
 
@@ -65,8 +67,8 @@ Do not duplicate these `0.2.0-rc.2` features:
 - search by resolved Session title;
 - per-task attention dot inside the native task row;
 - per-task acknowledgement when native Rules/Delivery records is opened;
-- numeric unread count next to the native Automation tasks label;
-- in-page notification settings button.
+- numeric unread count next to the native Automation tasks **text label** (the public sidebar slot owns only the glyph, so the badge is rendered inside the glyph instead);
+- in-page notification settings button inside native `TaskManagerPage`.
 
 If a later DSH version exposes additive slots in the task manager, re-evaluate these features there. Do not replace the whole native page merely to regain them.
 
@@ -82,7 +84,8 @@ native @deepseek-ai/dsh-experimental-schedule-bundle
              ↑ presentation only
 @stolyarovmn/dsh-client-ui-schedule-tab
   ├─ optional remote.schedule integration
-  ├─ reuse sidebar.panellist id=schedules for attention glyph only
+  ├─ reuse sidebar.panellist id=schedules for attention glyph + unread badge
+  ├─ plugins.detail.section for browser-local notification preferences
   └─ shell.overlay delivery notification
 ```
 
