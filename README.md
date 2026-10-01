@@ -4,20 +4,20 @@ This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally car
 
 The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
 
-## Scope of `0.7.0-dev.3`
+## Scope of `0.7.0-dev.4`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
 - new-task and new-delivery seen state;
 - one-time popup notification for a newly recorded delivery;
-- a compact blue numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`), using the Harness state accent rather than the light/dark foreground token;
+- a compact white numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`), with the count in the Harness blue state accent;
 - overdue warning on that same icon (`!` when there is no unread count);
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
 - browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot;
 - cross-tab synchronization of those preferences;
 - English, Chinese and Russian visible strings.
 
-Opening the native Automation tasks page acknowledges the current task/delivery attention visible in the authoritative catalog, matching the earlier plugin's “clear after view” behavior. Per-task acknowledgement from the native task detail is still deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
+Unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear attention. Per-task acknowledgement from the native task detail is still deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
 
 ## Required native capability
 
