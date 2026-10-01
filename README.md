@@ -4,13 +4,14 @@ This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally car
 
 The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
 
-## Scope of `0.7.0-dev.6`
+## Scope of `0.7.0-dev.7`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
 - new-task and new-delivery seen state;
 - one-time popup notification for a newly recorded delivery;
 - a compact neutral numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`), using the same adaptive gray surface/primary text tokens as native ghost controls (light gray + white text in dark theme);
+- unread delivery counts backed by native retained `schedule.history`, so repeated runs of the same recurring task can contribute `2`, `3`, … rather than collapsing to its single `lastDelivery` receipt;
 - overdue warning on that same icon (`!` when there is no unread count);
 - a native-style green Session-row completion dot for unread scheduled activity when DSH's built-in completion reminder is suppressed by retained `mainView` state;
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
@@ -22,7 +23,7 @@ Task-center unread is acknowledged only when Automation tasks transitions from n
 
 ## Required native capability
 
-The plugin does **not** enable or re-declare the DSH Schedule rows. Enable **Automation tasks** in Plugins → Official first. That selects `@deepseek-ai/dsh-experimental-schedule-bundle`, which owns `time-context`, `schedule`, and `ui-schedule` in DSH `0.2.0-rc.2`.
+The plugin does **not** enable or re-declare the DSH Schedule rows. Delivery-history enrichment uses the public `remote.schedule.history` API with a page size of 10 and at most four concurrent reads; it stops once the UI already knows the badge is `9+`. Enable **Automation tasks** in Plugins → Official first. That selects `@deepseek-ai/dsh-experimental-schedule-bundle`, which owns `time-context`, `schedule`, and `ui-schedule` in DSH `0.2.0-rc.2`.
 
 When Schedule is absent, this plugin stays inert through optional `remote.schedule` injection rather than failing the profile.
 
