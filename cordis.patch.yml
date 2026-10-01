@@ -1,0 +1,3 @@
+- insert:
+    - id: schedule-attention-enhancer
+      name: '@stolyarovmn/dsh-client-ui-schedule-tab'
