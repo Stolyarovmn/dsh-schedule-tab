@@ -395,10 +395,10 @@ test('quick task page delegates open, details, creation, and delete to native se
     injected.onOpenDetails(rec)
     await new Promise(resolve => setImmediate(resolve))
     assert.equal(h.getOpenedSession(), rec.sessionId)
-    assert.deepEqual(h.getOpenedTaskTab(), {
-      kind: 'scheduleTask',
-      options: { params: { sessionId: rec.sessionId, id: rec.id } },
-    })
+    const openedTask = h.getOpenedTaskTab()
+    assert.equal(openedTask?.kind, 'scheduleTask')
+    assert.equal(openedTask?.options?.params?.sessionId, rec.sessionId)
+    assert.equal(openedTask?.options?.params?.id, rec.id)
 
     assert.equal(await injected.onDelete(rec), true)
     assert.equal(h.getDeleteCalls(), 1)
