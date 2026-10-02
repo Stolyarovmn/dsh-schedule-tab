@@ -1,10 +1,10 @@
 # DSH Automation Tasks Attention
 
-This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
+This release targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
 
 The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
 
-## Scope of `0.7.0-dev.7`
+## Scope of `0.7.0`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
