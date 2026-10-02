@@ -110,7 +110,7 @@ The replacement boundary is intentionally narrow:
 - copied/reimplemented: central list heading, native-like filters/search/rows, plus quick Open session / Open details / Delete controls;
 - still native DSH: task detail, Rules editor, Delivery records, timing/timezone editing, right-Sidebar task tab, Schedule Host mutations;
 - delete calls the native `remote.schedule.delete` Host operation and retains confirm-first semantics;
-- details navigate to the linked Session and open native `scheduleTask` in the right Sidebar;
+- Open session navigates to the linked Session; Open details stays on Automation Tasks and opens the in-page detail column;
 - no DOM observation, no runtime import of Harness Client internals.
 
 Re-evaluate this exception when a later Harness release adds an additive task-row actions slot; that slot should replace the page shadow.
