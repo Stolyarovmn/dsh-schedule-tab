@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.7.0-rc.1 — DSH 0.2.0-rc.2
+## 0.7.0 — 2026-10-02 — DSH 0.2.0-rc.2
 
-This line is a redesign for **DeepSeek Harness 0.2.0-rc.2 only**. It intentionally drops compatibility with DSH 0.1.x and no longer ships a replacement Automation Tasks manager.
+This release is a redesign for **DeepSeek Harness 0.2.0-rc.2 only**. It intentionally drops compatibility with DSH 0.1.x and no longer ships a replacement Automation Tasks manager.
 
 ### Added
 
