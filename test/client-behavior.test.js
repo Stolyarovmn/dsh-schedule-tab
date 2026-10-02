@@ -101,9 +101,45 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
       if (typeof cleanup === 'function') cleanups.push(cleanup)
     },
   }
+  const nativeCatalogSource = () => {
+    let snapshot = { records, status: 'ready', deleting: [], settled: true, readRequest: 1, readSettled: 1 }
+    const listeners = new Set()
+    return {
+      hooks: { catalog: {
+        getSnapshot: () => snapshot,
+        subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener) },
+      } },
+      onDelete: async id => {
+        records = records.filter(item => item.id !== id)
+        snapshot = { ...snapshot, records }
+        for (const listener of listeners) listener()
+        return 'deleted'
+      },
+      onRetry: async () => {},
+    }
+  }
+  const nativeManager = {
+    TaskManagerPage() { return null },
+    ScheduleDeleteToast() { return null },
+    createCatalogSource: nativeCatalogSource,
+    createDeleteToastSource() {
+      let current = null
+      const listeners = new Set()
+      return {
+        hooks: { toast: {
+          getSnapshot: () => current,
+          subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener) },
+        } },
+        report() {},
+        dismiss() { current = null; for (const listener of listeners) listener() },
+      }
+    },
+    sessionLinkState() { return 'available' },
+  }
   const mod = moduleDefinition.factory(name => {
-    assert.equal(name, 'react')
-    return React
+    if (name === 'react') return React
+    if (name === '@stolyarovmn/dsh-schedule-native-manager') return nativeManager
+    throw new Error('unexpected module require: ' + name)
   })
 
   const translate = (key, vars = {}) => String(key).replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? ''))

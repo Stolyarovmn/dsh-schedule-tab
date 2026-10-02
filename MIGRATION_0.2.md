@@ -100,3 +100,22 @@ The plugin patch inserts only its own row. If the official Schedule bundle is no
 - verify first-install baselining, recurring delivery unread state, popup dedupe, reconnect refresh and unload/reload cleanup;
 - verify light and dark themes and keyboard focus;
 - only after live UI verification remove `private: true`, choose an RC version, merge to `main`, publish and release.
+
+
+## 0.8.0-dev.3 exception: pinned native TaskManager fork
+
+Real UI testing of the first 0.8 prototype showed that a hand-redrawn list/detail pair drifted from Harness: action icons were not from the product icon set and the right detail column lost native TaskDetail behavior.
+
+The replacement experiment therefore restarts from stable 0.7.0 and uses a build-time snapshot of **DeepSeek Harness dsh-v0.2.0-rc.2**:
+
+- source: shipped `ui-schedule` TaskManagerPage, TaskDetail and dependencies;
+- controls/icons: bundled source snapshot of the exact ui-primitives used by that version;
+- runtime dependency rule: the generated bundle contains no `require('@deepseek-ai/dsh-client-ui-primitives')`;
+- page shadow: keyed `main/schedules`, priority `-100`;
+- patch boundary: one quick-action group added beside each native task row;
+- Open Session uses native Session navigation;
+- Details uses the native row selection and the original in-page TaskDetail;
+- Delete selects the native task detail and opens its native confirmation flow;
+- Rules editing, timing/time-zone controls, Delivery records and delete toast remain the pinned native implementation.
+
+This is intentionally version-specific. When DSH changes, regenerate/review the snapshot against that target version rather than carrying it forward. Prefer an upstream row-actions slot and delete this fork when such a slot exists.

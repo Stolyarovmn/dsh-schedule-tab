@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.0-dev.3 — DSH 0.2.0-rc.2
+
+Private development preview; not published.
+
+### Changed
+
+- abandoned the hand-redrawn 0.8 prototype and restarted from stable 0.7.0;
+- build now pins `deepseek-harness@dsh-v0.2.0-rc.2` and compiles the shipped TaskManagerPage / TaskDetail source into the plugin;
+- bundled copies of the pinned native primitives replace runtime imports of Harness Client internals;
+- the generated page keeps native New/search/filter controls, Rules editor, date/time/time-zone controls, Delivery records, delete confirmation, focus/Escape/menu behavior and deletion toast;
+- only one source patch is applied to the native page: three quick actions beside each task row;
+- quick actions use the actual DSH icon geometry: Link, Panel, Trash.
+
+### Architecture
+
+The page is a version-pinned native fork because DSH 0.2.0-rc.2 has no additive task-row actions slot. It shadows the shipped `main/schedules` cell at `priority: -100`; the shipped registration remains live at priority 0. Remove this fork when a later DSH exposes an additive row-actions extension point.
+
+# Changelog
+
 ## 0.7.0 — 2026-10-02 — DSH 0.2.0-rc.2
 
 This release is a redesign for **DeepSeek Harness 0.2.0-rc.2 only**. It intentionally drops compatibility with DSH 0.1.x and no longer ships a replacement Automation Tasks manager.
