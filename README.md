@@ -29,7 +29,7 @@ When Schedule is absent, this plugin stays inert through optional `remote.schedu
 
 ## Development install
 
-Install the branch by commit SHA while testing. Do not publish this development version.
+Install the RC by commit SHA for final verification. The package remains `private: true`; do not publish or merge it to `main` until the real Harness checks below pass.
 
 ```powershell
 $DSH_VERSION = "0.2.0-rc.2"
