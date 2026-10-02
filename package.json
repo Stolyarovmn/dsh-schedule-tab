@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "Attention and delivery-notification enhancer for the native DeepSeek Harness Automation Tasks UI.",
-  "version": "0.7.0-dev.7",
+  "version": "0.7.0-dev.8",
   "private": true,
   "author": {
     "name": "Stolyarovmn",
@@ -16,7 +16,7 @@
     "./locale/*.json": "./locale/*.json"
   },
   "scripts": {
-    "test": "node test/contract.test.js",
+    "test": "node --test test/*.test.js",
     "check": "node --check lib/index.js && node --check lib/client.js && npm test"
   },
   "files": [
