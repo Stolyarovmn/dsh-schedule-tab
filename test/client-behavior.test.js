@@ -166,10 +166,9 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
       openTab(kind, options) { openedTaskTab = { kind, options } },
     },
   }
-  const ctx = {
-    ...scope,
-    inject(_services, callback) { return callback(scope) },
-  }
+  const inject = (_services, callback) => callback(scope)
+  scope.inject = inject
+  const ctx = { ...scope, inject }
   mod.apply(ctx)
 
   return {
