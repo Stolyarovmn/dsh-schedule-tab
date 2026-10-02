@@ -26,6 +26,7 @@ assert.ok(!client.includes('background:var(--dsw-static-neutral-bluish-00);color
 assert.ok(!client.includes('background:var(--dsw-alias-brand-primary);color:var(--dsw-alias-label-primary-foreground);font-size:8px'), 'badge must not reuse brand-primary as an accent')
 assert.ok(client.includes("rightScope.slots.inject('main'"), '0.8.x quick-actions line intentionally replaces only the central Automation Tasks list')
 assert.ok(client.includes("key: PANEL_ID"), 'quick-actions page must reuse the native schedules panel key')
+assert.ok(client.includes("key: PANEL_ID, priority: -100"), 'quick-actions page must shadow native schedules at a distinct lower priority')
 assert.ok(client.includes("rightScope.sidebarRight.openTab('scheduleTask'"), 'task details must stay on the native Schedule task tab')
 assert.ok(client.includes("rightScope.remote.schedule.delete({ sessionId: record.sessionId, id: record.id })"), 'quick delete must call the native Schedule Host operation')
 assert.ok(client.includes("rightScope.uiWorkspace.openSession(record.sessionId)"), 'quick open-session must use the native workspace action')
