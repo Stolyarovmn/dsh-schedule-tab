@@ -4,16 +4,10 @@ on:
   push:
     branches: [main]
     paths:
+      # A release commit must carry its version bump. Code/docs-only pushes do
+      # not need to wake npm for an already-published version.
       - package.json
-      - lib/**
-      - locale/**
-      - icon.svg
-      - cordis.patch.yml
-      - README.md
-      - CHANGELOG.md
-      - MIGRATION_0.2.md
       - .github/workflows/publish.yml
-      - .github/release-notes/**
   release:
     types: [published]
   workflow_dispatch:
@@ -21,6 +15,13 @@ on:
 permissions:
   contents: write
   id-token: write
+
+# Serialize publishes for this package. Two fast main pushes can otherwise both
+# pass npm view before the first staged version becomes visible and the second
+# publish then fails with E409.
+concurrency:
+  group: npm-publish-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   publish:
