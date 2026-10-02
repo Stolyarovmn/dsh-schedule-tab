@@ -373,7 +373,7 @@ test('overdue active task shows warning when no unread attention remains', async
 })
 
 
-test('quick task page delegates open, details, creation, and delete to native services', async () => {
+test('quick task page delegates session open, history, creation, and delete to native services', async () => {
   const rec = record()
   const h = createHarness({ initialRecords: [rec] })
   try {
@@ -392,13 +392,10 @@ test('quick task page delegates open, details, creation, and delete to native se
     injected.onOpenSession(rec)
     assert.equal(h.getOpenedSession(), rec.sessionId)
 
-    injected.onOpenDetails(rec)
-    await new Promise(resolve => setImmediate(resolve))
-    assert.equal(h.getOpenedSession(), rec.sessionId)
-    const openedTask = h.getOpenedTaskTab()
-    assert.equal(openedTask?.kind, 'scheduleTask')
-    assert.equal(openedTask?.options?.params?.sessionId, rec.sessionId)
-    assert.equal(openedTask?.options?.params?.id, rec.id)
+    h.setHistories(new Map([['session-1:task-1', [receipt('history-1')]]]))
+    const history = await injected.onLoadHistory(rec)
+    assert.equal(history.length, 1)
+    assert.equal(history[0].messageId, 'history-1')
 
     assert.equal(await injected.onDelete(rec), true)
     assert.equal(h.getDeleteCalls(), 1)
