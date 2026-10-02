@@ -66,12 +66,18 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
   let records = initialRecords
   let histories = initialHistories
   let historyCalls = 0
+  let deleteCalls = 0
   let openedSession = null
+  let startedSessions = 0
+  let openedTaskTab = null
 
   const fakeWindow = {
     localStorage: storage,
     __ModuleLoader__: { load(definition) { moduleDefinition = definition } },
-    setTimeout() { return 1 },
+    setTimeout(callback, delay) {
+      if (delay === 0) queueMicrotask(callback)
+      return 1
+    },
     clearTimeout() {},
     addEventListener(name, listener) { windowListeners.set(name, listener) },
     removeEventListener(name, listener) {
@@ -132,6 +138,12 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
           },
         }
       },
+      async delete(request) {
+        deleteCalls += 1
+        const before = records.length
+        records = records.filter(item => !(item.sessionId === request.sessionId && item.id === request.id))
+        return { ok: true, value: { id: request.id, deleted: records.length !== before } }
+      },
     },
     $on(event, listener) {
       if (event === 'schedule/changed') scheduleChanged = listener
@@ -146,7 +158,13 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
   const scope = {
     slots, locale, remote, effect,
     on() { return () => {} },
-    uiWorkspace: { openSession(id) { openedSession = id } },
+    uiWorkspace: {
+      openSession(id) { openedSession = id },
+      startSession() { startedSessions += 1 },
+    },
+    sidebarRight: {
+      openTab(kind, options) { openedTaskTab = { kind, options } },
+    },
   }
   const ctx = {
     ...scope,
@@ -158,7 +176,10 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
     storage,
     registrations,
     getHistoryCalls: () => historyCalls,
+    getDeleteCalls: () => deleteCalls,
     getOpenedSession: () => openedSession,
+    getStartedSessions: () => startedSessions,
+    getOpenedTaskTab: () => openedTaskTab,
     setRecords(next) { records = next },
     setHistories(next) { histories = next },
     triggerScheduleChanged() { assert.ok(scheduleChanged); scheduleChanged() },
@@ -346,6 +367,43 @@ test('overdue active task shows warning when no unread attention remains', async
     const badge = findAll(tree, node => node.props?.className?.includes?.('sat_panelBadge'))[0]
     assert.equal(textOf(badge), '!')
     assert.ok(badge.props.className.includes('sat_panelBadgeWarn'))
+    unsubscribe()
+  } finally {
+    h.cleanup()
+  }
+})
+
+
+test('quick task page delegates open, details, creation, and delete to native services', async () => {
+  const rec = record()
+  const h = createHarness({ initialRecords: [rec] })
+  try {
+    const overlay = h.registrations.get('shell.overlay:schedule-attention.delivery-toast')
+    const catalog = overlay.spec.inject().hooks.catalog
+    const unsubscribe = catalog.subscribe(() => {})
+    await settle(catalog)
+
+    const page = h.registrations.get('main:schedules')
+    assert.ok(page, 'quick-actions page must shadow the native schedules main cell')
+    const injected = page.spec.inject()
+
+    injected.onNewTask()
+    assert.equal(h.getStartedSessions(), 1)
+
+    injected.onOpenSession(rec)
+    assert.equal(h.getOpenedSession(), rec.sessionId)
+
+    injected.onOpenDetails(rec)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(h.getOpenedSession(), rec.sessionId)
+    assert.deepEqual(h.getOpenedTaskTab(), {
+      kind: 'scheduleTask',
+      options: { params: { sessionId: rec.sessionId, id: rec.id } },
+    })
+
+    assert.equal(await injected.onDelete(rec), true)
+    assert.equal(h.getDeleteCalls(), 1)
+    assert.equal(catalog.getSnapshot().records.length, 0)
     unsubscribe()
   } finally {
     h.cleanup()
