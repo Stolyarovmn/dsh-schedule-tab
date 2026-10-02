@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dsh-0.2.0-rc.2]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - run: npm pack --dry-run
+
+  dsh-install-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install into DSH 0.2.0-rc.2
+        env:
+          DSH_HOME: ${{ runner.temp }}/dsh-home
+        run: |
+          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --from-default-profile web --dump-config > /dev/null
+          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile smoke add "file:$GITHUB_WORKSPACE"
+          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --dump-config > /tmp/dsh-config.txt
+          grep -F "schedule-attention-enhancer" /tmp/dsh-config.txt
+          grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
+      - name: Boot Web without requiring Schedule to be enabled
+        env:
+          DSH_HOME: ${{ runner.temp }}/dsh-home
+        shell: bash
+        run: |
+          set +e
+          timeout 15s pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --port 0 --no-open > /tmp/dsh-web.log 2>&1
+          STATUS=$?
+          set -e
+          cat /tmp/dsh-web.log
+          if grep -Eiq "Failed to load plugins|entry did not activate|web boot: .*failed" /tmp/dsh-web.log; then
+            exit 1
+          fi
+          if ! grep -Eq "dsh web: http://127\\.0\\.0\\.1:" /tmp/dsh-web.log; then
+            exit 1
+          fi
+          if [ "$STATUS" -ne 0 ] && [ "$STATUS" -ne 124 ]; then
+            exit "$STATUS"
+          fi
