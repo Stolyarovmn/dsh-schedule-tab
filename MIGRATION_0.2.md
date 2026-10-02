@@ -100,3 +100,17 @@ The plugin patch inserts only its own row. If the official Schedule bundle is no
 - verify first-install baselining, recurring delivery unread state, popup dedupe, reconnect refresh and unload/reload cleanup;
 - verify light and dark themes and keyboard focus;
 - only after live UI verification remove `private: true`, choose an RC version, merge to `main`, publish and release.
+
+## 0.8.x exception: quick actions on task rows
+
+User testing showed that native deletion and linked-Session navigation require too many steps. DSH `0.2.0-rc.2` still exposes no additive child slot inside `TaskManagerPage` rows. For the `0.8.x` experiment, the plugin therefore uses the documented keyed `main` slot under `schedules` and accepts its explicit `shadows-shipped-ui` replacement risk.
+
+The replacement boundary is intentionally narrow:
+
+- copied/reimplemented: central list heading, native-like filters/search/rows, plus quick Open session / Open details / Delete controls;
+- still native DSH: task detail, Rules editor, Delivery records, timing/timezone editing, right-Sidebar task tab, Schedule Host mutations;
+- delete calls the native `remote.schedule.delete` Host operation and retains confirm-first semantics;
+- details navigate to the linked Session and open native `scheduleTask` in the right Sidebar;
+- no DOM observation, no runtime import of Harness Client internals.
+
+Re-evaluate this exception when a later Harness release adds an additive task-row actions slot; that slot should replace the page shadow.
