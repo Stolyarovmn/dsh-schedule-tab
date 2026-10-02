@@ -1,19 +1,22 @@
 # Changelog
 
-## 0.8.0-dev.1 — DSH 0.2.0-rc.2
+## 0.8.0-dev.2 — DSH 0.2.0-rc.2
 
 Development preview only; not published.
 
 ### Added
 
 - quick **Open session**, **Open details**, and confirm-first **Delete** actions directly on Automation Tasks rows;
-- task-row click opens DSH's native `scheduleTask` right-Sidebar detail after navigating to the linked Session;
+- task-row click and **Open details** keep Automation Tasks selected and open an in-page right detail pane;
+- **Open session** is now a separate action and only navigates to the linked Conversation;
+- action icons are 18px semantic Conversation / Details-panel / Delete glyphs;
+- the **New** button matches the native primary-button foreground token and restores its visible plus icon;
 - native Schedule deletion through `remote.schedule.delete` followed by authoritative catalog refresh.
 
 ### Architecture
 
-- intentionally shadows only `main/schedules` because DSH `0.2.0-rc.2` has no additive row-actions slot;
-- keeps native Rules, Delivery records, editing and right-Sidebar task detail;
+- intentionally shadows `main/schedules` because DSH `0.2.0-rc.2` has no additive row-actions slot;
+- recreates the native page split so details remain beside the list; delivery records use the native Schedule history API;
 - remains free of Host DOM manipulation and runtime imports of Harness Client internals.
 
 # Changelog
