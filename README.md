@@ -1,4 +1,4 @@
-# DSH Automation Tasks Attention — 0.2.x development line
+# DSH Automation Tasks Attention
 
 This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
 
@@ -29,7 +29,7 @@ When Schedule is absent, this plugin stays inert through optional `remote.schedu
 
 ## Development install
 
-Install the RC by commit SHA for final verification. The package remains `private: true`; do not publish or merge it to `main` until the real Harness checks below pass.
+Stable `0.7.0` targets DSH `0.2.0-rc.2` only. During verification, install by commit SHA; after npm publication, install the published package version.
 
 ```powershell
 $DSH_VERSION = "0.2.0-rc.2"
@@ -43,3 +43,12 @@ pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" registry-test
 - `legacy/dsh-0.1.7.x` — plugin `0.6.15`.
 
 See [`MIGRATION_0.2.md`](MIGRATION_0.2.md) for the feature-by-feature decision record.
+
+## Install
+
+After npm publication:
+
+```powershell
+pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile registry-test add "@stolyarovmn/dsh-client-ui-schedule-tab@0.7.0"
+pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 registry-test
+```
