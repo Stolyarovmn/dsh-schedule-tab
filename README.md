@@ -1,10 +1,10 @@
-# DSH Automation Tasks Attention
+# DSH Automation Tasks Attention + Native Quick Actions
 
-This release targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
+This development line targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
 
-The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
+`0.7.0` keeps the shipped Automation Tasks page unchanged. The `0.8.0-dev.3` experiment restarts from that stable line and shadows only `main/schedules` with a **pinned source snapshot of DSH `0.2.0-rc.2` TaskManagerPage/TaskDetail**. The native code is preserved; the only intended UI patch is a three-button quick-action group beside each task row.
 
-## Scope of `0.7.0`
+## Scope of `0.8.0-dev.3`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
@@ -17,9 +17,11 @@ The first `0.2.x` implementation keeps only differentiated attention behavior:
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
 - browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot;
 - cross-tab synchronization of those preferences;
-- English, Chinese and Russian visible strings.
+- English, Chinese and Russian attention-layer strings;
+- pinned native Automation Tasks page behavior: native New/search/filters, TaskDetail, Rules editing, timing/time-zone controls, Delivery records, delete confirmation and native deletion toast;
+- three row actions using the **actual DSH icon set** bundled from the pinned source snapshot: linked Session, task details, delete.
 
-Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup. Per-task acknowledgement from the native task detail is still deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
+Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup. `0.2.0-rc.2` still exposes no child row-actions slot. Therefore the 0.8 experiment uses the documented keyed `main/schedules` shadow at `priority: -100`. The build copies the exact DSH source and primitives for this pinned version and applies one narrow row patch instead of maintaining a hand-redrawn TaskManager.
 
 ## Required native capability
 
@@ -29,7 +31,7 @@ When Schedule is absent, this plugin stays inert through optional `remote.schedu
 
 ## Development install
 
-Stable `0.7.0` targets DSH `0.2.0-rc.2` only. During verification, install by commit SHA; after npm publication, install the published package version.
+`0.8.0-dev.3` is private and must be installed by commit SHA. Stable `0.7.0` remains the published fallback until the pinned native fork is verified in the real Harness UI.
 
 ```powershell
 $DSH_VERSION = "0.2.0-rc.2"
