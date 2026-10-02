@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.0-dev.1 — DSH 0.2.0-rc.2
+
+Development preview only; not published.
+
+### Added
+
+- quick **Open session**, **Open details**, and confirm-first **Delete** actions directly on Automation Tasks rows;
+- task-row click opens DSH's native `scheduleTask` right-Sidebar detail after navigating to the linked Session;
+- native Schedule deletion through `remote.schedule.delete` followed by authoritative catalog refresh.
+
+### Architecture
+
+- intentionally shadows only `main/schedules` because DSH `0.2.0-rc.2` has no additive row-actions slot;
+- keeps native Rules, Delivery records, editing and right-Sidebar task detail;
+- remains free of Host DOM manipulation and runtime imports of Harness Client internals.
+
+# Changelog
+
 ## 0.7.0 — 2026-10-02 — DSH 0.2.0-rc.2
 
 This release is a redesign for **DeepSeek Harness 0.2.0-rc.2 only**. It intentionally drops compatibility with DSH 0.1.x and no longer ships a replacement Automation Tasks manager.
