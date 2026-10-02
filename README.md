@@ -4,7 +4,7 @@ This release targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally ca
 
 `0.7.0` keeps the native **Automation tasks** page unchanged. The `0.8.x` development line intentionally shadows only the central `main/schedules` list because DSH `0.2.0-rc.2` exposes no additive task-row actions slot. Native task details, Rules, Delivery records, timing edits, and the right-Sidebar task view remain owned by DSH.
 
-## Development scope of `0.8.0-dev.1`
+## Development scope of `0.8.0-dev.2`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
@@ -19,7 +19,9 @@ The first `0.2.x` implementation keeps only differentiated attention behavior:
 - cross-tab synchronization of those preferences;
 - English, Chinese and Russian visible strings;
 - quick row actions: **Open session**, **Open details**, and confirm-first **Delete**;
-- clicking a task row opens the linked Session and DSH's native `scheduleTask` right-Sidebar detail, rather than copying the editor/history implementation.
+- **Open session** changes to the linked Conversation only;
+- **Open details** and clicking the row keep Automation Tasks open and show an in-page right detail pane in the same place as the native `TaskManagerPage`;
+- the detail pane exposes Rules summary and Delivery records through the native Schedule history API.
 
 Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup. Per-task acknowledgement from the native task detail is still deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
 
@@ -31,7 +33,7 @@ When Schedule is absent, this plugin stays inert through optional `remote.schedu
 
 ## Development install
 
-`0.8.0-dev.1` is intentionally private and must be tested by commit SHA. Stable `0.7.0` remains the published attention-only release until this stronger `main/schedules` replacement is verified in the real Harness UI.
+`0.8.0-dev.2` is intentionally private and must be tested by commit SHA. Stable `0.7.0` remains the published attention-only release until this stronger `main/schedules` replacement is verified in the real Harness UI.
 
 ```powershell
 $DSH_VERSION = "0.2.0-rc.2"
@@ -57,4 +59,4 @@ pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 registry-test
 
 ## 0.8 quick-actions trade-off
 
-DSH `0.2.0-rc.2` has no child slot inside `TaskManagerPage` rows. To place actions directly on the cards, this development line uses the documented keyed `main` slot with key `schedules`, whose catalog marks the replacement risk as `shadows-shipped-ui`. The replacement is deliberately limited to the central list. Editing/history still open in DSH's native `scheduleTask` right-Sidebar page.
+DSH `0.2.0-rc.2` has no child slot inside `TaskManagerPage` rows. To place actions directly on the cards, this development line uses the documented keyed `main` slot with key `schedules`, whose catalog marks the replacement risk as `shadows-shipped-ui`. The replacement owns the central list and its in-page detail column so details no longer navigate away from Automation Tasks. Delivery history still comes from the native Schedule Host API. Full native timing-edit parity remains a compatibility item for this shadowed page.
