@@ -5,9 +5,9 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 const client = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
 const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 
-assert.equal(pkg.version, '0.7.0-rc.1')
+assert.equal(pkg.version, '0.7.0')
 assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2')
-assert.equal(pkg.private, true, 'development branch must not publish accidentally')
+assert.ok(pkg.private !== true, 'stable package must be publishable')
 assert.ok(client.includes("ctx.inject(['remote.schedule']"), 'Schedule integration must stay optional')
 assert.ok(client.includes("scope.slots.inject('sidebar.panellist'"), 'attention belongs in the existing Schedule navigation seat')
 assert.ok(client.includes("scope.slots.inject('sidebar.session.row.leading'"), 'scheduled Session attention must use the public Session-row leading seat')
