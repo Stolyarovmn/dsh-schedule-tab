@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "Attention and delivery-notification enhancer for the native DeepSeek Harness Automation Tasks UI.",
-  "version": "0.7.0-dev.8",
+  "version": "0.7.0-rc.1",
   "private": true,
   "author": {
     "name": "Stolyarovmn",
@@ -25,6 +25,7 @@
     "cordis.patch.yml",
     "locale/*.json",
     "README.md",
+    "CHANGELOG.md",
     "MIGRATION_0.2.md",
     "LICENSE",
     "icon.svg"
