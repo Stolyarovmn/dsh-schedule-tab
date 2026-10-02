@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [dsh-0.2.0-rc.2]
+    branches: [main, dsh-0.2.0-rc.2]
   pull_request:
 
 permissions:
