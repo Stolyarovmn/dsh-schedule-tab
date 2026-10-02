@@ -5,7 +5,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement
 
     const PACKAGE = '@stolyarovmn/dsh-client-ui-schedule-tab'
-    const nativeManager = require(PACKAGE + '/native-manager')
+    const nativeManager = require('@stolyarovmn/dsh-schedule-native-manager')
     const NS = 'schedule-attention-enhancer'
     const PANEL_ID = 'schedules'
     const SEEN_STORAGE_KEY = PACKAGE + '/seen-v2'
