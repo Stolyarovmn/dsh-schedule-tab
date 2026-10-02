@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
-  "description": "Automation Tasks attention, delivery notifications, and quick card actions for DeepSeek Harness.",
-  "version": "0.8.0-dev.1",
+  "description": "Automation Tasks attention, delivery notifications, in-page details, and quick card actions for DeepSeek Harness.",
+  "version": "0.8.0-dev.2",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
@@ -57,7 +57,6 @@
         "@deepseek-ai/dsh-client-ui-plugin-manager",
         "@deepseek-ai/dsh-client-ui-sidebar",
         "@deepseek-ai/dsh-client-ui-workspace",
-        "@deepseek-ai/dsh-client-ui-sidebar-right",
         "@deepseek-ai/dsh-client-ui-schedule"
       ]
     }
