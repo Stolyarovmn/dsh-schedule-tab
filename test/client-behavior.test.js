@@ -92,7 +92,8 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
   const React = {
     Fragment: Symbol('Fragment'),
     createElement(type, props, ...children) {
-      return { type, props: { ...(props ?? {}), children: children.length <= 1 ? children[0] : children } }
+      const nextProps = { ...(props ?? {}), children: children.length <= 1 ? children[0] : children }
+      return typeof type === 'function' ? type(nextProps) : { type, props: nextProps }
     },
     useState(initial) { return [typeof initial === 'function' ? initial() : initial, () => {}] },
     useEffect(effect) {
