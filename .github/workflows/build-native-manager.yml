@@ -1,0 +1,82 @@
+name: Build native schedule snapshot
+
+on:
+  push:
+    branches: [feat/0.8.0-native-task-actions]
+    paths:
+      - src/client-shell.js
+      - tools/prepare-native-manager.mjs
+      - package.json
+      - .github/workflows/build-native-manager.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: native-schedule-snapshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout pinned DSH source
+        uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: dsh-v0.2.0-rc.2
+          path: .dsh-src
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+          cache-dependency-path: .dsh-src/pnpm-lock.yaml
+
+      - name: Install DSH build dependencies
+        working-directory: .dsh-src
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Prepare patched native TaskManager package
+        run: node tools/prepare-native-manager.mjs "$GITHUB_WORKSPACE/.dsh-src"
+
+      - name: Build native manager helper
+        working-directory: .dsh-src
+        run: pnpm exec tsdown --config packages/client/native-schedule-fork/tsdown.config.ts
+
+      - name: Compose plugin client
+        shell: bash
+        run: |
+          test -s .dsh-src/packages/client/native-schedule-fork/lib/client.js
+          cp .dsh-src/packages/client/native-schedule-fork/lib/client.js /tmp/native-manager.js
+          {
+            cat /tmp/native-manager.js
+            printf '\n'
+            cat src/client-shell.js
+          } > lib/client.js
+          node --check lib/client.js
+          grep -F "@stolyarovmn/dsh-schedule-native-manager" lib/client.js
+          grep -F "rowQuickActions" lib/client.js
+
+      - name: Commit generated client
+        shell: bash
+        run: |
+          if git diff --quiet -- lib/client.js; then
+            echo "Generated client is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/client.js
+          git commit -m "build: refresh pinned native TaskManager snapshot"
+          git push
