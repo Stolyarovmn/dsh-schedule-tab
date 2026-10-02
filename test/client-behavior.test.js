@@ -32,17 +32,19 @@ function taskKey(rec) { return 'task:' + rec.sessionId + ':' + rec.id }
 
 function textOf(node) {
   if (node == null || node === false) return ''
+  if (Array.isArray(node)) return node.map(textOf).join('')
   if (typeof node === 'string' || typeof node === 'number') return String(node)
-  const children = node.props?.children
-  if (Array.isArray(children)) return children.map(textOf).join('')
-  return textOf(children)
+  return textOf(node.props?.children)
 }
 function findAll(node, predicate, out = []) {
-  if (node == null || node === false || typeof node !== 'object') return out
+  if (node == null || node === false) return out
+  if (Array.isArray(node)) {
+    node.forEach(child => findAll(child, predicate, out))
+    return out
+  }
+  if (typeof node !== 'object') return out
   if (predicate(node)) out.push(node)
-  const children = node.props?.children
-  if (Array.isArray(children)) children.forEach(child => findAll(child, predicate, out))
-  else findAll(children, predicate, out)
+  findAll(node.props?.children, predicate, out)
   return out
 }
 
