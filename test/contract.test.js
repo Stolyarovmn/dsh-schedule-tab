@@ -67,7 +67,7 @@ assert.ok(client.includes('panelWasActiveRef.current = active'), 'panel activati
 assert.ok(client.includes('markAllSeen(catalog.records)'), 'panel activation must acknowledge current attention')
 
 assert.ok(nativeBuild.includes('IconNewChatOutlineRegular'), 'row Session action must use the native New Chat glyph')
-assert.ok(!nativeBuild.includes('IconPanelLeftOutlineRegular'), 'redundant row detail action must stay removed')
+assert.ok(!nativeBuild.includes('<IconPanelLeftOutlineRegular />'), 'redundant row detail action must stay removed')
 assert.ok(nativeBuild.includes('const [quickConfirmId, setQuickConfirmId]'), 'quick delete must defer confirmation across native task-selection reset')
 assert.ok(nativeBuild.includes('setQuickConfirmId(record.id)'), 'row trash action must request confirmation on the first click')
 assert.ok(nativeBuild.includes('setConfirmId(quickConfirmId)'), 'selected task must receive the deferred native confirmation')
