@@ -473,7 +473,7 @@ window.__ModuleLoader__.load({
         }, h('span', { className: 'sat_prefThumb' })))
     }
 
-    function PluginPreferences({ usePreferences, setPreference: setValue, t }) {
+    function OwnedPluginPreferences({ usePreferences, setPreference: setValue, t }) {
       const preferences = usePreferences(value => value)
       return h('section', { className: 'sat_prefSection' },
         h('style', null, pluginCss),
@@ -500,6 +500,12 @@ window.__ModuleLoader__.load({
             description: t('settingsNewDeliveriesDescription'),
           })),
         h('p', { className: 'sat_prefFootnote' }, t('settingsBrowserLocal')))
+    }
+
+    function PluginPreferences(props) {
+      const subject = props?.subject
+      if (subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE) return null
+      return h(OwnedPluginPreferences, props)
     }
 
     function AttentionIcon({ active, useCatalog, usePreferences, t }) {
