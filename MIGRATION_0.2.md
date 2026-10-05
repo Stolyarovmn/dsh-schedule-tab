@@ -6,14 +6,13 @@ Authoritative references for this line are the version-matched `cordis-plugin-de
 
 ## Remove from the new line
 
-The following `0.6.x` responsibilities are now native or rely on extension patterns that should not be carried forward:
+The following `0.6.x` responsibilities are native in DSH `0.2.0-rc.2` or rely on extension patterns that must not be carried forward unchanged:
 
-- replacing the `main` / `schedules` page;
+- a separately designed replacement `main/schedules` page;
 - custom task cards as the primary management UI;
 - custom task editor and timing validation;
-- native-detail bridge / embedding another feature package's `TaskManagerPage`;
 - custom Delivery records rendering;
-- custom delete flow;
+- custom delete dialogs/toasts;
 - custom source-Session navigation;
 - re-declaring or enabling `time-context`, `schedule`, or `ui-schedule` in this bundle patch;
 - runtime import of `@deepseek-ai/dsh-client-ui-primitives` or other Harness Client internals;
@@ -21,9 +20,9 @@ The following `0.6.x` responsibilities are now native or rely on extension patte
 - recoloring native Session-row schedule marks through host-DOM CSS;
 - adaptive polling near due times when `schedule/changed` plus reconnect invalidation is sufficient.
 
-## Keep in the first 0.2.x implementation
+## Keep in the 0.2.x implementation
 
-These remain differentiated and can be implemented without replacing native Schedule UI:
+These remain differentiated behavior owned by this plugin:
 
 - browser-local seen state for newly discovered active tasks;
 - browser-local seen state for newly recorded deliveries;
@@ -32,8 +31,8 @@ These remain differentiated and can be implemented without replacing native Sche
 - compatibility with `seen-v1` → `seen-v2` migration;
 - compatibility with existing `notification-preferences-v1` values;
 - consuming disabled notification categories without replaying a backlog later;
-- `shell.overlay` popup for a new delivery with Open conversation;
-- visible numeric unread badge on the existing `schedules` sidebar glyph, constrained to that glyph's public slot;
+- `shell.overlay` popup for a new delivery with **Open conversation**;
+- visible numeric unread badge on the existing `schedules` sidebar glyph;
 - overdue state independent from unread state;
 - browser-local notification settings on the bundle detail page through the public `plugins.detail.section` slot;
 - cross-tab preference synchronization;
@@ -42,80 +41,80 @@ These remain differentiated and can be implemented without replacing native Sche
 
 ## Native DSH remains authoritative
 
-Do not duplicate these `0.2.0-rc.2` features:
+The `0.8.0` fork preserves these native `0.2.0-rc.2` behaviors from the pinned shipped source rather than reimplementing them independently:
 
-- global Automation tasks page;
+- global Automation tasks page layout;
 - native text search and All / Active / Inactive filters;
 - task name, instruction and timing editing;
 - Once / Every / Daily / Weekly / Monday-to-Friday / Cron controls;
 - IANA time-zone selector and date/time controls;
 - Delivery records pagination and retention messaging;
 - task deletion and mutation conflict handling;
-- right-Sidebar task detail;
-- linked Session navigation;
-- Session-header reminder button/popover;
-- Session-row schedule mark and hover content;
-- `schedule_create` transcript card.
+- in-page TaskDetail placement;
+- linked Session navigation semantics;
+- native delete confirmation and deletion toast;
+- native focus, Escape and menu behavior.
 
-## Deferred until a suitable public extension point exists
+The official Schedule bundle still owns the Host capability and the rest of the native surfaces, including Session-header reminders, Session-row schedule state and `schedule_create` transcript cards.
 
-`TaskManagerPage` in `0.2.0-rc.2` declares no child slot for additive controls. Therefore these useful `0.6.x` features are not copied into the first port:
+## Features still deferred
+
+`TaskManagerPage` in `0.2.0-rc.2` declares no additive row-actions slot. `0.8.0` makes one explicit exception for the two requested row actions, but the following older custom features remain deferred:
 
 - Today / Overdue / Recurring filters;
 - grouping by date;
 - grouping by source Session;
 - search by resolved Session title;
-- per-task attention dot inside the native task row;
+- per-task attention dot inside each task row;
 - per-task acknowledgement when native Rules/Delivery records is opened;
-- numeric unread count next to the native Automation tasks **text label** (the public sidebar slot owns only the glyph, so the badge is rendered inside the glyph instead);
+- numeric unread count next to the native Automation tasks **text label**;
 - in-page notification settings button inside native `TaskManagerPage`.
 
-If a later DSH version exposes additive slots in the task manager, re-evaluate these features there. Do not replace the whole native page merely to regain them.
+If a later DSH version exposes additive slots in the task manager, re-evaluate these features there and remove the pinned page fork when possible.
 
-## First 0.2.x architecture
-
-```text
-native @deepseek-ai/dsh-experimental-schedule-bundle
-  ├─ time-context
-  ├─ schedule
-  └─ ui-schedule
-       ├─ native Automation tasks page (unchanged)
-       └─ native schedules sidebar entry
-             ↑ presentation only
-@stolyarovmn/dsh-client-ui-schedule-tab
-  ├─ optional remote.schedule integration
-  ├─ reuse sidebar.panellist id=schedules for attention glyph + unread badge
-  ├─ plugins.detail.section for browser-local notification preferences
-  └─ shell.overlay delivery notification
-```
-
-The plugin patch inserts only its own row. If the official Schedule bundle is not enabled, optional `remote.schedule` injection keeps the enhancer inactive.
-
-## Verification gates before release
-
-- inspect live `Slots` and `Theme` on an installed `0.2.0-rc.2` profile;
-- confirm replacement risk and props for `sidebar.panellist` and `shell.overlay`;
-- install by commit SHA with the official Automation tasks bundle enabled;
-- confirm no `main/schedules` replacement and no duplicate sidebar entry;
-- verify first-install baselining, recurring delivery unread state, popup dedupe, reconnect refresh and unload/reload cleanup;
-- verify light and dark themes and keyboard focus;
-- only after live UI verification remove `private: true`, choose an RC version, merge to `main`, publish and release.
-
-
-## 0.8.0-dev.3 exception: pinned native TaskManager fork
+## `0.8.0` architecture: pinned native TaskManager fork
 
 Real UI testing of the first 0.8 prototype showed that a hand-redrawn list/detail pair drifted from Harness: action icons were not from the product icon set and the right detail column lost native TaskDetail behavior.
 
-The replacement experiment therefore restarts from stable 0.7.0 and uses a build-time snapshot of **DeepSeek Harness dsh-v0.2.0-rc.2**:
+The released `0.8.0` implementation therefore restarts from stable `0.7.0` and uses a build-time snapshot of **DeepSeek Harness `dsh-v0.2.0-rc.2`**:
 
 - source: shipped `ui-schedule` TaskManagerPage, TaskDetail and dependencies;
-- controls/icons: bundled source snapshot of the exact ui-primitives used by that version;
-- runtime dependency rule: the generated bundle contains no `require('@deepseek-ai/dsh-client-ui-primitives')`;
-- page shadow: keyed `main/schedules`, priority `-100`;
-- patch boundary: one quick-action group added beside each native task row;
-- Open Session uses native Session navigation;
-- Details uses the native row selection and the original in-page TaskDetail;
-- Delete selects the native task detail and opens its native confirmation flow;
-- Rules editing, timing/time-zone controls, Delivery records and delete toast remain the pinned native implementation.
+- controls/icons: bundled source snapshot of the exact `ui-primitives` used by that version;
+- runtime dependency rule: the generated helper contains no runtime `require('@deepseek-ai/dsh-client-ui-primitives')` and no non-platform external such as `clsx`;
+- page shadow: keyed `main/schedules`, priority `-100`; native DSH registration stays present at priority `0`;
+- patch boundary: two quick actions beside each native task row;
+- `QueueOutline` opens the linked Session through root `uiWorkspace`;
+- clicking the row itself opens the original in-page TaskDetail, so no details quick button is added;
+- `TrashOutline` selects the target row and defers the native `confirmId` until the native selection reset completes, producing confirmation on the first click;
+- Rules editing, timing/time-zone controls, Delivery records, mutation conflict handling and delete toast remain the pinned native implementation.
 
-This is intentionally version-specific. When DSH changes, regenerate/review the snapshot against that target version rather than carrying it forward. Prefer an upstream row-actions slot and delete this fork when such a slot exists.
+This architecture is intentionally version-specific. When DSH changes, regenerate and review the snapshot against that exact target version instead of carrying the fork forward unchanged.
+
+## Shared Plugin Manager slot ownership
+
+`plugins.detail.section` is a root list slot shared by every plugin detail page. The notification-settings contribution must inspect the page `subject` and render `null` unless:
+
+```text
+subject.kind === 'bundle'
+subject.pkg.name === '@stolyarovmn/dsh-client-ui-schedule-tab'
+```
+
+This prevents schedule notification controls from appearing on Registry Aggregator or any unrelated bundle/row/item page.
+
+## Verification gates for `0.8.0`
+
+Completed before release:
+
+- target fixed to DSH `0.2.0-rc.2` with no `0.1.x` compatibility path;
+- official `cordis-plugin-development` guidance for that exact tag reviewed;
+- build pinned to the exact native Schedule source for `dsh-v0.2.0-rc.2`;
+- generated helper restricted to platform module-table externals;
+- official Automation Tasks bundle enabled during install/boot smoke;
+- real UI verified for native TaskDetail layout, Rules controls and Delivery records;
+- real UI verified for row click → native detail, Queue action → linked Session, and first-click Trash → native delete confirmation;
+- native `QueueOutline` / `TrashOutline` glyphs used from the pinned DSH icon set;
+- `plugins.detail.section` ownership guard regression-tested against foreign bundle, row and item subjects;
+- notification preferences, recurring unread counts, popup dedupe and Session attention retain regression coverage;
+- package remains inert when Schedule is absent through optional `remote.schedule` injection.
+
+For a future DSH release, repeat these gates against that version and do not assume this pinned fork remains compatible.
