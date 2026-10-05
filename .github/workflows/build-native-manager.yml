@@ -6,6 +6,7 @@ on:
     paths:
       - src/client-shell.js
       - tools/prepare-native-manager.mjs
+      - tools/ensure-settings-scope.mjs
       - package.json
       - .github/workflows/build-native-manager.yml
   workflow_dispatch:
@@ -47,6 +48,9 @@ jobs:
         working-directory: .dsh-src
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Enforce plugin detail ownership
+        run: node tools/ensure-settings-scope.mjs
+
       - name: Prepare patched native TaskManager package
         run: node tools/prepare-native-manager.mjs "$GITHUB_WORKSPACE/.dsh-src"
 
@@ -65,6 +69,9 @@ jobs:
             echo "Client shell declares the nonexistent uiPluginManager service" >&2
             exit 1
           fi
+          # plugins.detail.section is a shared list slot. Every contribution must
+          # render null when the open detail page is not its own bundle.
+          grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" src/client-shell.js
           # Session navigation is owned by the root uiWorkspace service. The
           # optional remote.schedule child scope only owns Schedule-dependent work.
           if grep -Fq "scope.uiWorkspace" src/client-shell.js; then
@@ -87,7 +94,13 @@ jobs:
           node --check lib/client.js
           grep -F "@stolyarovmn/dsh-schedule-native-manager" lib/client.js
           grep -F "rowQuickActions" lib/client.js
+          grep -F "IconQueueOutlineRegular" lib/client.js
           grep -F "ctx.uiWorkspace.openSession" lib/client.js
+          grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" lib/client.js
+          if grep -Fq "IconNewChatOutlineRegular" lib/client.js; then
+            echo "Generated client still uses New Chat for an existing linked Session" >&2
+            exit 1
+          fi
           if grep -Fq "scope.uiWorkspace" lib/client.js; then
             echo "Generated client still navigates through the optional Schedule scope" >&2
             exit 1
@@ -113,16 +126,16 @@ jobs:
           console.log('Native helper externals:', [...new Set(requires)].join(', '))
           NODE
 
-      - name: Commit generated client
+      - name: Commit generated client and normalized shell
         shell: bash
         run: |
-          if git diff --quiet -- lib/client.js; then
-            echo "Generated client is already current."
+          if git diff --quiet -- lib/client.js src/client-shell.js; then
+            echo "Generated client and shell are already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/client.js
+          git add lib/client.js src/client-shell.js
           git commit -m "build: refresh pinned native TaskManager snapshot"
           # A docs/tests commit can land while this relatively expensive pinned
           # DSH build is running. Rebase the generated-only commit before push so
