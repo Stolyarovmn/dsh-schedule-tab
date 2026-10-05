@@ -72,12 +72,30 @@ const pagePath = join(packageDir, 'src/client/TaskManagerPage.tsx')
 let page = await readFile(pagePath, 'utf8')
 page = page.replace(
 `  Button, IconClockOutlineRegular, IconCloseOutlineRegular, IconPlusOutlineRegular, IconSearchOutlineRegular, Input,`,
-`  Button, IconClockOutlineRegular, IconCloseOutlineRegular, IconLinkOutlineRegular, IconPanelLeftOutlineRegular,
+`  Button, IconClockOutlineRegular, IconCloseOutlineRegular, IconNewChatOutlineRegular,
   IconPlusOutlineRegular, IconSearchOutlineRegular, IconTrashOutlineRegular, Input,`,
 )
 page = page.replace(
 `  const { useCatalog, onNewTask, onRetry, t } = props`,
 `  const { useCatalog, onNewTask, onRetry, onOpenSession, t } = props`,
+)
+page = page.replace(
+`  const [selectedId, setSelectedId] = useState<ScheduleId | null>(null)`,
+`  const [selectedId, setSelectedId] = useState<ScheduleId | null>(null)
+  // A quick delete can target a row that is not selected yet. Native useTaskDetail
+  // clears confirmId whenever taskId changes, so defer the confirmation until
+  // that task has become the selected detail instead of losing the first click.
+  const [quickConfirmId, setQuickConfirmId] = useState<ScheduleId | null>(null)`,
+)
+page = page.replace(
+`  const confirming = records.find(record => record.id === confirmId)`,
+`  const confirming = records.find(record => record.id === confirmId)
+
+  useEffect(() => {
+    if (quickConfirmId === null || selectedId !== quickConfirmId || selected === undefined) return
+    setConfirmId(quickConfirmId)
+    setQuickConfirmId(null)
+  }, [quickConfirmId, selectedId, selected, setConfirmId])`,
 )
 page = page.replace(
 `                    <li key={record.id}>`,
@@ -95,19 +113,7 @@ page = page.replace(
                           title={t('detail.openSession')}
                           onClick={() => { onOpenSession(record.sessionId) }}
                         >
-                          <IconLinkOutlineRegular />
-                        </Button>
-                        <Button
-                          size="sm"
-                          className={css.detailIconButton}
-                          aria-label={t('detail.label')}
-                          title={t('detail.label')}
-                          onClick={() => {
-                            setSelectedId(record.id)
-                            setTab('rule')
-                          }}
-                        >
-                          <IconPanelLeftOutlineRegular />
+                          <IconNewChatOutlineRegular />
                         </Button>
                         <Button
                           size="sm"
@@ -115,9 +121,9 @@ page = page.replace(
                           aria-label={t('delete.action')}
                           title={t('delete.action')}
                           onClick={() => {
+                            setQuickConfirmId(record.id)
                             setSelectedId(record.id)
                             setTab('rule')
-                            setConfirmId(record.id)
                           }}
                         >
                           <IconTrashOutlineRegular />
@@ -126,6 +132,8 @@ page = page.replace(
                     </li>`,
 )
 if (!page.includes('className={css.rowQuickActions}')) throw new Error('TaskManagerPage quick-action patch did not apply')
+if (page.includes('IconPanelLeftOutlineRegular')) throw new Error('redundant row detail action survived the patch')
+if (!page.includes('setQuickConfirmId(record.id)')) throw new Error('one-click delete confirmation patch did not apply')
 await writeFile(pagePath, page)
 
 const cssPath = join(packageDir, 'src/client/TaskManagerPage.module.css')
