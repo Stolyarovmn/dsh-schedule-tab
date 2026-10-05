@@ -54,25 +54,25 @@ jobs:
         working-directory: .dsh-src
         run: pnpm exec tsdown --config packages/client/native-schedule-fork/tsdown.config.ts
 
-      - name: Normalize plugin client shell
+      - name: Verify plugin client shell
         shell: bash
         run: |
-          # DSH 0.2.0-rc.2 ui-plugin-manager exports pluginNavigation, not a
-          # uiPluginManager Cordis service. Package-level dsh.client.inject stays
-          # responsible for activation ordering; it must not be duplicated as a
-          # runtime service dependency.
-          sed -i "s/, 'uiPluginManager'//g" src/client-shell.js
-          # Session navigation belongs to the root uiWorkspace service. The
-          # optional remote.schedule child scope only owns Schedule-dependent work.
-          sed -i 's/scope\.uiWorkspace\.openSession/ctx.uiWorkspace.openSession/g; s/scope\.uiWorkspace\.startSession/ctx.uiWorkspace.startSession/g' src/client-shell.js
+          # @deepseek-ai/dsh-client-ui-plugin-manager stays in package.json only
+          # as dsh.client.inject load ordering. DSH 0.2.0-rc.2 does not expose a
+          # uiPluginManager Cordis service; its public cross-plugin service is
+          # pluginNavigation, which this plugin does not need.
           if grep -Fq "uiPluginManager" src/client-shell.js; then
-            echo "Client shell still declares the nonexistent uiPluginManager service" >&2
+            echo "Client shell declares the nonexistent uiPluginManager service" >&2
             exit 1
           fi
+          # Session navigation is owned by the root uiWorkspace service. The
+          # optional remote.schedule child scope only owns Schedule-dependent work.
           if grep -Fq "scope.uiWorkspace" src/client-shell.js; then
-            echo "Client shell still routes workspace navigation through the optional Schedule scope" >&2
+            echo "Client shell routes workspace navigation through the optional Schedule scope" >&2
             exit 1
           fi
+          grep -F "ctx.uiWorkspace.openSession" src/client-shell.js
+          grep -F "ctx.uiWorkspace.startSession" src/client-shell.js
 
       - name: Compose plugin client
         shell: bash
@@ -116,13 +116,13 @@ jobs:
       - name: Commit generated client
         shell: bash
         run: |
-          if git diff --quiet -- src/client-shell.js lib/client.js; then
+          if git diff --quiet -- lib/client.js; then
             echo "Generated client is already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/client-shell.js lib/client.js
+          git add lib/client.js
           git commit -m "build: refresh pinned native TaskManager snapshot"
           # A docs/tests commit can land while this relatively expensive pinned
           # DSH build is running. Rebase the generated-only commit before push so
