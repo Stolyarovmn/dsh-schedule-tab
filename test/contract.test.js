@@ -32,6 +32,16 @@ assert.ok(client.includes("onUpdateTiming"), 'native timing editor wiring must b
 assert.ok(client.includes("loadHistory"), 'native Delivery records wiring must be retained')
 assert.ok(!client.includes("require(\"@deepseek-ai/dsh-client-ui-primitives\")"), 'native primitives must be bundled, not runtime-imported from Harness')
 assert.ok(!client.includes("require('@deepseek-ai/dsh-client-ui-primitives')"), 'native primitives must be bundled, not runtime-imported from Harness')
+const pluginMarker = "window.__ModuleLoader__.load({\n  id: '@stolyarovmn/dsh-client-ui-schedule-tab'"
+const markerAt = client.indexOf(pluginMarker)
+assert.ok(markerAt > 0, 'generated native helper must precede the plugin module')
+const helper = client.slice(0, markerAt)
+const helperRequires = [...helper.matchAll(/require\(["']([^"']+)["']\)/g)].map(match => match[1])
+const allowedHelperRequires = new Set(['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'])
+for (const specifier of helperRequires) {
+  assert.ok(allowedHelperRequires.has(specifier), `native helper leaked non-platform external: ${specifier}`)
+}
+assert.ok(!helperRequires.includes('clsx'), 'clsx must be bundled into the native helper')
 assert.ok(!shell.includes('@deepseek-ai/dsh-client-ui-primitives'), 'plugin shell must not runtime-import Harness Client internals')
 assert.ok(!shell.includes('document.querySelector'), 'plugin shell must not inspect host DOM')
 assert.ok(!shell.includes(':has('), 'plugin shell CSS must not style host DOM through parent selectors')
