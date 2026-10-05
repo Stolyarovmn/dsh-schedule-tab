@@ -49,7 +49,7 @@ assert.ok(!shell.includes(':has('), 'plugin shell CSS must not style host DOM th
 assert.ok(!/^\s*- id: schedule\s*$/m.test(patch), 'plugin must not own the official Schedule rows')
 assert.ok(client.includes("ctx.remote.$on('schedule/changed'"), 'catalog must follow authoritative Schedule invalidation')
 assert.ok(client.includes("ctx.remote.schedule.history({ sessionId: record.sessionId, id: record.id, limit: 10 })"), 'recurring unread count must use native retained delivery history with a bounded page')
-assert.ok(client.includes("if (candidates.length >= 10) return historyByTask"), 'ten distinct unread tasks must skip unnecessary history reads')
+assert.ok(client.includes("if (candidates.length < 10)"), 'ten distinct unread tasks must skip unnecessary history reads')
 assert.ok(client.includes("Math.min(4, candidates.length)"), 'delivery-history enrichment must keep bounded concurrency')
 assert.ok(client.includes("if (count >= 10) break"), 'history counting must stop once the 9+ badge threshold is known')
 assert.ok(client.includes("historyByTask: new Map()"), 'catalog snapshots must carry delivery-history enrichment')
