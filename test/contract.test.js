@@ -5,8 +5,9 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 const client = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
 const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 const shell = readFileSync(new URL('../src/client-shell.js', import.meta.url), 'utf8')
+const nativeBuild = readFileSync(new URL('../tools/prepare-native-manager.mjs', import.meta.url), 'utf8')
 
-assert.equal(pkg.version, '0.8.0-dev.3')
+assert.equal(pkg.version, '0.8.0-dev.4')
 assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2')
 assert.equal(pkg.private, true, 'development package must stay private')
 assert.ok(client.includes("ctx.inject(['remote.schedule']"), 'Schedule integration must stay optional')
@@ -63,5 +64,13 @@ assert.ok(client.includes('startPreferencesStorageSync'), 'browser-local prefere
 assert.ok(client.includes('const justActivated = active && !panelWasActive'), 'attention acknowledgement must require an inactive-to-active panel transition')
 assert.ok(client.includes('panelWasActive = active'), 'panel activation state must survive ordinary sidebar rerenders')
 assert.ok(client.includes('markAllSeen(catalog.records)'), 'panel activation must acknowledge current attention')
+
+assert.ok(nativeBuild.includes('IconNewChatOutlineRegular'), 'row Session action must use the native New Chat glyph')
+assert.ok(!nativeBuild.includes('IconPanelLeftOutlineRegular'), 'redundant row detail action must stay removed')
+assert.ok(nativeBuild.includes('const [quickConfirmId, setQuickConfirmId]'), 'quick delete must defer confirmation across native task-selection reset')
+assert.ok(nativeBuild.includes('setQuickConfirmId(record.id)'), 'row trash action must request confirmation on the first click')
+assert.ok(nativeBuild.includes('setConfirmId(quickConfirmId)'), 'selected task must receive the deferred native confirmation')
+assert.ok(shell.includes('markSessionSeen(catalog.getSnapshot().records, id)\n            scope.uiWorkspace.openSession(id)'), 'linked Session actions must navigate directly and acknowledge Session attention')
+assert.ok(!shell.includes("nativeManager.sessionLinkState(id, scope.sessions.list.getSnapshot()"), 'navigation callback must not repeat the native detail availability gate with a stale snapshot')
 
 console.log('DSH 0.2.0-rc.2 pinned native TaskManager contract passed')
