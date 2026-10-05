@@ -54,27 +54,46 @@ jobs:
         working-directory: .dsh-src
         run: pnpm exec tsdown --config packages/client/native-schedule-fork/tsdown.config.ts
 
+      - name: Normalize plugin client shell
+        shell: bash
+        run: |
+          # DSH 0.2.0-rc.2 ui-plugin-manager exports pluginNavigation, not a
+          # uiPluginManager Cordis service. Package-level dsh.client.inject stays
+          # responsible for activation ordering; it must not be duplicated as a
+          # runtime service dependency.
+          sed -i "s/, 'uiPluginManager'//g" src/client-shell.js
+          # Session navigation belongs to the root uiWorkspace service. The
+          # optional remote.schedule child scope only owns Schedule-dependent work.
+          sed -i 's/scope\.uiWorkspace\.openSession/ctx.uiWorkspace.openSession/g; s/scope\.uiWorkspace\.startSession/ctx.uiWorkspace.startSession/g' src/client-shell.js
+          if grep -Fq "uiPluginManager" src/client-shell.js; then
+            echo "Client shell still declares the nonexistent uiPluginManager service" >&2
+            exit 1
+          fi
+          if grep -Fq "scope.uiWorkspace" src/client-shell.js; then
+            echo "Client shell still routes workspace navigation through the optional Schedule scope" >&2
+            exit 1
+          fi
+
       - name: Compose plugin client
         shell: bash
         run: |
           test -s .dsh-src/packages/client/native-schedule-fork/lib/client.js
           cp .dsh-src/packages/client/native-schedule-fork/lib/client.js /tmp/native-manager.js
-          cp src/client-shell.js /tmp/client-shell.js
-          # Match shipped ui-schedule navigation exactly: Session navigation is
-          # owned by the root uiWorkspace service. The optional remote.schedule
-          # child scope is only the lifetime owner for Schedule-dependent pieces.
-          sed -i 's/scope\.uiWorkspace\.openSession/ctx.uiWorkspace.openSession/g; s/scope\.uiWorkspace\.startSession/ctx.uiWorkspace.startSession/g' /tmp/client-shell.js
           {
             cat /tmp/native-manager.js
             printf '\n'
-            cat /tmp/client-shell.js
+            cat src/client-shell.js
           } > lib/client.js
           node --check lib/client.js
           grep -F "@stolyarovmn/dsh-schedule-native-manager" lib/client.js
           grep -F "rowQuickActions" lib/client.js
           grep -F "ctx.uiWorkspace.openSession" lib/client.js
-          if grep -Fq "scope.uiWorkspace.openSession" lib/client.js; then
+          if grep -Fq "scope.uiWorkspace" lib/client.js; then
             echo "Generated client still navigates through the optional Schedule scope" >&2
+            exit 1
+          fi
+          if grep -Fq "uiPluginManager" lib/client.js; then
+            echo "Generated client still waits for the nonexistent uiPluginManager service" >&2
             exit 1
           fi
 
@@ -97,13 +116,13 @@ jobs:
       - name: Commit generated client
         shell: bash
         run: |
-          if git diff --quiet -- lib/client.js; then
+          if git diff --quiet -- src/client-shell.js lib/client.js; then
             echo "Generated client is already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/client.js
+          git add src/client-shell.js lib/client.js
           git commit -m "build: refresh pinned native TaskManager snapshot"
           # A docs/tests commit can land while this relatively expensive pinned
           # DSH build is running. Rebase the generated-only commit before push so
