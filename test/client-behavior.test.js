@@ -211,7 +211,7 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
     getOpenedSession: () => openedSession,
     setRecords(next) { records = next },
     setHistories(next) { histories = next },
-    triggerScheduleChanged() { assert.ok(scheduleChanged); scheduleChanged() },
+    triggerScheduleChanged() { assert.ok(scheduleChanged); return scheduleChanged() },
     dispatchStorage(key) { windowListeners.get('storage')?.({ key }) },
     cleanup() { cleanups.splice(0).reverse().forEach(fn => fn()) },
   }
@@ -243,14 +243,14 @@ test('startup baselines popup dedupe without clearing unread, then only a new de
     assert.ok(JSON.parse(h.storage.getItem(NOTIFIED)).includes(deliveryKey(recOffline, 'offline')))
     assert.ok(!JSON.parse(h.storage.getItem(SEEN)).includes(deliveryKey(recOffline, 'offline')), 'popup baseline must not clear task unread')
 
-    h.triggerScheduleChanged()
+    await h.triggerScheduleChanged()
     await settle(injected.hooks.catalog)
     assert.equal(injected.hooks.toast.getSnapshot(), null, 'an unrelated refresh must not replay the startup delivery')
 
     const recNewest = record({ lastDelivery: newest })
     h.setRecords([recNewest])
     h.setHistories(new Map([['session-1:task-1', [newest, offline, old]]]))
-    h.triggerScheduleChanged()
+    await h.triggerScheduleChanged()
     await settle(injected.hooks.catalog)
     assert.equal(injected.hooks.toast.getSnapshot()?.record.lastDelivery?.messageId, 'newest')
     unsubscribe()
@@ -294,7 +294,7 @@ test('recurring history produces exact unread counts and 9+', async () => {
     const currentTen = record({ lastDelivery: ten[0] })
     h.setRecords([currentTen])
     h.setHistories(new Map([['session-1:task-1', ten]]))
-    h.triggerScheduleChanged()
+    await h.triggerScheduleChanged()
     await settle(catalog)
     badge = findAll(render(), node => node.props?.className?.includes?.('sat_panelBadge'))[0]
     assert.equal(textOf(badge), '9+')
