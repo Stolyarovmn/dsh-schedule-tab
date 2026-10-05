@@ -575,7 +575,7 @@ window.__ModuleLoader__.load({
 
     return {
       name: 'schedule-attention-enhancer',
-      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'uiPluginManager'],
+      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote'],
       apply(ctx) {
         ctx.effect(() => ctx.locale.register(NS, { en, zh, ru }), 'schedule-attention: locale')
         ctx.effect(startPreferencesStorageSync, 'schedule-attention: storage sync')
@@ -613,7 +613,7 @@ window.__ModuleLoader__.load({
           }
           const openSession = (id) => {
             markSessionSeen(catalog.getSnapshot().records, id)
-            scope.uiWorkspace.openSession(id)
+            ctx.uiWorkspace.openSession(id)
           }
 
           scope.slots.inject('shell.overlay', () => scope.slots.register({
@@ -630,7 +630,7 @@ window.__ModuleLoader__.load({
               onUpdateTiming: updateTask,
               loadHistory: request => scope.remote.schedule.history(request),
               onOpenSession: openSession,
-              onNewTask: () => { scope.uiWorkspace.startSession() },
+              onNewTask: () => { ctx.uiWorkspace.startSession() },
             }),
           }, nativeManager.TaskManagerPage))
           scope.effect(() => preferencesSource.subscribe(() => {
@@ -654,7 +654,7 @@ window.__ModuleLoader__.load({
                 markRecordSeen(record)
                 markSessionRecordSeen(record)
                 toastSource.dismiss()
-                scope.uiWorkspace.openSession(record.sessionId)
+                ctx.uiWorkspace.openSession(record.sessionId)
               },
             }),
           }, DeliveryToast))
