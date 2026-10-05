@@ -62,8 +62,8 @@ assert.ok(client.includes('markSessionRecordSeen(record)'), 'Open conversation f
 assert.ok(client.includes("const PREFERENCES_STORAGE_KEY = PACKAGE + '/notification-preferences-v1'"), 'legacy notification preferences must remain compatible')
 assert.ok(client.includes('startPreferencesStorageSync'), 'browser-local preferences must synchronize across tabs')
 assert.ok(client.includes('function applyPreferenceSuppression(records)'), 'preference changes must suppress current attention without throwing')
-assert.ok(client.includes('const justActivated = active && !panelWasActive'), 'attention acknowledgement must require an inactive-to-active panel transition')
-assert.ok(client.includes('panelWasActive = active'), 'panel activation state must survive ordinary sidebar rerenders')
+assert.ok(client.includes('const justActivated = active && !panelWasActiveRef.current'), 'attention acknowledgement must require an inactive-to-active panel transition')
+assert.ok(client.includes('panelWasActiveRef.current = active'), 'panel activation state must survive ordinary sidebar rerenders')
 assert.ok(client.includes('markAllSeen(catalog.records)'), 'panel activation must acknowledge current attention')
 
 assert.ok(nativeBuild.includes('IconNewChatOutlineRegular'), 'row Session action must use the native New Chat glyph')
