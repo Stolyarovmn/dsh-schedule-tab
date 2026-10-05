@@ -7,7 +7,7 @@ const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf
 const shell = readFileSync(new URL('../src/client-shell.js', import.meta.url), 'utf8')
 const nativeBuild = readFileSync(new URL('../tools/prepare-native-manager.mjs', import.meta.url), 'utf8')
 
-assert.equal(pkg.version, '0.8.0-dev.4')
+assert.equal(pkg.version, '0.8.0-dev.5')
 assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2')
 assert.equal(pkg.private, true, 'development package must stay private')
 assert.ok(client.includes("ctx.inject(['remote.schedule']"), 'Schedule integration must stay optional')
@@ -16,6 +16,7 @@ assert.ok(client.includes("scope.slots.inject('sidebar.session.row.leading'"), '
 assert.ok(client.includes("id: 'schedule-mark'"), 'enhanced Session activity must replace only the native Schedule mark occupant')
 assert.ok(client.includes("scope.slots.inject('shell.overlay'"), 'delivery popup must use the Harness overlay slot')
 assert.ok(client.includes("ctx.slots.inject('plugins.detail.section'"), 'notification preferences must live on the plugin detail page')
+assert.ok(shell.includes("subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE"), 'shared plugin-detail contribution must render only for the schedule bundle')
 assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-client-ui-plugin-manager'), 'Plugin Manager must be ordered before the settings contribution')
 assert.ok(client.includes('hooks: { toast: toastSource, catalog }'), 'overlay must keep the authoritative Schedule catalog subscribed')
 assert.ok(client.includes("className: 'sat_panelBadge'"), 'sidebar attention must expose a visible unread badge')
@@ -66,7 +67,8 @@ assert.ok(client.includes('const justActivated = active && !panelWasActiveRef.cu
 assert.ok(client.includes('panelWasActiveRef.current = active'), 'panel activation state must survive ordinary sidebar rerenders')
 assert.ok(client.includes('markAllSeen(catalog.records)'), 'panel activation must acknowledge current attention')
 
-assert.ok(nativeBuild.includes('IconNewChatOutlineRegular'), 'row Session action must use the native New Chat glyph')
+assert.ok(nativeBuild.includes('IconQueueOutlineRegular'), 'linked Session action must use the native Queue glyph')
+assert.ok(!nativeBuild.includes('IconNewChatOutlineRegular'), 'linked Session action must not look like New Chat')
 assert.ok(!nativeBuild.includes('<IconPanelLeftOutlineRegular />'), 'redundant row detail action must stay removed')
 assert.ok(nativeBuild.includes('const [quickConfirmId, setQuickConfirmId]'), 'quick delete must defer confirmation across native task-selection reset')
 assert.ok(nativeBuild.includes('setQuickConfirmId(record.id)'), 'row trash action must request confirmation on the first click')
