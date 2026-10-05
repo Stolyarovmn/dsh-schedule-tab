@@ -1,32 +1,45 @@
 # Changelog
 
-## 0.8.0-dev.5 — DSH 0.2.0-rc.2
+## 0.8.0 — 2026-10-05 — DSH 0.2.0-rc.2
 
-Private development preview; not published.
+Stable release for DeepSeek Harness `0.2.0-rc.2` only.
+
+### Added
+
+- two native-style quick actions beside each Automation Tasks row:
+  - `QueueOutline` opens the linked Session/Conversation directly;
+  - `TrashOutline` starts the native delete flow;
+- first-click delete confirmation even when the task was not selected before pressing the trash action;
+- exact native TaskManager/TaskDetail behavior through a build-time snapshot pinned to `dsh-v0.2.0-rc.2`.
 
 ### Changed
 
-- abandoned the hand-redrawn 0.8 prototype and restarted from stable 0.7.0;
+- abandoned the hand-redrawn 0.8 prototype and restarted from stable `0.7.0`;
 - build pins `deepseek-harness@dsh-v0.2.0-rc.2` and compiles the shipped TaskManagerPage / TaskDetail source into the plugin;
 - bundled copies of the pinned native primitives replace runtime imports of Harness Client internals;
 - the generated page keeps native New/search/filter controls, Rules editor, date/time/time-zone controls, Delivery records, delete confirmation, focus/Escape/menu behavior and deletion toast;
-- the row patch now contains only two quick actions: open the linked Session and delete; task details remain the native row-click behavior;
-- the linked-Session action uses the native `QueueOutline` glyph instead of `NewChatOutline`;
-- the row trash opens native delete confirmation from the first click through deferred confirmation after native row selection;
-- `plugins.detail.section` notification preferences are now guarded by the current detail `subject`, so they render only for `@stolyarovmn/dsh-client-ui-schedule-tab` and cannot leak into Registry Aggregator or other plugin detail pages;
-- Session navigation uses the root `uiWorkspace` service, matching the shipped Schedule implementation.
+- task details remain the native row-click behavior, so the redundant details quick action was removed;
+- Session navigation uses the root `uiWorkspace` service, matching the shipped Schedule implementation;
+- linked-Session action uses the native `QueueOutline` glyph instead of `NewChatOutline`.
+
+### Fixed
+
+- notification preferences registered through shared `plugins.detail.section` now guard the current detail `subject`, so they render only on `@stolyarovmn/dsh-client-ui-schedule-tab` and no longer leak into Registry Aggregator or other plugin detail pages;
+- generated helper no longer leaks `clsx` into the DSH client module table; the exact pinned dependency is bundled instead;
+- quick Session navigation works both from the row action and from **Linked session** in the native TaskDetail;
+- delete confirmation opens on the first trash click rather than requiring a second click after row selection.
 
 ### Tests
 
 - generated native helper is checked for non-platform module-table externals;
 - build fails if `NewChatOutline` returns for the linked-Session action;
-- contract tests pin the `QueueOutline` action and first-click delete confirmation;
+- contract tests pin `QueueOutline`, root `uiWorkspace` navigation and first-click delete confirmation;
 - plugin-detail regression test verifies three notification switches on the schedule bundle and `null` for foreign bundle, row and item subjects;
 - DSH install/boot smoke runs with the official `@deepseek-ai/dsh-experimental-schedule-bundle@0.2.0-rc.2` enabled.
 
 ### Architecture
 
-The page is a version-pinned native fork because DSH 0.2.0-rc.2 has no additive task-row actions slot. It shadows the shipped `main/schedules` cell at `priority: -100`; the shipped registration remains live at priority 0. Remove this fork when a later DSH exposes an additive row-actions extension point.
+DSH `0.2.0-rc.2` has no additive task-row actions slot. `0.8.0` therefore uses a version-pinned native fork of the shipped TaskManager page and shadows the keyed `main/schedules` cell at `priority: -100`; the shipped registration remains present at native priority `0`. Remove this fork when a later DSH exposes a suitable additive row-actions extension point.
 
 ## 0.7.0 — 2026-10-02 — DSH 0.2.0-rc.2
 
@@ -60,4 +73,4 @@ This release is a redesign for **DeepSeek Harness 0.2.0-rc.2 only**. It intentio
 
 ### Deferred
 
-Fast **Open session** / **Delete** actions inside native Automation Task rows are deferred until Harness exposes an additive task-row actions slot. Replacing the whole shipped TaskManagerPage only for those actions is intentionally avoided.
+Fast **Open session** / **Delete** actions inside native Automation Task rows were deferred in `0.7.0`; `0.8.0` adds them through a version-pinned native TaskManager fork because DSH `0.2.0-rc.2` still has no additive row-actions slot.
