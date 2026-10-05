@@ -1,5 +1,6 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { createRequire } from 'node:module'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import process from 'node:process'
 
 const dshRoot = resolve(process.argv[2] ?? '')
@@ -13,6 +14,15 @@ await rm(packageDir, { recursive: true, force: true })
 await mkdir(join(packageDir, 'src/client'), { recursive: true })
 await cp(sourceSchedule, join(packageDir, 'src/client'), { recursive: true })
 await cp(sourcePrimitives, join(packageDir, 'src/vendor-primitives'), { recursive: true })
+
+// The DSH client preset intentionally bundles clsx, but our synthetic package lives
+// outside ui-primitives' original dependency boundary. Copy the exact clsx artifact
+// resolved from the pinned DSH workspace and rewrite imports to this local file so
+// Rolldown cannot drift it into the runtime module table.
+const primitiveRequire = createRequire(join(dshRoot, 'packages/client/ui-primitives/package.json'))
+const clsxEntry = primitiveRequire.resolve('clsx')
+const localClsx = join(packageDir, 'src/vendor-clsx.cjs')
+await cp(clsxEntry, localClsx)
 
 const primitiveIndex = `
 export { Button } from './Button.tsx'
@@ -34,6 +44,11 @@ export function assertNever(value: never): never {
 }
 `)
 
+const localSpecifier = (from, to) => {
+  const path = relative(dirname(from), to).split(sep).join('/')
+  return path.startsWith('.') ? path : `./${path}`
+}
+
 const walk = async (dir) => {
   const { readdir } = await import('node:fs/promises')
   const entries = await readdir(dir, { withFileTypes: true })
@@ -45,11 +60,13 @@ const walk = async (dir) => {
       content = content
         .replaceAll("from '@deepseek-ai/dsh-client-ui-primitives'", "from '../vendor-primitives/index.ts'")
         .replaceAll("from '@deepseek-ai/dsh-util-values'", "from '../vendor-util.ts'")
+        .replaceAll("from 'clsx'", `from '${localSpecifier(file, localClsx)}'`)
       await writeFile(file, content)
     }
   }
 }
 await walk(join(packageDir, 'src/client'))
+await walk(join(packageDir, 'src/vendor-primitives'))
 
 const pagePath = join(packageDir, 'src/client/TaskManagerPage.tsx')
 let page = await readFile(pagePath, 'utf8')
