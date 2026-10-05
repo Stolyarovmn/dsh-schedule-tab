@@ -7,9 +7,9 @@ const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf
 const shell = readFileSync(new URL('../src/client-shell.js', import.meta.url), 'utf8')
 const nativeBuild = readFileSync(new URL('../tools/prepare-native-manager.mjs', import.meta.url), 'utf8')
 
-assert.equal(pkg.version, '0.8.0-dev.5')
+assert.equal(pkg.version, '0.8.0')
 assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2')
-assert.equal(pkg.private, true, 'development package must stay private')
+assert.notEqual(pkg.private, true, 'stable package must be publishable')
 assert.ok(client.includes("ctx.inject(['remote.schedule']"), 'Schedule integration must stay optional')
 assert.ok(client.includes("scope.slots.inject('sidebar.panellist'"), 'attention belongs in the existing Schedule navigation seat')
 assert.ok(client.includes("scope.slots.inject('sidebar.session.row.leading'"), 'scheduled Session attention must use the public Session-row leading seat')
