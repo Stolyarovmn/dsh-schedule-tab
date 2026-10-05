@@ -2,9 +2,9 @@
 
 This development line targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
 
-`0.7.0` keeps the shipped Automation Tasks page unchanged. The `0.8.0-dev.3` experiment restarts from that stable line and shadows only `main/schedules` with a **pinned source snapshot of DSH `0.2.0-rc.2` TaskManagerPage/TaskDetail**. The native code is preserved; the only intended UI patch is a three-button quick-action group beside each task row.
+`0.7.0` keeps the shipped Automation Tasks page unchanged. The `0.8.0-dev.4` experiment restarts from that stable line and shadows only `main/schedules` with a **pinned source snapshot of DSH `0.2.0-rc.2` TaskManagerPage/TaskDetail**. The native code is preserved; the only intended UI patch is a two-button quick-action group beside each task row.
 
-## Scope of `0.8.0-dev.3`
+## Scope of `0.8.0-dev.4`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
@@ -19,11 +19,15 @@ The first `0.2.x` implementation keeps only differentiated attention behavior:
 - cross-tab synchronization of those preferences;
 - English, Chinese and Russian attention-layer strings;
 - pinned native Automation Tasks page behavior: native New/search/filters, TaskDetail, Rules editing, timing/time-zone controls, Delivery records, delete confirmation and native deletion toast;
-- three row actions using the **actual DSH icon set** bundled from the pinned source snapshot: linked Session, task details, delete.
+- two row actions using the **actual DSH icon set** bundled from the pinned source snapshot: open linked Session and delete;
+- clicking the task row itself opens its native TaskDetail, so there is no redundant details action;
+- the row trash opens the native delete confirmation on the first click.
 
 Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup. `0.2.0-rc.2` still exposes no child row-actions slot. Therefore the 0.8 experiment uses the documented keyed `main/schedules` shadow at `priority: -100`. The build copies the exact DSH source and primitives for this pinned version and applies one narrow row patch instead of maintaining a hand-redrawn TaskManager.
 
 The generated native helper is checked for module-table drift: its remaining runtime `require()` calls are restricted to Harness platform modules (`react`, `react/jsx-runtime`, `react-dom`, `react-dom/client`). Non-shared utilities such as the pinned DSH `clsx@2.1.1` are bundled into the helper instead of being left as loader dependencies.
+
+Session navigation follows the shipped `ui-schedule` implementation and uses the root `uiWorkspace` service. The same callback backs both the quick Session action on a task row and **Linked session** in the native TaskDetail.
 
 ## Required native capability
 
@@ -33,11 +37,11 @@ When Schedule is absent, this plugin stays inert through optional `remote.schedu
 
 ## Development install
 
-`0.8.0-dev.3` is private and must be installed by commit SHA. Stable `0.7.0` remains the published fallback until the pinned native fork is verified in the real Harness UI.
+`0.8.0-dev.4` is private and must be installed by an install branch or commit SHA. Stable `0.7.0` remains the published fallback until the pinned native fork is verified in the real Harness UI.
 
 ```powershell
 $DSH_VERSION = "0.2.0-rc.2"
-pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile registry-test add "github:Stolyarovmn/dsh-schedule-tab#<COMMIT_SHA>"
+pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile registry-test add "github:Stolyarovmn/dsh-schedule-tab#install-0.8.0-dev.4"
 pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" registry-test
 ```
 
