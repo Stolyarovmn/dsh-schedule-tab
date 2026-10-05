@@ -23,6 +23,8 @@ The first `0.2.x` implementation keeps only differentiated attention behavior:
 
 Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup. `0.2.0-rc.2` still exposes no child row-actions slot. Therefore the 0.8 experiment uses the documented keyed `main/schedules` shadow at `priority: -100`. The build copies the exact DSH source and primitives for this pinned version and applies one narrow row patch instead of maintaining a hand-redrawn TaskManager.
 
+The generated native helper is checked for module-table drift: its remaining runtime `require()` calls are restricted to Harness platform modules (`react`, `react/jsx-runtime`, `react-dom`, `react-dom/client`). Non-shared utilities such as the pinned DSH `clsx@2.1.1` are bundled into the helper instead of being left as loader dependencies.
+
 ## Required native capability
 
 The plugin does **not** enable or re-declare the DSH Schedule rows. Delivery-history enrichment uses the public `remote.schedule.history` API with a page size of 10 and at most four concurrent reads; it stops once the UI already knows the badge is `9+`. Enable **Automation tasks** in Plugins → Official first. That selects `@deepseek-ai/dsh-experimental-schedule-bundle`, which owns `time-context`, `schedule`, and `ui-schedule` in DSH `0.2.0-rc.2`.
