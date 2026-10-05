@@ -2,9 +2,9 @@
 
 This development line targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
 
-`0.7.0` keeps the shipped Automation Tasks page unchanged. The `0.8.0-dev.4` experiment restarts from that stable line and shadows only `main/schedules` with a **pinned source snapshot of DSH `0.2.0-rc.2` TaskManagerPage/TaskDetail**. The native code is preserved; the only intended UI patch is a two-button quick-action group beside each task row.
+`0.7.0` keeps the shipped Automation Tasks page unchanged. The `0.8.0-dev.5` experiment restarts from that stable line and shadows only `main/schedules` with a **pinned source snapshot of DSH `0.2.0-rc.2` TaskManagerPage/TaskDetail**. The native code is preserved; the only intended UI patch is a two-button quick-action group beside each task row.
 
-## Scope of `0.8.0-dev.4`
+## Scope of `0.8.0-dev.5`
 
 The first `0.2.x` implementation keeps only differentiated attention behavior:
 
@@ -15,11 +15,11 @@ The first `0.2.x` implementation keeps only differentiated attention behavior:
 - overdue warning on that same icon (`!` when there is no unread count);
 - a native-style green Session-row completion dot for unread scheduled activity when DSH's built-in completion reminder is suppressed by retained `mainView` state;
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
-- browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot;
+- browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot; the contribution checks `subject` and renders `null` for every foreign bundle/row/item detail;
 - cross-tab synchronization of those preferences;
 - English, Chinese and Russian attention-layer strings;
 - pinned native Automation Tasks page behavior: native New/search/filters, TaskDetail, Rules editing, timing/time-zone controls, Delivery records, delete confirmation and native deletion toast;
-- two row actions using the **actual DSH icon set** bundled from the pinned source snapshot: open linked Session and delete;
+- two row actions using the **actual DSH icon set** bundled from the pinned source snapshot: `QueueOutline` to open the linked Session and `TrashOutline` to delete;
 - clicking the task row itself opens its native TaskDetail, so there is no redundant details action;
 - the row trash opens the native delete confirmation on the first click.
 
@@ -37,11 +37,11 @@ When Schedule is absent, this plugin stays inert through optional `remote.schedu
 
 ## Development install
 
-`0.8.0-dev.4` is private and must be installed by an install branch or commit SHA. Stable `0.7.0` remains the published fallback until the pinned native fork is verified in the real Harness UI.
+`0.8.0-dev.5` is private and must be installed by an install branch or commit SHA. Stable `0.7.0` remains the published fallback until the pinned native fork is verified in the real Harness UI.
 
 ```powershell
 $DSH_VERSION = "0.2.0-rc.2"
-pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile registry-test add "github:Stolyarovmn/dsh-schedule-tab#install-0.8.0-dev.4"
+pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile registry-test add "github:Stolyarovmn/dsh-schedule-tab#install-0.8.0-dev.5"
 pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" registry-test
 ```
 
