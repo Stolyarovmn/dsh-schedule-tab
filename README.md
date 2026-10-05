@@ -1,54 +1,63 @@
 # DSH Automation Tasks Attention
 
-This branch targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
+This branch targets **DeepSeek Harness `0.2.1-alpha.1` only**. It intentionally carries no compatibility layer for DSH `0.1.x` or the retired `0.2.0-rc.2` Automation Tasks bundle workflow.
 
-The package no longer replaces the native **Automation tasks** page. DeepSeek Harness `0.2.0-rc.2` already owns task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
+The package does not replace the native **Automation tasks** page. In DSH `0.2.1-alpha.1`, Web mounts `schedule` and `ui-schedule` itself, while the native UI continues to own task listing, search, status filtering, task details, editing, delivery records, deletion, Session navigation, the Session-header reminder catalog, Session-row marks, and the `schedule_create` transcript card.
 
-## Scope of `0.7.0-dev.7`
+## Scope of `0.7.1-alpha.1`
 
-The first `0.2.x` implementation keeps only differentiated attention behavior:
+This compatibility build keeps only differentiated attention behavior:
 
 - new-task and new-delivery seen state;
 - one-time popup notification for a newly recorded delivery;
-- a compact neutral numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`), using the same adaptive gray surface/primary text tokens as native ghost controls (light gray + white text in dark theme);
+- a compact neutral numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`), using native Harness theme tokens;
 - unread delivery counts backed by native retained `schedule.history`, so repeated runs of the same recurring task can contribute `2`, `3`, … rather than collapsing to its single `lastDelivery` receipt;
 - overdue warning on that same icon (`!` when there is no unread count);
-- a native-style green Session-row completion dot for unread scheduled activity when DSH's built-in completion reminder is suppressed by retained `mainView` state;
+- a native-style Session-row completion dot for unread scheduled activity;
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
 - browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot;
 - cross-tab synchronization of those preferences;
 - English, Chinese and Russian visible strings.
 
-Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup. Per-task acknowledgement from the native task detail is still deferred because `0.2.0-rc.2` exposes no child slot inside `TaskManagerPage` for an additive plugin contribution.
+Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup.
 
-## Required native capability
+Per-task acknowledgement from the native task detail remains deferred because the native `TaskManagerPage` still does not expose a child slot for this additive behavior. The plugin intentionally does not replace the native page to regain it.
 
-The plugin does **not** enable or re-declare the DSH Schedule rows. Delivery-history enrichment uses the public `remote.schedule.history` API with a page size of 10 and at most four concurrent reads; it stops once the UI already knows the badge is `9+`. Enable **Automation tasks** in Plugins → Official first. That selects `@deepseek-ai/dsh-experimental-schedule-bundle`, which owns `time-context`, `schedule`, and `ui-schedule` in DSH `0.2.0-rc.2`.
+## Native Schedule ownership in DSH 0.2.1-alpha.1
 
-When Schedule is absent, this plugin stays inert through optional `remote.schedule` injection rather than failing the profile.
+No separate Automation Tasks bundle needs to be enabled. DSH `0.2.1-alpha.1` retires the old optional bundle and `@deepseek-ai/dsh-web-app` mounts `schedule` and `ui-schedule` in every Web profile. Existing tasks and delivery records remain on disk during that migration.
+
+The plugin still uses optional `remote.schedule` injection. This keeps its dependency weak and lets the enhancer remain inert rather than crash if the service is unavailable in a nonstandard composition.
+
+Delivery-history enrichment uses the native `remote.schedule.history` API with a page size of 10 and at most four concurrent reads; it stops once the UI already knows the badge is `9+`.
 
 ## Development install
 
-Stable `0.7.0` targets DSH `0.2.0-rc.2` only. During verification, install by commit SHA; after npm publication, install the published package version.
+`0.7.1-alpha.1` is the validation build for DSH `0.2.1-alpha.1`. Install by commit SHA first; do not publish merely to test the port.
 
 ```powershell
-$DSH_VERSION = "0.2.0-rc.2"
+$DSH_VERSION = "0.2.1-alpha.1"
 pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile registry-test add "github:Stolyarovmn/dsh-schedule-tab#<COMMIT_SHA>"
 pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" registry-test
 ```
+
+## Verification target
+
+Before promoting this line beyond alpha, verify in a real DSH `0.2.1-alpha.1` Web profile:
+
+- the native Automation tasks entry is present without enabling an extra bundle;
+- no duplicate `schedules` sidebar entry appears;
+- unread badge, overdue state and delivery popup work;
+- opening Automation tasks clears task-center attention only;
+- opening the source Session clears its scheduled-activity indicator;
+- notification preferences persist and synchronize across tabs;
+- reconnect and plugin unload/reload do not duplicate subscriptions or registrations;
+- light/dark themes and keyboard/focus behavior remain native-looking.
 
 ## Legacy lines
 
 - `legacy/dsh-0.1.5.x` — plugin `0.5.1`.
 - `legacy/dsh-0.1.7.x` — plugin `0.6.15`.
+- `dsh-0.2.0-rc.2` — plugin `0.7.0`.
 
 See [`MIGRATION_0.2.md`](MIGRATION_0.2.md) for the feature-by-feature decision record.
-
-## Install
-
-After npm publication:
-
-```powershell
-pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile registry-test add "@stolyarovmn/dsh-client-ui-schedule-tab@0.7.0"
-pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 registry-test
-```
