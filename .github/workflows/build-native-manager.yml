@@ -59,14 +59,24 @@ jobs:
         run: |
           test -s .dsh-src/packages/client/native-schedule-fork/lib/client.js
           cp .dsh-src/packages/client/native-schedule-fork/lib/client.js /tmp/native-manager.js
+          cp src/client-shell.js /tmp/client-shell.js
+          # Match shipped ui-schedule navigation exactly: Session navigation is
+          # owned by the root uiWorkspace service. The optional remote.schedule
+          # child scope is only the lifetime owner for Schedule-dependent pieces.
+          sed -i 's/scope\.uiWorkspace\.openSession/ctx.uiWorkspace.openSession/g; s/scope\.uiWorkspace\.startSession/ctx.uiWorkspace.startSession/g' /tmp/client-shell.js
           {
             cat /tmp/native-manager.js
             printf '\n'
-            cat src/client-shell.js
+            cat /tmp/client-shell.js
           } > lib/client.js
           node --check lib/client.js
           grep -F "@stolyarovmn/dsh-schedule-native-manager" lib/client.js
           grep -F "rowQuickActions" lib/client.js
+          grep -F "ctx.uiWorkspace.openSession" lib/client.js
+          if grep -Fq "scope.uiWorkspace.openSession" lib/client.js; then
+            echo "Generated client still navigates through the optional Schedule scope" >&2
+            exit 1
+          fi
 
       - name: Verify helper externals match the DSH module table
         shell: bash
