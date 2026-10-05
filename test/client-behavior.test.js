@@ -88,6 +88,7 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
   }
   vm.runInNewContext(clientSource, sandbox, { filename: 'lib/client.js' })
   assert.ok(moduleDefinition, 'client module must register with ModuleLoader')
+  assert.equal(moduleDefinition.id, PACKAGE, 'last generated module must be the plugin shell')
 
   const React = {
     Fragment: Symbol('Fragment'),
@@ -100,6 +101,8 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
       const cleanup = effect()
       if (typeof cleanup === 'function') cleanups.push(cleanup)
     },
+    useRef(initial) { return { current: initial } },
+    useSyncExternalStore(_subscribe, getSnapshot) { return getSnapshot() },
   }
   const nativeCatalogSource = () => {
     let snapshot = { records, status: 'ready', deleting: [], settled: true, readRequest: 1, readSettled: 1 }
@@ -153,7 +156,7 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
   }
   const remote = {
     schedule: {
-      async catalog() { return { ok: true, value: records } },
+      async catalog() { return { ok: true, value: { records } } },
       async history(request) {
         historyCalls += 1
         const key = request.sessionId + ':' + request.id
@@ -167,6 +170,12 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
             retention: { days: 30, records: 200 },
           },
         }
+      },
+      async update() { return { ok: true, value: { code: 'schedule_not_found' } } },
+      async delete(request) {
+        const before = records.length
+        records = records.filter(item => !(item.sessionId === request.sessionId && item.id === request.id))
+        return { ok: true, value: { id: request.id, deleted: records.length !== before } }
       },
     },
     $on(event, listener) {
@@ -182,7 +191,12 @@ function createHarness({ initialStorage = {}, initialRecords = [], initialHistor
   const scope = {
     slots, locale, remote, effect,
     on() { return () => {} },
-    uiWorkspace: { openSession(id) { openedSession = id } },
+    uiWorkspace: {
+      openSession(id) { openedSession = id },
+      startSession() {},
+    },
+    sessions: { list: { getSnapshot: () => ({ phase: 'ready', ids: records.map(item => item.sessionId), byId: {} }) } },
+    workspaces: { list: { getSnapshot: () => ({ phase: 'ready', state: 'ready', archivedSessionIds: [] }) } },
   }
   const ctx = {
     ...scope,
@@ -332,13 +346,13 @@ test('ten distinct unread tasks skip history reads and still render 9+', async (
 test('plugin detail switches persist browser-local preferences', () => {
   const h = createHarness()
   try {
-    const section = h.registrations.get('plugins.detail.section:schedule-attention.settings')
+    const section = h.registrations.get('plugins.detail.section:schedule-attention-notifications')
     assert.ok(section)
     const injected = section.spec.inject()
     const render = () => section.component({
       subject: { kind: 'bundle', pkg: { name: PACKAGE } },
       usePreferences: selector => selector(injected.hooks.preferences.getSnapshot()),
-      changePreference: injected.changePreference,
+      setPreference: injected.setPreference,
       t: key => key,
     })
     let switches = findAll(render(), node => node.props?.role === 'switch')
@@ -349,6 +363,20 @@ test('plugin detail switches persist browser-local preferences', () => {
     assert.equal(JSON.parse(h.storage.getItem(PREFS)).popup, false)
     switches = findAll(render(), node => node.props?.role === 'switch')
     assert.equal(switches[0].props['aria-checked'], false)
+  } finally {
+    h.cleanup()
+  }
+})
+
+test('native TaskManager linked-session action delegates directly to workspace navigation', () => {
+  const rec = record()
+  const h = createHarness({ initialRecords: [rec] })
+  try {
+    const page = h.registrations.get('main:schedules')
+    assert.ok(page)
+    const injected = page.spec.inject()
+    injected.onOpenSession(rec.sessionId)
+    assert.equal(h.getOpenedSession(), rec.sessionId)
   } finally {
     h.cleanup()
   }
@@ -377,11 +405,10 @@ test('overdue active task shows warning when no unread attention remains', async
       active: false,
       useCatalog: selector => selector(injected.hooks.catalog.getSnapshot()),
       usePreferences: selector => selector(injected.hooks.preferences.getSnapshot()),
-      t: key => key,
+      t: (key, vars = {}) => key + JSON.stringify(vars),
     })
-    const badge = findAll(tree, node => node.props?.className?.includes?.('sat_panelBadge'))[0]
-    assert.equal(textOf(badge), '!')
-    assert.ok(badge.props.className.includes('sat_panelBadgeWarn'))
+    const warning = findAll(tree, node => node.props?.className?.includes?.('sat_panelOverdue'))[0]
+    assert.equal(textOf(warning), '!')
     unsubscribe()
   } finally {
     h.cleanup()
