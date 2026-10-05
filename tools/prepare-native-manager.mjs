@@ -72,7 +72,7 @@ const pagePath = join(packageDir, 'src/client/TaskManagerPage.tsx')
 let page = await readFile(pagePath, 'utf8')
 page = page.replace(
 `  Button, IconClockOutlineRegular, IconCloseOutlineRegular, IconPlusOutlineRegular, IconSearchOutlineRegular, Input,`,
-`  Button, IconClockOutlineRegular, IconCloseOutlineRegular, IconNewChatOutlineRegular,
+`  Button, IconClockOutlineRegular, IconCloseOutlineRegular, IconQueueOutlineRegular,
   IconPlusOutlineRegular, IconSearchOutlineRegular, IconTrashOutlineRegular, Input,`,
 )
 page = page.replace(
@@ -113,7 +113,7 @@ page = page.replace(
                           title={t('detail.openSession')}
                           onClick={() => { onOpenSession(record.sessionId) }}
                         >
-                          <IconNewChatOutlineRegular />
+                          <IconQueueOutlineRegular />
                         </Button>
                         <Button
                           size="sm"
@@ -133,6 +133,8 @@ page = page.replace(
 )
 if (!page.includes('className={css.rowQuickActions}')) throw new Error('TaskManagerPage quick-action patch did not apply')
 if (page.includes('IconPanelLeftOutlineRegular')) throw new Error('redundant row detail action survived the patch')
+if (!page.includes('<IconQueueOutlineRegular />')) throw new Error('linked Session action must use the native Queue glyph')
+if (page.includes('IconNewChatOutlineRegular')) throw new Error('New Chat glyph must not be used for existing linked Sessions')
 if (!page.includes('setQuickConfirmId(record.id)')) throw new Error('one-click delete confirmation patch did not apply')
 await writeFile(pagePath, page)
 
