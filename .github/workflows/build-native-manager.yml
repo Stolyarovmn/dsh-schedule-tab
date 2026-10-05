@@ -105,4 +105,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/client.js
           git commit -m "build: refresh pinned native TaskManager snapshot"
-          git push
+          # A docs/tests commit can land while this relatively expensive pinned
+          # DSH build is running. Rebase the generated-only commit before push so
+          # that harmless branch movement cannot lose the generated artifact.
+          git fetch origin feat/0.8.0-native-task-actions
+          git rebase origin/feat/0.8.0-native-task-actions
+          git push origin HEAD:feat/0.8.0-native-task-actions
