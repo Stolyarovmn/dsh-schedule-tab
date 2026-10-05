@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.1-alpha.1 — 2026-10-05 — DSH 0.2.1-alpha.1
+
+Compatibility build for **DeepSeek Harness `0.2.1-alpha.1`**.
+
+### Changed
+
+- pin the plugin compatibility target to DSH `0.2.1-alpha.1` while it is being validated;
+- update CI install/boot smoke tests to use DSH `0.2.1-alpha.1`;
+- update the migration model for Automation Tasks now being mounted directly by `@deepseek-ai/dsh-web-app`;
+- remove documentation that required enabling the retired optional Automation Tasks bundle;
+- keep the existing attention-only architecture because the native `ui-schedule` client entry and the public slots used by the plugin are unchanged between DSH `0.2.0-rc.2` and `0.2.1-alpha.1`.
+
+### Verification status
+
+- source/API comparison completed against the version-matched DSH `0.2.1-alpha.1` `cordis-plugin-development` guidance and native Schedule implementation;
+- automated syntax, contract, pack, install and Web boot checks are required by CI;
+- real Harness UI verification is still required before promotion or publication.
+
 ## 0.7.0 — 2026-10-02 — DSH 0.2.0-rc.2
 
 This release is a redesign for **DeepSeek Harness 0.2.0-rc.2 only**. It intentionally drops compatibility with DSH 0.1.x and no longer ships a replacement Automation Tasks manager.
