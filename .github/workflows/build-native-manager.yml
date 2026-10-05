@@ -68,6 +68,22 @@ jobs:
           grep -F "@stolyarovmn/dsh-schedule-native-manager" lib/client.js
           grep -F "rowQuickActions" lib/client.js
 
+      - name: Verify helper externals match the DSH module table
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const source = fs.readFileSync('/tmp/native-manager.js', 'utf8')
+          const requires = [...source.matchAll(/require\(["']([^"']+)["']\)/g)].map(match => match[1])
+          const allowed = new Set(['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'])
+          const leaked = [...new Set(requires.filter(specifier => !allowed.has(specifier)))]
+          if (leaked.length > 0) {
+            console.error('Native helper leaked non-platform externals:', leaked.join(', '))
+            process.exit(1)
+          }
+          console.log('Native helper externals:', [...new Set(requires)].join(', '))
+          NODE
+
       - name: Commit generated client
         shell: bash
         run: |
