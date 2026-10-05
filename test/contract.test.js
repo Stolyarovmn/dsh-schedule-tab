@@ -71,7 +71,7 @@ assert.ok(!nativeBuild.includes('<IconPanelLeftOutlineRegular />'), 'redundant r
 assert.ok(nativeBuild.includes('const [quickConfirmId, setQuickConfirmId]'), 'quick delete must defer confirmation across native task-selection reset')
 assert.ok(nativeBuild.includes('setQuickConfirmId(record.id)'), 'row trash action must request confirmation on the first click')
 assert.ok(nativeBuild.includes('setConfirmId(quickConfirmId)'), 'selected task must receive the deferred native confirmation')
-assert.ok(shell.includes('markSessionSeen(catalog.getSnapshot().records, id)\n            scope.uiWorkspace.openSession(id)'), 'linked Session actions must navigate directly and acknowledge Session attention')
+assert.ok(shell.includes('markSessionSeen(catalog.getSnapshot().records, id)\n            ctx.uiWorkspace.openSession(id)'), 'linked Session actions must navigate directly and acknowledge Session attention')
 assert.ok(!shell.includes("nativeManager.sessionLinkState(id, scope.sessions.list.getSnapshot()"), 'navigation callback must not repeat the native detail availability gate with a stale snapshot')
 
 console.log('DSH 0.2.0-rc.2 pinned native TaskManager contract passed')
