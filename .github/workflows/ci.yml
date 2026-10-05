@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, dsh-0.2.0-rc.2]
+    branches: [main, dsh-0.2.0-rc.2, dsh-0.2.1-alpha.1]
   pull_request:
 
 permissions:
@@ -29,22 +29,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install into DSH 0.2.0-rc.2
+      - name: Install into DSH 0.2.1-alpha.1
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
         run: |
-          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --from-default-profile web --dump-config > /dev/null
-          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile smoke add "file:$GITHUB_WORKSPACE"
-          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --dump-config > /tmp/dsh-config.txt
+          pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 --profile smoke --from-default-profile web --dump-config > /dev/null
+          pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 plugin --profile smoke add "file:$GITHUB_WORKSPACE"
+          pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 --profile smoke --dump-config > /tmp/dsh-config.txt
           grep -F "schedule-attention-enhancer" /tmp/dsh-config.txt
           grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
-      - name: Boot Web without requiring Schedule to be enabled
+          if grep -Fq "@deepseek-ai/dsh-experimental-schedule-bundle" /tmp/dsh-config.txt; then
+            echo "retired schedule bundle unexpectedly remains in the 0.2.1 profile" >&2
+            exit 1
+          fi
+      - name: Boot Web with native Automation Tasks
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
         shell: bash
         run: |
           set +e
-          timeout 15s pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --port 0 --no-open > /tmp/dsh-web.log 2>&1
+          timeout 15s pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 --profile smoke --port 0 --no-open > /tmp/dsh-web.log 2>&1
           STATUS=$?
           set -e
           cat /tmp/dsh-web.log
