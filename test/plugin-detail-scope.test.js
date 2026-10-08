@@ -54,6 +54,10 @@ function renderSection(subject) {
     locale: { register() { return () => {} }, bind() { return key => key } },
     effect(factory) { return factory() },
     on() { return () => {} },
+    // The unit test verifies the Plugin Manager contribution only. The real
+    // installed Client context provides ctx.inject(); returning undefined here
+    // deliberately leaves the optional remote.schedule child context unmounted.
+    inject() { return undefined },
     remote: {
       schedule: {
         async catalog() { return { ok: true, value: { records: [] } } },
