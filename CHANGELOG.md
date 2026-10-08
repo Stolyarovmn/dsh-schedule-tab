@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.8.1-alpha.2 — 2026-10-08 — DSH 0.2.1-alpha.1
+
+Compatibility candidate based on published `0.8.0`, rebuilt and reviewed against the exact `dsh-v0.2.1-alpha.1` Harness source.
+
+### Fixed
+
+- restores the attention runtime (unread badge, Session indicator, delivery popup, and native TaskManager shadow) on DSH `0.2.1-alpha.1` by declaring `remote.schedule` directly in the Client plugin `inject` list; the old `ctx.inject(['remote.schedule'], ...)` path is not exposed by the `0.2.1-alpha.1` dynamic Client facade and previously stopped execution immediately after the notification-settings section registered;
+- removes plugin-supplied `priority: -100` values from dynamic Slot registrations; DSH `0.2.1-alpha.1` assigns the lower shadowing priority through its Client facade;
+- rebuilds the pinned native TaskManager/TaskDetail helper from `dsh-v0.2.1-alpha.1` rather than carrying forward the rc.2 artifact;
+- includes the `ReferenceIconRegular` primitive newly required by the target Schedule `TaskDetail` snapshot.
+
+### Preserved
+
+- the published `0.8.0` attention semantics, browser-local keys and notification switches;
+- native TaskDetail, Rules editing, timing controls, Delivery records, delete flow and toast;
+- Queue/Delete row quick actions and first-click native delete confirmation;
+- direct linked-Session navigation through the root `uiWorkspace` service.
+
+### Validation
+
+- build snapshot is pinned to `dsh-v0.2.1-alpha.1`;
+- contract tests reject the obsolete dynamic `ctx.inject` path and manual Slot priority;
+- install/boot smoke uses DSH `0.2.1-alpha.1` with its built-in Schedule rows and rejects the retired experimental Schedule bundle.
+
 ## 0.8.0 — 2026-10-05 — DSH 0.2.0-rc.2
 
 Stable release for DeepSeek Harness `0.2.0-rc.2` only.
