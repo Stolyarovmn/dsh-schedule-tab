@@ -72,7 +72,7 @@ jobs:
           # dynamic model code. DSH 0.2.1-alpha.1 standard Client code still uses
           # ctx.inject() for optional services; keep the published 0.8 lifecycle.
           grep -F "ctx.inject(['remote.schedule'], (scope) => {" src/client-shell.js
-          if grep -Fq "'remote.schedule']," src/client-shell.js; then
+          if grep -Fq "inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'remote.schedule']" src/client-shell.js; then
             echo "remote.schedule unexpectedly became a required root service" >&2
             exit 1
           fi
