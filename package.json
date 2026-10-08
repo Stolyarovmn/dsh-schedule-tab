@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "Attention, delivery notifications, and native quick actions for DeepSeek Harness Automation Tasks.",
-  "version": "0.8.1-alpha.1",
+  "version": "0.8.1-alpha.2",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
