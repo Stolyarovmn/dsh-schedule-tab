@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.8.0-dev.6 — DSH 0.2.1-alpha.1
+
+Private development preview; not published.
+
+### Ported from 0.8.0-dev.5
+
+- retained the full attention layer: unread task/delivery state, recurring delivery counting, `9+` badge, overdue state, delivery popup, Session activity mark, notification preferences and cross-tab sync;
+- retained the pinned native Automation Tasks page rather than falling back to the attention-only 0.7 architecture;
+- retained native TaskDetail, Rules editing, timing/date/time/time-zone controls, Delivery records, delete confirmation and deletion toast;
+- retained **Open linked Session** using native `QueueOutline` and **Delete** using native `TrashOutline` on every task row;
+- retained first-click quick-delete confirmation through deferred selection/confirmation state;
+- retained the plugin-detail ownership guard so notification switches cannot leak into other bundle/item details.
+
+### Changed for DSH 0.2.1-alpha.1
+
+- package peer target moved from `0.2.0-rc.2` to exact `0.2.1-alpha.1`;
+- the retired `@deepseek-ai/dsh-experimental-schedule-bundle` is no longer installed or treated as a prerequisite;
+- CI now verifies that native `schedule` and `ui-schedule` come from the Web composition before installing this plugin;
+- documentation and migration gates are updated for built-in Automation Tasks;
+- the native snapshot provenance is revalidated against the exact target tag.
+
+### Source compatibility result
+
+The official upstream compare from `dsh-v0.2.0-rc.2` to `dsh-v0.2.1-alpha.1` contains no changes under `packages/client/ui-schedule/src/client/` or `packages/client/ui-primitives/src/`; `TaskManagerPage.tsx` is byte-identical between the two tags. Therefore the generated native helper from `0.8.0-dev.5` remains source-equivalent for this target and does not need an artificial rebuild that would produce the same UI source.
+
+### Verification
+
+- contract tests pin the exact DSH target and full quick-action/native-manager feature set;
+- install smoke uses a clean `0.2.1-alpha.1` profile without the retired bundle;
+- Web boot smoke rejects failed plugin entries;
+- real Harness UI verification remains required before promotion/release.
+
 ## 0.8.0-dev.5 — DSH 0.2.0-rc.2
 
 Private development preview; not published.
