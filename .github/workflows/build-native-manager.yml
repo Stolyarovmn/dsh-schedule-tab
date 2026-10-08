@@ -68,20 +68,20 @@ jobs:
           fi
           grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" src/client-shell.js
 
-          # DSH 0.2.1-alpha.1 dynamic Client plugins do not expose ctx.inject().
-          # Schedule is Web-owned now, so it must be a declared service.
-          grep -F "'remote.schedule'" src/client-shell.js
-          if grep -Fq "ctx.inject(['remote.schedule']" src/client-shell.js; then
-            echo "Client shell still uses the unsupported dynamic ctx.inject() path" >&2
+          # This is an ordinary installed Client package, not cordis-client-runner
+          # dynamic model code. DSH 0.2.1-alpha.1 standard Client code still uses
+          # ctx.inject() for optional services; keep the published 0.8 lifecycle.
+          grep -F "ctx.inject(['remote.schedule'], (scope) => {" src/client-shell.js
+          if grep -Fq "'remote.schedule']," src/client-shell.js; then
+            echo "remote.schedule unexpectedly became a required root service" >&2
             exit 1
           fi
-          grep -F "const scope = ctx" src/client-shell.js
 
-          # Dynamic Cordis assigns shadowing priority automatically.
-          if grep -Fq "priority: -100" src/client-shell.js; then
-            echo "Client shell still hard-codes dynamic Slot priority" >&2
-            exit 1
-          fi
+          # The native schedules occupants use priority 0. Our published 0.8
+          # shadow uses -100 so the same id/key does not collide and still wins.
+          grep -F "name: 'main', key: PANEL_ID, priority: -100" src/client-shell.js
+          grep -F "id: 'schedule-mark', order: 10, priority: -100" src/client-shell.js
+          grep -F "id: PANEL_ID, order: 10, priority: -100" src/client-shell.js
 
           # Session navigation stays on the root uiWorkspace service.
           if grep -Fq "scope.uiWorkspace" src/client-shell.js; then
@@ -107,18 +107,12 @@ jobs:
           grep -F "IconQueueOutlineRegular" lib/client.js
           grep -F "ctx.uiWorkspace.openSession" lib/client.js
           grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" lib/client.js
-          grep -F "'remote.schedule'" lib/client.js
-          grep -F "const scope = ctx" lib/client.js
+          grep -F "ctx.inject(['remote.schedule'], (scope) => {" lib/client.js
+          grep -F "name: 'main', key: PANEL_ID, priority: -100" lib/client.js
+          grep -F "id: 'schedule-mark', order: 10, priority: -100" lib/client.js
+          grep -F "id: PANEL_ID, order: 10, priority: -100" lib/client.js
           if grep -Fq "IconNewChatOutlineRegular" lib/client.js; then
             echo "Generated client still uses New Chat for an existing linked Session" >&2
-            exit 1
-          fi
-          if grep -Fq "ctx.inject(['remote.schedule']" lib/client.js; then
-            echo "Generated client still uses unsupported dynamic ctx.inject()" >&2
-            exit 1
-          fi
-          if grep -Fq "priority: -100" lib/client.js; then
-            echo "Generated client still hard-codes dynamic Slot priority" >&2
             exit 1
           fi
           if grep -Fq "scope.uiWorkspace" lib/client.js; then
