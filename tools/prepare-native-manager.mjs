@@ -29,6 +29,7 @@ export { Button } from './Button.tsx'
 export { Input } from './Input.tsx'
 export { Modal } from './Modal.tsx'
 export { Pill } from './Pill.tsx'
+export { ReferenceIconMedium, ReferenceIconRegular } from './ReferenceIcon.tsx'
 export { StateDot } from './StateDot.tsx'
 export { Tooltip } from './Tooltip.tsx'
 export { Toast } from './Toast.tsx'
@@ -142,7 +143,7 @@ const cssPath = join(packageDir, 'src/client/TaskManagerPage.module.css')
 let css = await readFile(cssPath, 'utf8')
 css += `
 
-/* dsh-client-ui-schedule-tab 0.8 patch: the only layout delta from DSH 0.2.0-rc.2. */
+/* dsh-client-ui-schedule-tab 0.8 patch: the only TaskManager layout delta from DSH 0.2.1-alpha.1. */
 .rowShell {
   display: flex;
   align-items: center;
