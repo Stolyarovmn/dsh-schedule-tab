@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, dsh-0.2.0-rc.2]
+    branches: [main, dsh-0.2.0-rc.2, dsh-0.2.1-alpha.1, install-0.8.1-alpha.1-from-0.8.0]
   pull_request:
 
 permissions:
@@ -29,27 +29,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install into DSH 0.2.0-rc.2
+      - name: Install into DSH 0.2.1-alpha.1
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
         run: |
-          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --from-default-profile web --dump-config > /dev/null
-          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile smoke add "@deepseek-ai/dsh-experimental-schedule-bundle@0.2.0-rc.2"
-          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile smoke add "file:$GITHUB_WORKSPACE"
-          pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --dump-config > /tmp/dsh-config.txt
+          pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 --profile smoke --from-default-profile web --dump-config > /tmp/dsh-base-config.txt
+          grep -F "@deepseek-ai/dsh-schedule" /tmp/dsh-base-config.txt
+          grep -F "@deepseek-ai/dsh-client-ui-schedule" /tmp/dsh-base-config.txt
+          if grep -Fq "@deepseek-ai/dsh-experimental-schedule-bundle" /tmp/dsh-base-config.txt; then
+            echo "retired Automation Tasks bundle unexpectedly present" >&2
+            exit 1
+          fi
+          pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 plugin --profile smoke add "file:$GITHUB_WORKSPACE"
+          pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 --profile smoke --dump-config > /tmp/dsh-config.txt
           grep -F "schedule-attention-enhancer" /tmp/dsh-config.txt
           grep -F "@stolyarovmn/dsh-client-ui-schedule-tab" /tmp/dsh-config.txt
-      - name: Boot Web with official Schedule enabled
+      - name: Boot Web with built-in Schedule
         env:
           DSH_HOME: ${{ runner.temp }}/dsh-home
         shell: bash
         run: |
           set +e
-          timeout 15s pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 --profile smoke --port 0 --no-open > /tmp/dsh-web.log 2>&1
+          timeout 15s pnpm dlx @deepseek-ai/dsh@0.2.1-alpha.1 --profile smoke --port 0 --no-open > /tmp/dsh-web.log 2>&1
           STATUS=$?
           set -e
           cat /tmp/dsh-web.log
-          if grep -Eiq "Failed to load plugins|entry did not activate|web boot: .*failed" /tmp/dsh-web.log; then
+          if grep -Eiq "Failed to load plugins|entry did not activate|web boot: .*failed|dynamic ctx does not expose \"inject\"" /tmp/dsh-web.log; then
             exit 1
           fi
           if ! grep -Eq "dsh web: http://127\\.0\\.0\\.1:" /tmp/dsh-web.log; then
