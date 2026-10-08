@@ -35,38 +35,42 @@ if (source.includes(legacy)) {
   throw new Error('PluginPreferences shape changed and does not contain the ownership guard')
 }
 
-// DSH 0.2.1-alpha.1 dynamic Client plugins cannot call ctx.inject(). The
-// browser facade exposes only declared services plus lifecycle-safe verbs. Web
-// now mounts Schedule unconditionally, so declare remote.schedule as a required
-// service and run the Schedule-dependent registrations directly on this fiber.
-const oldInjectDeclaration = `      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote'],`
-const newInjectDeclaration = `      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'remote.schedule'],`
-if (source.includes(oldInjectDeclaration)) {
-  source = source.replace(oldInjectDeclaration, newInjectDeclaration)
+// This package is an ordinary installed Harness Client plugin, not a package
+// executed through cordis-client-runner's dynamic facade. Standard Client code
+// in DSH 0.2.1-alpha.1 still has ctx.inject(). Keep the published 0.8 lifecycle:
+// the settings section can mount immediately, while Schedule-dependent seats
+// live under an optional remote.schedule child context.
+const directInjectDeclaration = `      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'remote.schedule'],`
+const publishedInjectDeclaration = `      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote'],`
+if (source.includes(directInjectDeclaration)) {
+  source = source.replace(directInjectDeclaration, publishedInjectDeclaration)
   changed = true
 }
 
-const oldScheduleScope = `        ctx.inject(['remote.schedule'], (scope) => {
-          const catalog = createCatalogSource(scope)`
-const newScheduleScope = `        const scope = ctx
+const directScheduleScope = `        const scope = ctx
         const catalog = createCatalogSource(scope)`
-if (source.includes(oldScheduleScope)) {
-  source = source.replace(oldScheduleScope, newScheduleScope)
-  const tail = `          }, DeliveryToast))
-        })
-      },`
+const wrappedScheduleScope = `        ctx.inject(['remote.schedule'], (scope) => {
+          const catalog = createCatalogSource(scope)`
+if (source.includes(directScheduleScope)) {
+  source = source.replace(directScheduleScope, wrappedScheduleScope)
   const directTail = `          }, DeliveryToast))
       },`
-  if (!source.includes(tail)) throw new Error('Schedule scope tail changed; direct runtime conversion was not applied')
-  source = source.replace(tail, directTail)
+  const wrappedTail = `          }, DeliveryToast))
+        })
+      },`
+  if (!source.includes(directTail)) throw new Error('Schedule scope tail changed; ctx.inject lifecycle was not restored')
+  source = source.replace(directTail, wrappedTail)
   changed = true
 }
 
-// Dynamic Cordis assigns shadowing priority itself in DSH 0.2.1-alpha.1.
+// Ordinary installed Client plugins do not receive the dynamic runner's
+// automatic shadowing rank. Preserve the published 0.8 priorities so our
+// schedules page/icon/Session mark shadow the native priority-0 occupants
+// instead of colliding with them at the same id/key and priority.
 for (const [from, to] of [
-  [`name: 'main', key: PANEL_ID, priority: -100, locale:`, `name: 'main', key: PANEL_ID, locale:`],
-  [`name: 'sidebar.session.row.leading', id: 'schedule-mark', order: 10, priority: -100, locale:`, `name: 'sidebar.session.row.leading', id: 'schedule-mark', order: 10, locale:`],
-  [`name: 'sidebar.panellist', id: PANEL_ID, order: 10, priority: -100, locale:`, `name: 'sidebar.panellist', id: PANEL_ID, order: 10, locale:`],
+  [`name: 'main', key: PANEL_ID, locale:`, `name: 'main', key: PANEL_ID, priority: -100, locale:`],
+  [`name: 'sidebar.session.row.leading', id: 'schedule-mark', order: 10, locale:`, `name: 'sidebar.session.row.leading', id: 'schedule-mark', order: 10, priority: -100, locale:`],
+  [`name: 'sidebar.panellist', id: PANEL_ID, order: 10, locale:`, `name: 'sidebar.panellist', id: PANEL_ID, order: 10, priority: -100, locale:`],
 ]) {
   if (source.includes(from)) {
     source = source.replace(from, to)
@@ -74,11 +78,16 @@ for (const [from, to] of [
   }
 }
 
-if (!source.includes(newInjectDeclaration)) throw new Error('remote.schedule is not declared in the Client plugin inject list')
-if (!source.includes('        const scope = ctx\n        const catalog = createCatalogSource(scope)')) throw new Error('Schedule runtime is not attached directly to the plugin fiber')
-if (source.includes("ctx.inject(['remote.schedule']")) throw new Error('legacy ctx.inject remote.schedule wrapper survived the DSH 0.2.1 port')
-if (source.includes('priority: -100')) throw new Error('manual dynamic Slot priority survived the DSH 0.2.1 port')
+if (!source.includes(publishedInjectDeclaration)) throw new Error('published Client inject declaration was not restored')
+if (!source.includes("ctx.inject(['remote.schedule'], (scope) => {")) throw new Error('remote.schedule child context is missing')
+for (const expected of [
+  `name: 'main', key: PANEL_ID, priority: -100, locale:`,
+  `name: 'sidebar.session.row.leading', id: 'schedule-mark', order: 10, priority: -100, locale:`,
+  `name: 'sidebar.panellist', id: PANEL_ID, order: 10, priority: -100, locale:`,
+]) {
+  if (!source.includes(expected)) throw new Error(`published slot shadow priority missing: ${expected}`)
+}
 
 if (changed) await writeFile(path, source)
 
-console.log('plugin detail ownership and DSH 0.2.1 Client runtime contract present')
+console.log('plugin detail ownership and standard DSH 0.2.1 Client lifecycle contract present')
