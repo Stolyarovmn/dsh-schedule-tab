@@ -87,7 +87,8 @@ assert.ok(shell.includes('markSessionSeen(catalog.getSnapshot().records, id)\n  
 assert.ok(!shell.includes("nativeManager.sessionLinkState(id, scope.sessions.list.getSnapshot()"), 'navigation callback must not repeat the native detail availability gate with a stale snapshot')
 
 assert.ok(readme.includes('no separate Automation Tasks bundle needs to be enabled'), '0.2.1 docs must describe built-in Automation Tasks')
-assert.ok(!workflow.includes('@deepseek-ai/dsh-experimental-schedule-bundle'), '0.2.1 CI must not install the retired Automation Tasks bundle')
+assert.ok(!workflow.includes('plugin --profile smoke add "@deepseek-ai/dsh-experimental-schedule-bundle'), '0.2.1 CI must not install the retired Automation Tasks bundle')
 assert.ok(workflow.includes('@deepseek-ai/dsh@0.2.1-alpha.1'), 'CI must smoke-test the exact target DSH version')
+assert.ok(workflow.includes('retired Automation Tasks bundle unexpectedly present'), 'CI must actively reject the retired bundle if it reappears')
 
 console.log('DSH 0.2.1-alpha.1 pinned native TaskManager + quick-actions contract passed')
