@@ -1,62 +1,93 @@
 # DSH Automation Tasks Attention + Native Quick Actions
 
-This development line targets **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally carries no compatibility layer for `0.1.x`.
+This development line targets **DeepSeek Harness `0.2.1-alpha.1` only**. It intentionally carries no compatibility layer for `0.1.x` and no dependency on the retired `@deepseek-ai/dsh-experimental-schedule-bundle` workflow.
 
-`0.7.0` keeps the shipped Automation Tasks page unchanged. The `0.8.0-dev.5` experiment restarts from that stable line and shadows only `main/schedules` with a **pinned source snapshot of DSH `0.2.0-rc.2` TaskManagerPage/TaskDetail**. The native code is preserved; the only intended UI patch is a two-button quick-action group beside each task row.
+The plugin keeps the native Automation Tasks behavior and adds two narrow row actions plus attention/notification features. DSH `0.2.1-alpha.1` mounts `schedule` and `ui-schedule` directly from the Web composition; no separate Automation Tasks bundle needs to be enabled.
 
-## Scope of `0.8.0-dev.5`
+## Scope of `0.8.0-dev.6`
 
-The first `0.2.x` implementation keeps only differentiated attention behavior:
+The build preserves the full `0.8.0-dev.5` functionality while retargeting it to DSH `0.2.1-alpha.1`:
 
 - new-task and new-delivery seen state;
 - one-time popup notification for a newly recorded delivery;
-- a compact neutral numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`), using the same adaptive gray surface/primary text tokens as native ghost controls (light gray + white text in dark theme);
-- unread delivery counts backed by native retained `schedule.history`, so repeated runs of the same recurring task can contribute `2`, `3`, … rather than collapsing to its single `lastDelivery` receipt;
-- overdue warning on that same icon (`!` when there is no unread count);
-- a native-style green Session-row completion dot for unread scheduled activity when DSH's built-in completion reminder is suppressed by retained `mainView` state;
+- compact numeric unread badge on the existing Automation tasks sidebar icon (`1`…`9+`);
+- unread delivery counts backed by native retained `schedule.history`, including repeated deliveries from the same recurring task;
+- overdue warning on the same sidebar icon when there is no unread count;
+- Session-row unread activity indicator for scheduled deliveries;
 - compatibility with the `0.6.x` browser-local `seen-v2`, delivery-notified and notification-preference keys;
-- browser-local notification settings on this bundle's own **Plugins** detail page using the public `plugins.detail.section` slot; the contribution checks `subject` and renders `null` for every foreign bundle/row/item detail;
-- cross-tab synchronization of those preferences;
+- browser-local switches for popup notifications, new-task attention and new-delivery attention on this bundle's own Plugins detail page;
+- cross-tab synchronization of notification preferences;
 - English, Chinese and Russian attention-layer strings;
-- pinned native Automation Tasks page behavior: native New/search/filters, TaskDetail, Rules editing, timing/time-zone controls, Delivery records, delete confirmation and native deletion toast;
-- two row actions using the **actual DSH icon set** bundled from the pinned source snapshot: `QueueOutline` to open the linked Session and `TrashOutline` to delete;
-- clicking the task row itself opens its native TaskDetail, so there is no redundant details action;
-- the row trash opens the native delete confirmation on the first click.
+- native New/search/status-filter controls;
+- native TaskDetail, Rules editing, timing/date/time/time-zone controls and Delivery records;
+- native delete confirmation, mutation handling and deletion toast;
+- **Open linked Session** quick action on every task row using the native `QueueOutline` glyph;
+- **Delete** quick action on every task row using the native `TrashOutline` glyph;
+- task-row click continues to open the native TaskDetail, so no redundant Details button is added;
+- first-click row Delete selects the task and opens the native confirmation through the deferred native confirmation state.
 
-Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible (`activePanelId === null`), or when **Open conversation** is used from the popup. `0.2.0-rc.2` still exposes no child row-actions slot. Therefore the 0.8 experiment uses the documented keyed `main/schedules` shadow at `priority: -100`. The build copies the exact DSH source and primitives for this pinned version and applies one narrow row patch instead of maintaining a hand-redrawn TaskManager.
+Task-center unread is acknowledged only when Automation tasks transitions from not selected to selected. Hovering or an ordinary sidebar rerender must not clear it. Session-row scheduled activity is tracked separately and clears only when that Session's Conversation is actually visible, or when a plugin action explicitly opens that linked Session.
 
-The generated native helper is checked for module-table drift: its remaining runtime `require()` calls are restricted to Harness platform modules (`react`, `react/jsx-runtime`, `react-dom`, `react-dom/client`). Non-shared utilities such as the pinned DSH `clsx@2.1.1` are bundled into the helper instead of being left as loader dependencies.
+## Native-page strategy
 
-Session navigation follows the shipped `ui-schedule` implementation and uses the root `uiWorkspace` service. The same callback backs both the quick Session action on a task row and **Linked session** in the native TaskDetail.
+DSH `0.2.1-alpha.1` still exposes no additive task-row action slot inside `TaskManagerPage`. The plugin therefore uses the same narrow strategy proven in `0.8.0-dev.5`:
 
-## Required native capability
+1. take the exact native `ui-schedule/src/client` implementation from the target DSH source;
+2. bundle the required native primitives into the generated helper instead of runtime-importing Harness Client internals;
+3. patch only the row shell to add **Open linked Session** and **Delete**;
+4. shadow only keyed `main/schedules` at `priority: -100`;
+5. leave all other Automation Tasks semantics in the copied native implementation.
 
-The plugin does **not** enable or re-declare the DSH Schedule rows. Delivery-history enrichment uses the public `remote.schedule.history` API with a page size of 10 and at most four concurrent reads; it stops once the UI already knows the badge is `9+`. Enable **Automation tasks** in Plugins → Official first. That selects `@deepseek-ai/dsh-experimental-schedule-bundle`, which owns `time-context`, `schedule`, and `ui-schedule` in DSH `0.2.0-rc.2`.
+For this target, the official compare `dsh-v0.2.0-rc.2...dsh-v0.2.1-alpha.1` contains no changes under `packages/client/ui-schedule/src/client/` or `packages/client/ui-primitives/src/`. Therefore the generated native helper from `0.8.0-dev.5` remains source-equivalent for `0.2.1-alpha.1`; the build tooling and tests are retargeted so any future source drift is reviewed instead of silently carried forward.
 
-When Schedule is absent, this plugin stays inert through optional `remote.schedule` injection rather than failing the profile.
+The generated helper's remaining runtime `require()` calls are restricted to Harness platform modules (`react`, `react/jsx-runtime`, `react-dom`, `react-dom/client`). `clsx` and the required native primitives are bundled into the helper.
+
+## DSH `0.2.1-alpha.1` ownership
+
+Automation Tasks are built into Web in this version. The plugin does **not** insert, enable or own the official `schedule` or `ui-schedule` rows. It inserts only `schedule-attention-enhancer`.
+
+Attention integration still uses optional `remote.schedule` injection so a nonstandard composition without the Schedule service stays inert instead of crashing.
+
+Quick Delete calls the native Schedule Host operation through `remote.schedule.delete`; it does not implement a second delete path. Open linked Session is a view/navigation action through `uiWorkspace.openSession`.
 
 ## Development install
 
-`0.8.0-dev.5` is private and must be installed by an install branch or commit SHA. Stable `0.7.0` remains the published fallback until the pinned native fork is verified in the real Harness UI.
+`0.8.0-dev.6` is private and must be installed by branch or commit SHA.
 
 ```powershell
-$DSH_VERSION = "0.2.0-rc.2"
-pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile registry-test add "github:Stolyarovmn/dsh-schedule-tab#install-0.8.0-dev.5"
-pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" registry-test
+$DSH_VERSION = "0.2.1-alpha.1"
+$PROFILE = "registry-test"
+$REF = "dsh-0.2.1-alpha.1-0.8.0-dev.6"
+
+pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" plugin --profile $PROFILE add "github:Stolyarovmn/dsh-schedule-tab#$REF"
+pnpm dlx "@deepseek-ai/dsh@$DSH_VERSION" $PROFILE
 ```
 
-## Legacy lines
+For final verification prefer an exact commit SHA instead of the moving branch name.
+
+## Verification target
+
+Before promoting this line beyond development status, verify in a real DSH `0.2.1-alpha.1` Web profile:
+
+- native Automation tasks is present without enabling an extra bundle;
+- exactly one `schedules` sidebar entry is visible;
+- native New/search/All-Active-Inactive filters still work;
+- row click opens native TaskDetail;
+- Rules editing and timing/time-zone controls still work;
+- Delivery records still load and paginate;
+- **Open linked Session** opens the correct Session and acknowledges its scheduled activity;
+- **Delete** opens native confirmation on the first click and native deletion/toast behavior remains intact;
+- unread badge, overdue state and delivery popup work;
+- notification preferences render only on this plugin's detail page and persist/synchronize across tabs;
+- reconnect and plugin unload/reload do not duplicate subscriptions or registrations;
+- light/dark themes, focus, Escape and keyboard behavior remain native-looking.
+
+## Version lines
 
 - `legacy/dsh-0.1.5.x` — plugin `0.5.1`.
 - `legacy/dsh-0.1.7.x` — plugin `0.6.15`.
+- `dsh-0.2.0-rc.2` — stable attention-only plugin `0.7.0`.
+- `install-0.8.0-dev.5` — native quick-actions experiment for DSH `0.2.0-rc.2`.
+- `dsh-0.2.1-alpha.1-0.8.0-dev.6` — full quick-actions port for DSH `0.2.1-alpha.1`.
 
-See [`MIGRATION_0.2.md`](MIGRATION_0.2.md) for the feature-by-feature decision record.
-
-## Install
-
-After npm publication:
-
-```powershell
-pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 plugin --profile registry-test add "@stolyarovmn/dsh-client-ui-schedule-tab@0.7.0"
-pnpm dlx @deepseek-ai/dsh@0.2.0-rc.2 registry-test
-```
+See [`MIGRATION_0.2.md`](MIGRATION_0.2.md) for the architecture and migration decision record.
