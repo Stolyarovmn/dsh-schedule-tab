@@ -6,10 +6,16 @@ const client = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8'
 const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
 const shell = readFileSync(new URL('../src/client-shell.js', import.meta.url), 'utf8')
 const nativeBuild = readFileSync(new URL('../tools/prepare-native-manager.mjs', import.meta.url), 'utf8')
+const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
+const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8')
 
-assert.equal(pkg.version, '0.8.0-dev.5')
-assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '0.2.0-rc.2')
+assert.equal(pkg.version, '0.8.0-dev.6')
+assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '0.2.1-alpha.1')
 assert.equal(pkg.private, true, 'development package must stay private')
+assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-client-ui-schedule'), 'native Schedule UI must activate before the shadow contribution')
+assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-api-session-controller'), 'Session navigation dependency must remain ordered')
+assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-api-workspace-controller'), 'Workspace navigation dependency must remain ordered')
+
 assert.ok(client.includes("ctx.inject(['remote.schedule']"), 'Schedule integration must stay optional')
 assert.ok(client.includes("scope.slots.inject('sidebar.panellist'"), 'attention belongs in the existing Schedule navigation seat')
 assert.ok(client.includes("scope.slots.inject('sidebar.session.row.leading'"), 'scheduled Session attention must use the public Session-row leading seat')
@@ -25,15 +31,17 @@ assert.ok(client.includes("state.unread > 9 ? '9+'"), 'unread badge must remain 
 assert.ok(client.includes('background:var(--dsw-alias-button-ghost-active-fill);color:var(--dsw-alias-label-primary)'), 'unread badge must follow native ghost-control surface and text tokens')
 assert.ok(!client.includes('background:var(--dsw-static-neutral-bluish-00);color:var(--dsw-alias-state-business-primary)'), 'badge must not hard-code the former white/blue treatment')
 assert.ok(!client.includes('background:var(--dsw-alias-brand-primary);color:var(--dsw-alias-label-primary-foreground);font-size:8px'), 'badge must not reuse brand-primary as an accent')
+
 assert.ok(client.includes("scope.slots.inject('main'"), '0.8 native-fork line intentionally shadows the Automation Tasks page')
 assert.ok(client.includes("key: PANEL_ID, priority: -100"), 'native fork must shadow the shipped schedules page at a distinct lower priority')
 assert.ok(client.includes("@stolyarovmn/dsh-schedule-native-manager"), 'generated client must contain and require the pinned native manager helper')
-assert.ok(client.includes("rowQuickActions"), 'native TaskManager snapshot must contain only the row-actions patch')
+assert.ok(client.includes("rowQuickActions"), 'native TaskManager snapshot must contain the row-actions patch')
 assert.ok(client.includes("createDeleteToastSource"), 'native deletion toast source must be retained')
 assert.ok(client.includes("onUpdateTiming"), 'native timing editor wiring must be retained')
 assert.ok(client.includes("loadHistory"), 'native Delivery records wiring must be retained')
 assert.ok(!client.includes("require(\"@deepseek-ai/dsh-client-ui-primitives\")"), 'native primitives must be bundled, not runtime-imported from Harness')
 assert.ok(!client.includes("require('@deepseek-ai/dsh-client-ui-primitives')"), 'native primitives must be bundled, not runtime-imported from Harness')
+
 const pluginMarker = "window.__ModuleLoader__.load({\n  id: '@stolyarovmn/dsh-client-ui-schedule-tab'"
 const markerAt = client.indexOf(pluginMarker)
 assert.ok(markerAt > 0, 'generated native helper must precede the plugin module')
@@ -48,6 +56,8 @@ assert.ok(!shell.includes('@deepseek-ai/dsh-client-ui-primitives'), 'plugin shel
 assert.ok(!shell.includes('document.querySelector'), 'plugin shell must not inspect host DOM')
 assert.ok(!shell.includes(':has('), 'plugin shell CSS must not style host DOM through parent selectors')
 assert.ok(!/^\s*- id: schedule\s*$/m.test(patch), 'plugin must not own the official Schedule rows')
+assert.ok(!/^\s*- id: ui-schedule\s*$/m.test(patch), 'plugin must not own the official Schedule UI row')
+
 assert.ok(client.includes("ctx.remote.$on('schedule/changed'"), 'catalog must follow authoritative Schedule invalidation')
 assert.ok(client.includes("ctx.remote.schedule.history({ sessionId: record.sessionId, id: record.id, limit: 10 })"), 'recurring unread count must use native retained delivery history with a bounded page')
 assert.ok(client.includes("if (candidates.length < 10)"), 'ten distinct unread tasks must skip unnecessary history reads')
@@ -76,4 +86,8 @@ assert.ok(nativeBuild.includes('setConfirmId(quickConfirmId)'), 'selected task m
 assert.ok(shell.includes('markSessionSeen(catalog.getSnapshot().records, id)\n            ctx.uiWorkspace.openSession(id)'), 'linked Session actions must navigate directly and acknowledge Session attention')
 assert.ok(!shell.includes("nativeManager.sessionLinkState(id, scope.sessions.list.getSnapshot()"), 'navigation callback must not repeat the native detail availability gate with a stale snapshot')
 
-console.log('DSH 0.2.0-rc.2 pinned native TaskManager contract passed')
+assert.ok(readme.includes('no separate Automation Tasks bundle needs to be enabled'), '0.2.1 docs must describe built-in Automation Tasks')
+assert.ok(!workflow.includes('@deepseek-ai/dsh-experimental-schedule-bundle'), '0.2.1 CI must not install the retired Automation Tasks bundle')
+assert.ok(workflow.includes('@deepseek-ai/dsh@0.2.1-alpha.1'), 'CI must smoke-test the exact target DSH version')
+
+console.log('DSH 0.2.1-alpha.1 pinned native TaskManager + quick-actions contract passed')
