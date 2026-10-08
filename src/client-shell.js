@@ -581,7 +581,7 @@ window.__ModuleLoader__.load({
 
     return {
       name: 'schedule-attention-enhancer',
-      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'remote.schedule'],
+      inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote'],
       apply(ctx) {
         ctx.effect(() => ctx.locale.register(NS, { en, zh, ru }), 'schedule-attention: locale')
         ctx.effect(startPreferencesStorageSync, 'schedule-attention: storage sync')
@@ -589,8 +589,8 @@ window.__ModuleLoader__.load({
           name: 'plugins.detail.section', id: 'schedule-attention-notifications', order: 30, locale: NS,
           inject: () => ({ hooks: { preferences: preferencesSource }, setPreference }),
         }, PluginPreferences))
-        const scope = ctx
-        const catalog = createCatalogSource(scope)
+        ctx.inject(['remote.schedule'], (scope) => {
+          const catalog = createCatalogSource(scope)
 
           let nativeCatalog
           nativeCatalog = nativeManager.createCatalogSource({
@@ -628,7 +628,7 @@ window.__ModuleLoader__.load({
           }, nativeManager.ScheduleDeleteToast))
 
           scope.slots.inject('main', () => scope.slots.register({
-            name: 'main', key: PANEL_ID, locale: 'schedule.manager',
+            name: 'main', key: PANEL_ID, priority: -100, locale: 'schedule.manager',
             inject: () => ({
               hooks: nativeCatalog.hooks,
               onDelete: reportedDelete,
@@ -643,11 +643,11 @@ window.__ModuleLoader__.load({
             applyPreferenceSuppression(catalog.getSnapshot().records)
           }), 'schedule-attention: apply preference changes')
           scope.slots.inject('sidebar.session.row.leading', () => scope.slots.register({
-            name: 'sidebar.session.row.leading', id: 'schedule-mark', order: 10, locale: NS,
+            name: 'sidebar.session.row.leading', id: 'schedule-mark', order: 10, priority: -100, locale: NS,
             inject: () => ({ hooks: { catalog } }),
           }, SessionActivityMark))
           scope.slots.inject('sidebar.panellist', () => scope.slots.register({
-            name: 'sidebar.panellist', id: PANEL_ID, order: 10, locale: NS,
+            name: 'sidebar.panellist', id: PANEL_ID, order: 10, priority: -100, locale: NS,
             label: () => scope.locale.bind(NS)('panel'),
             inject: () => ({ hooks: { catalog, preferences: preferencesSource } }),
           }, AttentionIcon))
@@ -664,6 +664,7 @@ window.__ModuleLoader__.load({
               },
             }),
           }, DeliveryToast))
+        })
       },
     }
   },
