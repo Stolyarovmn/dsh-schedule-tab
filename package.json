@@ -1,7 +1,7 @@
 {
   "name": "@stolyarovmn/dsh-client-ui-schedule-tab",
   "description": "Attention, delivery notifications, and native quick actions for DeepSeek Harness Automation Tasks.",
-  "version": "0.8.1-alpha.4",
+  "version": "0.8.1-rc.1",
   "author": {
     "name": "Stolyarovmn",
     "url": "https://github.com/Stolyarovmn"
@@ -12,7 +12,8 @@
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
     "./package.json": "./package.json",
-    "./locale/*.json": "./locale/*.json"
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
   },
   "scripts": {
     "test": "node --test test/*.test.js",
@@ -69,6 +70,6 @@
   "license": "MIT",
   "icon": "./icon.svg",
   "peerDependencies": {
-    "@deepseek-ai/dsh": "0.2.1-alpha.1"
+    "@deepseek-ai/dsh": ">=0.2.1-rc.2 <=0.2.1-rc.4"
   }
 }
