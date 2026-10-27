@@ -71,5 +71,8 @@
   "icon": "./icon.svg",
   "peerDependencies": {
     "@deepseek-ai/dsh": ">=0.2.1-rc.2 <=0.2.1-rc.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
