@@ -2,7 +2,7 @@ name: Build native schedule snapshot
 
 on:
   push:
-    branches: [feat/0.8.0-native-task-actions, install-0.8.1-alpha.1-from-0.8.0]
+    branches: [feat/0.8.0-native-task-actions, install-0.8.1-alpha.1-from-0.8.0, compat/dsh-0.2.1-rc.4]
     paths:
       - src/client-shell.js
       - tools/prepare-native-manager.mjs
@@ -27,22 +27,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Checkout pinned DSH source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+
+      - name: Resolve exact DSH 0.2.1-rc.4 source commit from npm
+        id: dsh-source
+        shell: bash
+        run: |
+          SHA="$(npm view @deepseek-ai/dsh@0.2.1-rc.4 gitHead --json | tr -d '\"')"
+          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Published DSH package did not expose a valid gitHead: $SHA" >&2
+            exit 1
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "DSH 0.2.1-rc.4 source: $SHA"
+
+      - name: Checkout exact published DSH source
         uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
-          ref: dsh-v0.2.1-alpha.1
+          ref: ${{ steps.dsh-source.outputs.sha }}
           path: .dsh-src
 
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.19.0
-          cache: pnpm
-          cache-dependency-path: .dsh-src/pnpm-lock.yaml
 
       - name: Install DSH build dependencies
         working-directory: .dsh-src
@@ -69,8 +79,8 @@ jobs:
           grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" src/client-shell.js
 
           # This is an ordinary installed Client package, not cordis-client-runner
-          # dynamic model code. DSH 0.2.1-alpha.1 standard Client code still uses
-          # ctx.inject() for optional services; keep the published 0.8 lifecycle.
+          # dynamic model code. Keep the published 0.8 optional-service lifecycle
+          # unless the exact DSH rc4 source proves that contract changed.
           grep -F "ctx.inject(['remote.schedule'], (scope) => {" src/client-shell.js
           if grep -Fq "inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'remote.schedule']" src/client-shell.js; then
             echo "remote.schedule unexpectedly became a required root service" >&2
@@ -150,7 +160,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/client.js src/client-shell.js
-          git commit -m "build: refresh DSH 0.2.1 native TaskManager snapshot"
+          git commit -m "build: refresh DSH 0.2.1-rc.4 native TaskManager snapshot"
           git fetch origin "$GITHUB_REF_NAME"
           git rebase "origin/$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
