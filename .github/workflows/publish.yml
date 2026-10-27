@@ -72,7 +72,12 @@ jobs:
         shell: bash
         run: |
           unset NODE_AUTH_TOKEN
-          npm publish --access public --provenance
+          VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$VERSION" == *-* ]]; then
+            npm publish --access public --provenance --tag next
+          else
+            npm publish --access public --provenance
+          fi
 
       - name: Create GitHub release
         if: github.event_name == 'push'

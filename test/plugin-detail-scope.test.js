@@ -28,19 +28,50 @@ function renderSection(subject) {
       return typeof type === 'function' ? type(next) : { type, props: next }
     },
   }
+  const nativeCatalogSnapshot = { records: [], readRequest: {} }
+  const nativeManager = {
+    createCatalogSource() {
+      return {
+        hooks: { catalog: { getSnapshot: () => nativeCatalogSnapshot } },
+        async onDelete() { return { ok: true, value: { deleted: false } } },
+        async onRetry() { return { ok: true, value: nativeCatalogSnapshot } },
+      }
+    },
+    createDeleteToastSource() {
+      return { hooks: {}, report() {}, dismiss() {} }
+    },
+    ScheduleDeleteToast() { return null },
+    TaskManagerPage() { return null },
+  }
   const plugin = definition.factory(name => {
     if (name === 'react') return React
-    if (name === '@stolyarovmn/dsh-schedule-native-manager') return {}
+    if (name === '@stolyarovmn/dsh-schedule-native-manager') return nativeManager
     throw new Error('unexpected require: ' + name)
   })
 
   let section = null
   const ctx = {
-    locale: { register() { return () => {} } },
+    locale: { register() { return () => {} }, bind() { return key => key } },
     effect(factory) { return factory() },
+    on() { return () => {} },
+    // The unit test verifies the Plugin Manager contribution only. The real
+    // installed Client context provides ctx.inject(); returning undefined here
+    // deliberately leaves the optional remote.schedule child context unmounted.
     inject() { return undefined },
+    remote: {
+      schedule: {
+        async catalog() { return { ok: true, value: { records: [] } } },
+        async delete() { return { ok: true, value: { deleted: false } } },
+        async update() { return { ok: true, value: { code: 'schedule_not_found' } } },
+        async history() { return { ok: true, value: { records: [] } } },
+      },
+      $on() { return () => {} },
+    },
+    uiWorkspace: { openSession() {}, startSession() {} },
     slots: {
       inject(name, register) {
+        // This unit test owns only the Plugin Manager contribution. Other slot
+        // seats belong to the Schedule-runtime contract tests and need not mount.
         if (name !== 'plugins.detail.section') return undefined
         return register()
       },

@@ -2,7 +2,7 @@ name: Build native schedule snapshot
 
 on:
   push:
-    branches: [feat/0.8.0-native-task-actions]
+    branches: [feat/0.8.0-native-task-actions, install-0.8.1-alpha.1-from-0.8.0, compat/dsh-0.2.1-rc.4]
     paths:
       - src/client-shell.js
       - tools/prepare-native-manager.mjs
@@ -27,28 +27,60 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Checkout pinned DSH source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+
+      - name: Resolve an authoritative DSH 0.2.1-rc.4 source baseline
+        id: dsh-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="$(npm view @deepseek-ai/dsh@0.2.1-rc.4 gitHead --json 2>/dev/null | tr -d '\"' || true)"
+          if [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "ref=$SHA" >> "$GITHUB_OUTPUT"
+            echo "provenance=exact npm gitHead" >> "$GITHUB_OUTPUT"
+            echo "DSH 0.2.1-rc.4 exact source: $SHA"
+            exit 0
+          fi
+
+          echo "Published DSH 0.2.1-rc.4 has no gitHead; proving rc3/rc4 built equivalence for the source packages this plugin vendors."
+          ROOT="$RUNNER_TEMP/dsh-native-equivalence"
+          mkdir -p "$ROOT"
+          for PACKAGE in dsh-client-ui-schedule dsh-client-ui-primitives; do
+            for VERSION in 0.2.1-rc.3 0.2.1-rc.4; do
+              DEST="$ROOT/$PACKAGE/$VERSION"
+              mkdir -p "$DEST"
+              npm pack "@deepseek-ai/$PACKAGE@$VERSION" --pack-destination "$DEST" >/dev/null
+              tar -xzf "$DEST"/*.tgz -C "$DEST"
+            done
+            echo "Comparing @deepseek-ai/$PACKAGE rc3 -> rc4 published lib tree"
+            if ! diff -qr "$ROOT/$PACKAGE/0.2.1-rc.3/package/lib" "$ROOT/$PACKAGE/0.2.1-rc.4/package/lib"; then
+              echo "Published rc4 $PACKAGE differs from rc3, and rc4 has no source tag/gitHead. Refusing to rebuild from an unverified source revision." >&2
+              exit 1
+            fi
+          done
+
+          echo "Published ui-schedule and ui-primitives rc4 lib trees are byte-for-byte equivalent to rc3."
+          echo "ref=dsh-v0.2.1-rc.3" >> "$GITHUB_OUTPUT"
+          echo "provenance=rc3 tag proven equivalent to published rc4 client libs" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout verified DSH source baseline
         uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
-          ref: dsh-v0.2.0-rc.2
+          ref: ${{ steps.dsh-source.outputs.ref }}
           path: .dsh-src
 
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.19.0
-          cache: pnpm
-          cache-dependency-path: .dsh-src/pnpm-lock.yaml
-
       - name: Install DSH build dependencies
         working-directory: .dsh-src
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Enforce plugin detail ownership
+      - name: Enforce plugin detail ownership and target Client contract
         run: node tools/ensure-settings-scope.mjs
 
       - name: Prepare patched native TaskManager package
@@ -61,21 +93,30 @@ jobs:
       - name: Verify plugin client shell
         shell: bash
         run: |
-          # @deepseek-ai/dsh-client-ui-plugin-manager stays in package.json only
-          # as dsh.client.inject load ordering. DSH 0.2.0-rc.2 does not expose a
-          # uiPluginManager Cordis service; its public cross-plugin service is
-          # pluginNavigation, which this plugin does not need.
+          # Harness Client packages remain activation-order dependencies only.
           if grep -Fq "uiPluginManager" src/client-shell.js; then
             echo "Client shell declares the nonexistent uiPluginManager service" >&2
             exit 1
           fi
-          # plugins.detail.section is a shared list slot. Every contribution must
-          # render null when the open detail page is not its own bundle.
           grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" src/client-shell.js
-          # Session navigation is owned by the root uiWorkspace service. The
-          # optional remote.schedule child scope only owns Schedule-dependent work.
+
+          # This is an ordinary installed Client package, not cordis-client-runner
+          # dynamic model code. Keep the published 0.8 optional-service lifecycle.
+          grep -F "ctx.inject(['remote.schedule'], (scope) => {" src/client-shell.js
+          if grep -Fq "inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'remote.schedule']" src/client-shell.js; then
+            echo "remote.schedule unexpectedly became a required root service" >&2
+            exit 1
+          fi
+
+          # The native schedules occupants use priority 0. Our published 0.8
+          # shadow uses -100 so the same id/key does not collide and still wins.
+          grep -F "name: 'main', key: PANEL_ID, priority: -100" src/client-shell.js
+          grep -F "id: 'schedule-mark', order: 10, priority: -100" src/client-shell.js
+          grep -F "id: PANEL_ID, order: 10, priority: -100" src/client-shell.js
+
+          # Session navigation stays on the root uiWorkspace service.
           if grep -Fq "scope.uiWorkspace" src/client-shell.js; then
-            echo "Client shell routes workspace navigation through the optional Schedule scope" >&2
+            echo "Client shell routes workspace navigation through the Schedule alias" >&2
             exit 1
           fi
           grep -F "ctx.uiWorkspace.openSession" src/client-shell.js
@@ -97,12 +138,16 @@ jobs:
           grep -F "IconQueueOutlineRegular" lib/client.js
           grep -F "ctx.uiWorkspace.openSession" lib/client.js
           grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" lib/client.js
+          grep -F "ctx.inject(['remote.schedule'], (scope) => {" lib/client.js
+          grep -F "name: 'main', key: PANEL_ID, priority: -100" lib/client.js
+          grep -F "id: 'schedule-mark', order: 10, priority: -100" lib/client.js
+          grep -F "id: PANEL_ID, order: 10, priority: -100" lib/client.js
           if grep -Fq "IconNewChatOutlineRegular" lib/client.js; then
             echo "Generated client still uses New Chat for an existing linked Session" >&2
             exit 1
           fi
           if grep -Fq "scope.uiWorkspace" lib/client.js; then
-            echo "Generated client still navigates through the optional Schedule scope" >&2
+            echo "Generated client still navigates through the Schedule alias" >&2
             exit 1
           fi
           if grep -Fq "uiPluginManager" lib/client.js; then
@@ -126,6 +171,11 @@ jobs:
           console.log('Native helper externals:', [...new Set(requires)].join(', '))
           NODE
 
+      - name: Record source provenance
+        run: |
+          printf 'DSH native source baseline: %s\n' '${{ steps.dsh-source.outputs.ref }}'
+          printf 'Provenance: %s\n' '${{ steps.dsh-source.outputs.provenance }}'
+
       - name: Commit generated client and normalized shell
         shell: bash
         run: |
@@ -136,10 +186,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/client.js src/client-shell.js
-          git commit -m "build: refresh pinned native TaskManager snapshot"
-          # A docs/tests commit can land while this relatively expensive pinned
-          # DSH build is running. Rebase the generated-only commit before push so
-          # that harmless branch movement cannot lose the generated artifact.
-          git fetch origin feat/0.8.0-native-task-actions
-          git rebase origin/feat/0.8.0-native-task-actions
-          git push origin HEAD:feat/0.8.0-native-task-actions
+          git commit -m "build: refresh DSH 0.2.1-rc.4 native TaskManager snapshot"
+          git fetch origin "$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
