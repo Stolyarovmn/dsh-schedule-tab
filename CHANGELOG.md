@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.8.1-rc.1 — 2026-10-27 — DSH 0.2.1-rc.2 through 0.2.1-rc.4
+
+Release candidate based on published `0.8.0`, migrated to the DSH 0.2.1 Client build contract and validated across the current RC line.
+
+### Changed
+
+- compatibility is now declared as `@deepseek-ai/dsh >=0.2.1-rc.2 <=0.2.1-rc.4`;
+- the synthetic native Schedule helper now uses the DSH 0.2.1 package-directory `clientBundle` API and selects only the browser Client artifact instead of inventing a Node-half entry;
+- the native TaskManager/TaskDetail helper was rebuilt and its external module set revalidated;
+- the package exports the current DSH display resource `"./icon": "./icon.svg"` while retaining the existing top-level `icon` field.
+
+### Preserved
+
+- unread Automation Tasks badge and scheduled-Session attention;
+- delivery popup and browser-local notification switches;
+- native TaskManager/TaskDetail behavior, Rules editing, timing controls and Delivery records;
+- Queue/Delete row quick actions, first-click native delete confirmation, and linked-Session navigation.
+
+### Validation
+
+- `npm run check` and `npm pack --dry-run` pass;
+- isolated install and Web boot pass on DSH `0.2.1-rc.2`, `0.2.1-rc.3`, and `0.2.1-rc.4`;
+- native Schedule snapshot build passes with shell, slot-priority and module-table external checks;
+- published DSH `0.2.1-rc.4` currently exposes neither an npm `gitHead` nor a matching public source tag. Before using the official `dsh-v0.2.1-rc.3` source as the native snapshot baseline, CI proves the published `@deepseek-ai/dsh-client-ui-schedule` and `@deepseek-ai/dsh-client-ui-primitives` rc.3/rc.4 `lib` trees are byte-for-byte equivalent.
+
+### Release state
+
+This remains an RC until the final browser UI is verified in a real DSH `0.2.1-rc.4` profile.
+
 ## 0.8.1-alpha.2 — 2026-10-08 — DSH 0.2.1-alpha.1
 
 Compatibility candidate based on published `0.8.0`, rebuilt and reviewed against the exact `dsh-v0.2.1-alpha.1` Harness source.
@@ -67,7 +96,7 @@ DSH `0.2.0-rc.2` has no additive task-row actions slot. `0.8.0` therefore uses a
 
 ## 0.7.0 — 2026-10-02 — DSH 0.2.0-rc.2
 
-This release is a redesign for **DeepSeek Harness 0.2.0-rc.2 only**. It intentionally drops compatibility with DSH 0.1.x and no longer ships a replacement Automation Tasks manager.
+This release is a redesign for **DeepSeek Harness `0.2.0-rc.2` only**. It intentionally drops compatibility with DSH 0.1.x and no longer ships a replacement Automation Tasks manager.
 
 ### Added
 
