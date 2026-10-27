@@ -73,7 +73,8 @@ assert.ok(client.includes('const justActivated = active && !panelWasActiveRef.cu
 assert.ok(client.includes('panelWasActiveRef.current = active'), 'panel activation state must survive ordinary sidebar rerenders')
 assert.ok(client.includes('markAllSeen(catalog.records)'), 'panel activation must acknowledge current attention')
 
-assert.ok(nativeBuild.includes("clientBundle(import.meta.dirname, ['lib/types/index.js'])"), 'native helper build must use the DSH 0.2.1 package-directory clientBundle contract')
+assert.ok(nativeBuild.includes('clientBundle(import.meta.dirname, [])({ env: {} })'), 'native helper must use the DSH 0.2.1 package-directory clientBundle contract and select only the Client artifact')
+assert.ok(nativeBuild.includes("configs.filter(config => config.name === id + '/client')"), 'synthetic native helper must not build a Node-half entry it does not own')
 assert.ok(nativeBuild.includes('IconQueueOutlineRegular'), 'linked Session action must use the native Queue glyph')
 assert.ok(!nativeBuild.includes('<IconNewChatOutlineRegular />'), 'linked Session action must not render the New Chat glyph')
 assert.ok(!nativeBuild.includes('<IconPanelLeftOutlineRegular />'), 'redundant row detail action must stay removed')

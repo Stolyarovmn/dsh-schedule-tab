@@ -184,7 +184,9 @@ await writeFile(join(packageDir, 'package.json'), JSON.stringify({
 await writeFile(join(packageDir, 'tsdown.config.ts'), `
 import { clientBundle } from '../tsdown.client.ts'
 
-export default clientBundle(import.meta.dirname, ['lib/types/index.js'])
+const id = "@stolyarovmn/dsh-schedule-native-manager"
+const configs = clientBundle(import.meta.dirname, [])({ env: {} })
+export default configs.filter(config => config.name === id + '/client')
 `)
 
 console.log(packageDir)
