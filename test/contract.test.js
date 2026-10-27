@@ -7,7 +7,7 @@ const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf
 const shell = readFileSync(new URL('../src/client-shell.js', import.meta.url), 'utf8')
 const nativeBuild = readFileSync(new URL('../tools/prepare-native-manager.mjs', import.meta.url), 'utf8')
 
-assert.equal(pkg.version, '0.8.1-rc.1')
+assert.equal(pkg.version, '0.8.1')
 assert.equal(pkg.peerDependencies['@deepseek-ai/dsh'], '>=0.2.1-rc.2 <=0.2.1-rc.4')
 assert.equal(pkg.exports['./icon'], './icon.svg')
 assert.notEqual(pkg.private, true, 'compatibility candidate must remain publishable')
