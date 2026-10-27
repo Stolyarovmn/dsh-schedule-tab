@@ -31,23 +31,45 @@ jobs:
         with:
           node-version: 22.19.0
 
-      - name: Resolve exact DSH 0.2.1-rc.4 source commit from npm
+      - name: Resolve an authoritative DSH 0.2.1-rc.4 source baseline
         id: dsh-source
         shell: bash
         run: |
-          SHA="$(npm view @deepseek-ai/dsh@0.2.1-rc.4 gitHead --json | tr -d '\"')"
-          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "Published DSH package did not expose a valid gitHead: $SHA" >&2
-            exit 1
+          set -euo pipefail
+          SHA="$(npm view @deepseek-ai/dsh@0.2.1-rc.4 gitHead --json 2>/dev/null | tr -d '\"' || true)"
+          if [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "ref=$SHA" >> "$GITHUB_OUTPUT"
+            echo "provenance=exact npm gitHead" >> "$GITHUB_OUTPUT"
+            echo "DSH 0.2.1-rc.4 exact source: $SHA"
+            exit 0
           fi
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "DSH 0.2.1-rc.4 source: $SHA"
 
-      - name: Checkout exact published DSH source
+          echo "Published DSH 0.2.1-rc.4 has no gitHead; proving rc3/rc4 built equivalence for the source packages this plugin vendors."
+          ROOT="$RUNNER_TEMP/dsh-native-equivalence"
+          mkdir -p "$ROOT"
+          for PACKAGE in dsh-client-ui-schedule dsh-client-ui-primitives; do
+            for VERSION in 0.2.1-rc.3 0.2.1-rc.4; do
+              DEST="$ROOT/$PACKAGE/$VERSION"
+              mkdir -p "$DEST"
+              npm pack "@deepseek-ai/$PACKAGE@$VERSION" --pack-destination "$DEST" >/dev/null
+              tar -xzf "$DEST"/*.tgz -C "$DEST"
+            done
+            echo "Comparing @deepseek-ai/$PACKAGE rc3 -> rc4 published lib tree"
+            if ! diff -qr "$ROOT/$PACKAGE/0.2.1-rc.3/package/lib" "$ROOT/$PACKAGE/0.2.1-rc.4/package/lib"; then
+              echo "Published rc4 $PACKAGE differs from rc3, and rc4 has no source tag/gitHead. Refusing to rebuild from an unverified source revision." >&2
+              exit 1
+            fi
+          done
+
+          echo "Published ui-schedule and ui-primitives rc4 lib trees are byte-for-byte equivalent to rc3."
+          echo "ref=dsh-v0.2.1-rc.3" >> "$GITHUB_OUTPUT"
+          echo "provenance=rc3 tag proven equivalent to published rc4 client libs" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout verified DSH source baseline
         uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
-          ref: ${{ steps.dsh-source.outputs.sha }}
+          ref: ${{ steps.dsh-source.outputs.ref }}
           path: .dsh-src
 
       - uses: pnpm/action-setup@v4
@@ -79,8 +101,7 @@ jobs:
           grep -F "subject?.kind !== 'bundle' || subject.pkg?.name !== PACKAGE" src/client-shell.js
 
           # This is an ordinary installed Client package, not cordis-client-runner
-          # dynamic model code. Keep the published 0.8 optional-service lifecycle
-          # unless the exact DSH rc4 source proves that contract changed.
+          # dynamic model code. Keep the published 0.8 optional-service lifecycle.
           grep -F "ctx.inject(['remote.schedule'], (scope) => {" src/client-shell.js
           if grep -Fq "inject: ['slots', 'locale', 'uiWorkspace', 'sessions', 'workspaces', 'remote', 'remote.schedule']" src/client-shell.js; then
             echo "remote.schedule unexpectedly became a required root service" >&2
@@ -149,6 +170,11 @@ jobs:
           }
           console.log('Native helper externals:', [...new Set(requires)].join(', '))
           NODE
+
+      - name: Record source provenance
+        run: |
+          printf 'DSH native source baseline: %s\n' '${{ steps.dsh-source.outputs.ref }}'
+          printf 'Provenance: %s\n' '${{ steps.dsh-source.outputs.provenance }}'
 
       - name: Commit generated client and normalized shell
         shell: bash
